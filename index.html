@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body class="bg-gradient-to-br from-indigo-500 to-purple-600 min-h-screen p-4 text-white">
+  <div id="app" class="max-w-md mx-auto">
+    <!-- Главный экран -->
+    <div id="main" class="space-y-6">
+      <h1 class="text-3xl font-bold text-center">LeakFixer</h1>
+      
+      <div class="bg-white/20 backdrop-blur-xl rounded-2xl p-6">
+        <div class="text-4xl font-black text-center mb-4" id="currentDay">День 1</div>
+        <div class="grid grid-cols-2 gap-4 text-xl">
+          <div>Стрик: <span id="streak">0</span></div>
+          <div>Баллы: <span id="points">0</span></div>
+        </div>
+      </div>
+
+      <div id="lesson" class="bg-white/10 rounded-xl p-6">
+        <h2 id="lessonTitle" class="text-xl font-semibold mb-2"></h2>
+        <p id="lessonDesc" class="mb-4 opacity-90"></p>
+        <iframe id="video" class="w-full h-48 rounded-lg" style="display:none"></iframe>
+        <button id="completeBtn" class="w-full bg-green-500 hover:bg-green-600 py-3 rounded-xl font-semibold text-lg">
+          ✅ Выполнено
+        </button>
+      </div>
+
+      <div class="flex space-x-3">
+        <button id="habitsBtn" class="flex-1 bg-blue-500 hover:bg-blue-600 py-3 rounded-xl font-semibold">📊 Привычки</button>
+        <button id="buddyBtn" class="flex-1 bg-purple-500 hover:bg-purple-600 py-3 rounded-xl font-semibold">👥 Бадди</button>
+      </div>
+    </div>
+
+    <!-- Экран Бадди -->
+    <div id="buddyScreen" class="hidden space-y-6">
+      <button id="backBtn" class="text-2xl">←</button>
+      <div class="bg-white/20 backdrop-blur-xl rounded-2xl p-6 text-center">
+        <h2 class="text-2xl font-bold mb-4">Выбери напарника</h2>
+        <input id="buddyInput" placeholder="@username" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
+        <button id="addBuddy" class="w-full mt-4 bg-pink-500 hover:bg-pink-600 py-3 rounded-xl font-semibold">Добавить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    const user = tg.initDataUnsafe().user;
+    
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+    const SUPABASE_KEY = 'YOUR_ANON_KEY';
+    
+    let currentUser = null;
+    let currentDay = 1;
+
+    // Инициализация
+    async function init() {
+      // Создать/получить пользователя
+      const { data } = await fetch(`${SUPABASE_URL}/rest/v1/users?telegram_id=eq.${user.id}`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+      }).then(r => r.json());
+      
+      if (data.length === 0) {
+        await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+          method: 'POST',
+          headers: { 
+            apikey: SUPABASE_KEY, 
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ telegram_id: user.id, username: user.username })
+        });
+        currentUser = { telegram_id: user.id, username: user.username, day: 1, streak: 0, points: 0 };
+      } else {
+        currentUser = data[0];
+        currentDay = data[0].day;
+      }
+      
+      loadDay();
+      updateUI();
+    }
+
+    async function loadDay() {
+      const { data } = await fetch(`${SUPABASE_URL}/rest/v1/lessons?day=eq.${currentDay}`, {
+        headers: { apikey: SUPABASE_KEY }
+      }).then(r => r.json());
+      
+      if (data[0]) {
+        document.getElementById('lessonTitle').textContent = data[0].title;
+        document.getElementById('lessonDesc').textContent = data[0].description;
+        const video = document.getElementById('video');
+        if (data[0].video_url) {
+          video.src = data[0].video_url;
+          video.style.display = 'block';
+        }
+        
+        // Проверить выполнение
+        const logCheck = await fetch(`${SUPABASE_URL}/rest/v1/daily_logs?user_id=eq.${user.id}&day=eq.${currentDay}`, {
+          headers: { apikey: SUPABASE_KEY }
+        }).then(r => r.json());
+        
+        if (logCheck.data?.[0]?.completed) {
+          document.getElementById('completeBtn').textContent = '✅ Выполнено!';
+          document.getElementById('completeBtn').disabled = true;
+          document.getElementById('completeBtn').className = 'w-full bg-green-400 py-3 rounded-xl font-semibold text-lg cursor-not-allowed';
+        }
+      }
+    }
+
+    // Отметить выполнение
+    document.getElementById('completeBtn').onclick = async () => {
+      await fetch(`${SUPABASE_URL}/rest/v1/daily_logs`, {
+        method: 'POST',
+        headers: { 
+          apikey: SUPABASE_KEY, 
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: user.id, day: currentDay, completed: true })
+      });
+      
+      tg.showAlert('✅ День выполнен! +10 баллов');
+      tg.MainButton.setText('Следующий день →').show().onClick(nextDay);
+    };
+
+    function nextDay() {
+      currentDay++;
+      currentUser.day = currentDay;
+      loadDay();
+      updateUI();
+    }
+
+    function updateUI() {
+      document.getElementById('currentDay').textContent = `День ${currentDay}/30`;
+      document.getElementById('streak').textContent = currentUser.streak;
+      document.getElementById('points').textContent = currentUser.points;
+    }
+
+    // Навигация
+    document.getElementById('buddyBtn').onclick = () => {
+      document.getElementById('main').classList.add('hidden');
+      document.getElementById('buddyScreen').classList.remove('hidden');
+    };
+
+    document.getElementById('backBtn').onclick = () => {
+      document.getElementById('buddyScreen').classList.add('hidden');
+      document.getElementById('main').classList.remove('hidden');
+    };
+
+    init();
+  </script>
+</body>
+</html>
