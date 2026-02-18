@@ -46,111 +46,254 @@
   </div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    const user = tg.initDataUnsafe().user;
-    
-    const SUPABASE_URL = 'https://zhpwehjbonzffpxdrbyl.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpocHdlaGpib256ZmZweGRyYnlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNzM3MjAsImV4cCI6MjA4Njk0OTcyMH0.em0tBA_YArxA2QQO-r5CWCFnyiknre88Mn6wsrX2ARs';
-    
-    let currentUser = null;
-    let currentDay = 1;
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('[LeakFixer] DOMContentLoaded');
 
-    // Инициализация
-    async function init() {
-      // Создать/получить пользователя
-      const { data } = await fetch(`${SUPABASE_URL}/rest/v1/users?telegram_id=eq.${user.id}`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-      }).then(r => r.json());
-      
-      if (data.length === 0) {
-        await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-          method: 'POST',
-          headers: { 
-            apikey: SUPABASE_KEY, 
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ telegram_id: user.id, username: user.username })
+      const tg = window.Telegram?.WebApp;
+      const isTelegram = Boolean(tg && typeof tg === 'object');
+      const tgUser = tg?.initDataUnsafe?.user ?? null;
+      const user = tgUser && tgUser.id ? tgUser : null;
+      const supabaseEnabled = Boolean(isTelegram && user?.id);
+
+      const showAlert = (message) => {
+        console.log('[LeakFixer][alert]', message);
+        if (isTelegram && typeof tg?.showAlert === 'function') tg.showAlert(message);
+        else window.alert(message);
+      };
+
+      if (isTelegram) {
+        console.log('[LeakFixer] Telegram WebApp detected', {
+          version: tg?.version,
+          platform: tg?.platform,
+          colorScheme: tg?.colorScheme,
+          hasInitDataUnsafe: Boolean(tg?.initDataUnsafe),
         });
-        currentUser = { telegram_id: user.id, username: user.username, day: 1, streak: 0, points: 0 };
+        try {
+          if (typeof tg.expand === 'function') tg.expand();
+        } catch (e) {
+          console.warn('[LeakFixer] tg.expand failed', e);
+        }
       } else {
-        currentUser = data[0];
-        currentDay = data[0].day;
+        console.warn('[LeakFixer] Telegram WebApp not found. Running in browser mode.');
+        showAlert('Открыто в браузере (не в Telegram). Кнопки работают, но Telegram-данные недоступны.');
       }
-      
-      loadDay();
-      updateUI();
-    }
 
-    async function loadDay() {
-      const { data } = await fetch(`${SUPABASE_URL}/rest/v1/lessons?day=eq.${currentDay}`, {
-        headers: { apikey: SUPABASE_KEY }
-      }).then(r => r.json());
-      
-      if (data[0]) {
-        document.getElementById('lessonTitle').textContent = data[0].title;
-        document.getElementById('lessonDesc').textContent = data[0].description;
-        const video = document.getElementById('video');
-        if (data[0].video_url) {
-          video.src = data[0].video_url;
-          video.style.display = 'block';
-        }
-        
-        // Проверить выполнение
-        const logCheck = await fetch(`${SUPABASE_URL}/rest/v1/daily_logs?user_id=eq.${user.id}&day=eq.${currentDay}`, {
-          headers: { apikey: SUPABASE_KEY }
-        }).then(r => r.json());
-        
-        if (logCheck.data?.[0]?.completed) {
-          document.getElementById('completeBtn').textContent = '✅ Выполнено!';
-          document.getElementById('completeBtn').disabled = true;
-          document.getElementById('completeBtn').className = 'w-full bg-green-400 py-3 rounded-xl font-semibold text-lg cursor-not-allowed';
+      if (!user) {
+        console.warn('[LeakFixer] No Telegram user found (initDataUnsafe.user).');
+      } else {
+        console.log('[LeakFixer] Telegram user', { id: user.id, username: user.username });
+      }
+
+      const SUPABASE_URL = 'https://zhpwehjbonzffpxdrbyl.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpocHdlaGpib256ZmZweGRyYnlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNzM3MjAsImV4cCI6MjA4Njk0OTcyMH0.em0tBA_YArxA2QQO-r5CWCFnyiknre88Mn6wsrX2ARs';
+
+      let currentUser = null;
+      let currentDay = 1;
+
+      const el = {
+        main: document.getElementById('main'),
+        buddyScreen: document.getElementById('buddyScreen'),
+        completeBtn: document.getElementById('completeBtn'),
+        habitsBtn: document.getElementById('habitsBtn'),
+        buddyBtn: document.getElementById('buddyBtn'),
+        backBtn: document.getElementById('backBtn'),
+        lessonTitle: document.getElementById('lessonTitle'),
+        lessonDesc: document.getElementById('lessonDesc'),
+        video: document.getElementById('video'),
+        currentDay: document.getElementById('currentDay'),
+        streak: document.getElementById('streak'),
+        points: document.getElementById('points'),
+      };
+
+      for (const [key, value] of Object.entries(el)) {
+        if (!value) console.error(`[LeakFixer] Missing DOM element: ${key}`);
+      }
+
+      function setCompleteButtonState({ completed }) {
+        if (!el.completeBtn) return;
+        if (completed) {
+          el.completeBtn.textContent = '✅ Выполнено!';
+          el.completeBtn.disabled = true;
+          el.completeBtn.className = 'w-full bg-green-400 py-3 rounded-xl font-semibold text-lg cursor-not-allowed';
+        } else {
+          el.completeBtn.textContent = '✅ Выполнено';
+          el.completeBtn.disabled = false;
+          el.completeBtn.className = 'w-full bg-green-500 hover:bg-green-600 py-3 rounded-xl font-semibold text-lg';
         }
       }
-    }
 
-    // Отметить выполнение
-    document.getElementById('completeBtn').onclick = async () => {
-      await fetch(`${SUPABASE_URL}/rest/v1/daily_logs`, {
-        method: 'POST',
-        headers: { 
-          apikey: SUPABASE_KEY, 
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ user_id: user.id, day: currentDay, completed: true })
-      });
-      
-      tg.showAlert('✅ День выполнен! +10 баллов');
-      tg.MainButton.setText('Следующий день →').show().onClick(nextDay);
-    };
+      function updateUI() {
+        if (!currentUser) return;
+        if (el.currentDay) el.currentDay.textContent = `День ${currentDay}/30`;
+        if (el.streak) el.streak.textContent = String(currentUser.streak ?? 0);
+        if (el.points) el.points.textContent = String(currentUser.points ?? 0);
+      }
 
-    function nextDay() {
-      currentDay++;
-      currentUser.day = currentDay;
-      loadDay();
-      updateUI();
-    }
+      async function initFromSupabase() {
+        console.log('[LeakFixer] initFromSupabase start');
+        try {
+          const users = await fetch(`${SUPABASE_URL}/rest/v1/users?telegram_id=eq.${user.id}`, {
+            headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+          }).then((r) => r.json());
 
-    function updateUI() {
-      document.getElementById('currentDay').textContent = `День ${currentDay}/30`;
-      document.getElementById('streak').textContent = currentUser.streak;
-      document.getElementById('points').textContent = currentUser.points;
-    }
+          const existing = Array.isArray(users) ? users[0] : null;
 
-    // Навигация
-    document.getElementById('buddyBtn').onclick = () => {
-      document.getElementById('main').classList.add('hidden');
-      document.getElementById('buddyScreen').classList.remove('hidden');
-    };
+          if (!existing) {
+            await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+              method: 'POST',
+              headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ telegram_id: user.id, username: user.username }),
+            });
+            currentUser = { telegram_id: user.id, username: user.username, day: 1, streak: 0, points: 0 };
+          } else {
+            currentUser = existing;
+            currentDay = Number(existing.day ?? 1);
+          }
 
-    document.getElementById('backBtn').onclick = () => {
-      document.getElementById('buddyScreen').classList.add('hidden');
-      document.getElementById('main').classList.remove('hidden');
-    };
+          await loadDayFromSupabase();
+          updateUI();
+          console.log('[LeakFixer] initFromSupabase done', { currentDay, currentUser });
+        } catch (e) {
+          console.error('[LeakFixer] initFromSupabase failed', e);
+          showAlert('Ошибка инициализации (Supabase). Проверь консоль.');
+          initBrowserMode();
+        }
+      }
 
-    init();
+      function initBrowserMode() {
+        console.log('[LeakFixer] initBrowserMode start');
+        currentUser = { telegram_id: null, username: 'browser', day: 1, streak: 0, points: 0 };
+        currentDay = 1;
+
+        if (el.lessonTitle) el.lessonTitle.textContent = 'Демо-режим';
+        if (el.lessonDesc) el.lessonDesc.textContent = 'Открыто напрямую в браузере. Telegram-данные недоступны, но кнопки должны реагировать.';
+        if (el.video) el.video.style.display = 'none';
+        setCompleteButtonState({ completed: false });
+        updateUI();
+        console.log('[LeakFixer] initBrowserMode done');
+      }
+
+      async function loadDayFromSupabase() {
+        console.log('[LeakFixer] loadDayFromSupabase', { day: currentDay });
+        const lessons = await fetch(`${SUPABASE_URL}/rest/v1/lessons?day=eq.${currentDay}`, {
+          headers: { apikey: SUPABASE_KEY },
+        }).then((r) => r.json());
+
+        const lesson = Array.isArray(lessons) ? lessons[0] : null;
+        if (!lesson) {
+          console.warn('[LeakFixer] No lesson for day', currentDay);
+          if (el.lessonTitle) el.lessonTitle.textContent = `День ${currentDay}`;
+          if (el.lessonDesc) el.lessonDesc.textContent = 'Урок не найден.';
+          if (el.video) el.video.style.display = 'none';
+          setCompleteButtonState({ completed: false });
+          return;
+        }
+
+        if (el.lessonTitle) el.lessonTitle.textContent = lesson.title ?? '';
+        if (el.lessonDesc) el.lessonDesc.textContent = lesson.description ?? '';
+        if (el.video) {
+          if (lesson.video_url) {
+            el.video.src = lesson.video_url;
+            el.video.style.display = 'block';
+          } else {
+            el.video.style.display = 'none';
+            el.video.removeAttribute('src');
+          }
+        }
+
+        const logs = await fetch(`${SUPABASE_URL}/rest/v1/daily_logs?user_id=eq.${user.id}&day=eq.${currentDay}`, {
+          headers: { apikey: SUPABASE_KEY },
+        }).then((r) => r.json());
+
+        const completed = Boolean(Array.isArray(logs) && logs[0]?.completed);
+        console.log('[LeakFixer] completion check', { completed });
+        setCompleteButtonState({ completed });
+      }
+
+      function nextDay() {
+        currentDay++;
+        if (currentUser) currentUser.day = currentDay;
+
+        console.log('[LeakFixer] nextDay', { currentDay });
+        showAlert(`Переходим на день ${currentDay}`);
+
+        if (supabaseEnabled) loadDayFromSupabase().catch((e) => console.error('[LeakFixer] loadDayFromSupabase failed', e));
+        else initBrowserMode();
+
+        updateUI();
+      }
+
+      // Кнопки: обязательно навешиваем после загрузки DOM
+      if (el.completeBtn) {
+        el.completeBtn.addEventListener('click', async () => {
+          console.log('[LeakFixer][click] completeBtn', { currentDay, supabaseEnabled });
+          showAlert('Кнопка "✅ Выполнено" нажата');
+
+          if (!supabaseEnabled) {
+            setCompleteButtonState({ completed: true });
+            nextDay();
+            return;
+          }
+
+          try {
+            await fetch(`${SUPABASE_URL}/rest/v1/daily_logs`, {
+              method: 'POST',
+              headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ user_id: user.id, day: currentDay, completed: true }),
+            });
+
+            setCompleteButtonState({ completed: true });
+            showAlert('✅ День выполнен! +10 баллов');
+
+            if (isTelegram && tg?.MainButton) {
+              tg.MainButton.setText('Следующий день →').show();
+              tg.MainButton.onClick(nextDay);
+            } else {
+              nextDay();
+            }
+          } catch (e) {
+            console.error('[LeakFixer] complete failed', e);
+            showAlert('Ошибка при сохранении выполнения. Проверь консоль.');
+          }
+        });
+      }
+
+      if (el.habitsBtn) {
+        el.habitsBtn.addEventListener('click', () => {
+          console.log('[LeakFixer][click] habitsBtn');
+          showAlert('Кнопка "Привычки" нажата (экран пока не реализован).');
+        });
+      }
+
+      if (el.buddyBtn) {
+        el.buddyBtn.addEventListener('click', () => {
+          console.log('[LeakFixer][click] buddyBtn');
+          showAlert('Кнопка "Buddy" нажата');
+          el.main?.classList.add('hidden');
+          el.buddyScreen?.classList.remove('hidden');
+        });
+      }
+
+      if (el.backBtn) {
+        el.backBtn.addEventListener('click', () => {
+          console.log('[LeakFixer][click] backBtn');
+          el.buddyScreen?.classList.add('hidden');
+          el.main?.classList.remove('hidden');
+        });
+      }
+
+      // Запуск
+      if (supabaseEnabled) initFromSupabase();
+      else initBrowserMode();
+    });
   </script>
 </body>
 </html>
