@@ -7,8 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   const tgUser = tg?.initDataUnsafe?.user ?? null;
-  const user = tgUser && tgUser.id ? tgUser : { id: 123, username: 'demo_user', first_name: 'Demo User' };
-  const supabaseEnabled = Boolean(isTelegram && user?.id && user.id !== 123);
+  const isDemoUser = !(tgUser && tgUser.id);
+  const user = !isDemoUser ? tgUser : { id: 123, username: 'demo_user', first_name: 'Demo User' };
+  const supabaseEnabled = Boolean(isTelegram && !isDemoUser && user?.id);
 
   const showAlert = (message) => {
     if (isTelegram && typeof tg?.showAlert === 'function') {
@@ -81,6 +82,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Пока просто заглушка-аватар, позже подтянем реальное фото через Bot API
     photoEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name || 'LF')}&background=4f46e5&color=ffffff`;
+    loadTelegramProfilePhoto(photoEl);
+  }
+
+  async function loadTelegramProfilePhoto(photoEl) {
+    if (!photoEl) return;
+    if (!isTelegram || isDemoUser) return;
+    if (!tg?.initData) return;
+
+    const cacheKey = `tg_avatar_url:${user.id}`;
+    const cached = window.localStorage?.getItem(cacheKey);
+    if (cached) {
+      photoEl.src = cached;
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/telegram-avatar?user_id=${encodeURIComponent(String(user.id))}`, {
+        headers: {
+          'x-telegram-init-data': tg.initData,
+        },
+      });
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (data?.photo_url) {
+        photoEl.src = data.photo_url;
+        window.localStorage?.setItem(cacheKey, data.photo_url);
+      }
+    } catch (e) {}
   }
 
   async function loadProfileHabits() {

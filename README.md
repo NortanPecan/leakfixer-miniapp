@@ -8,6 +8,8 @@ Telegram Mini App для бота LeakFixer — приложение для еж
 leakfixer-miniapp/
 ├── index.html          # Главный HTML файл с разметкой
 ├── app.js              # Основная логика приложения (JavaScript)
+├── api/
+│   └── telegram-avatar.js # Серверный эндпоинт для фото Telegram (Vercel)
 ├── .gitignore          # Игнорируемые файлы для Git
 └── README.md           # Этот файл
 ```
@@ -125,6 +127,15 @@ leakfixer-miniapp/
 1. Загрузите файлы на хостинг (например, Vercel, GitHub Pages)
 2. Укажите URL в настройках бота через [@BotFather](https://t.me/BotFather)
 3. Откройте Mini App через бота
+
+### Фото профиля из Telegram (Bot API)
+
+Чтобы показывать **реальный аватар Telegram**, добавлен эндпоинт `api/telegram-avatar.js` (под Vercel).
+
+- **Нужно добавить переменную окружения в Vercel**: `TELEGRAM_BOT_TOKEN`
+- Эндпоинт принимает `user_id` и заголовок `x-telegram-init-data` (строка `tg.initData`) и валидирует подпись.
+
+Важно: при открытии файла напрямую как `file://...` запросы к `/api/...` работать не будут — запускайте через локальный сервер или Vercel.
 
 ### Разработка
 
