@@ -47,8 +47,6 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('[LeakFixer] DOMContentLoaded');
-
       const tg = window.Telegram?.WebApp;
       const isTelegram = Boolean(tg && typeof tg === 'object');
       const tgUser = tg?.initDataUnsafe?.user ?? null;
@@ -56,12 +54,10 @@
       const supabaseEnabled = Boolean(isTelegram && user?.id);
 
       const showAlert = (message) => {
-        console.log('[LeakFixer][alert]', message);
         if (isTelegram && typeof tg?.showAlert === 'function') {
           try {
             tg.showAlert(message);
           } catch (e) {
-            console.warn('[LeakFixer] tg.showAlert failed, using window.alert', e);
             window.alert(message);
           }
         } else {
@@ -70,26 +66,9 @@
       };
 
       if (isTelegram) {
-        console.log('[LeakFixer] Telegram WebApp detected', {
-          version: tg?.version,
-          platform: tg?.platform,
-          colorScheme: tg?.colorScheme,
-          hasInitDataUnsafe: Boolean(tg?.initDataUnsafe),
-        });
         try {
           if (typeof tg.expand === 'function') tg.expand();
-        } catch (e) {
-          console.warn('[LeakFixer] tg.expand failed', e);
-        }
-      } else {
-        console.warn('[LeakFixer] Telegram WebApp not found. Running in browser mode.');
-        showAlert('Открыто в браузере (не в Telegram). Кнопки работают, но Telegram-данные недоступны.');
-      }
-
-      if (!user) {
-        console.warn('[LeakFixer] No Telegram user found (initDataUnsafe.user).');
-      } else {
-        console.log('[LeakFixer] Telegram user', { id: user.id, username: user.username });
+        } catch (e) {}
       }
 
       const SUPABASE_URL = 'https://zhpwehjbonzffpxdrbyl.supabase.co';
@@ -113,10 +92,6 @@
         points: document.getElementById('points'),
       };
 
-      for (const [key, value] of Object.entries(el)) {
-        if (!value) console.error(`[LeakFixer] Missing DOM element: ${key}`);
-      }
-
       function setCompleteButtonState({ completed }) {
         if (!el.completeBtn) return;
         if (completed) {
@@ -138,7 +113,6 @@
       }
 
       async function initFromSupabase() {
-        console.log('[LeakFixer] initFromSupabase start');
         try {
           const users = await fetch(`${SUPABASE_URL}/rest/v1/users?telegram_id=eq.${user.id}`, {
             headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
@@ -164,36 +138,30 @@
 
           await loadDayFromSupabase();
           updateUI();
-          console.log('[LeakFixer] initFromSupabase done', { currentDay, currentUser });
         } catch (e) {
-          console.error('[LeakFixer] initFromSupabase failed', e);
-          showAlert('Ошибка инициализации (Supabase). Проверь консоль.');
+          showAlert('Ошибка инициализации (Supabase).');
           initBrowserMode();
         }
       }
 
       function initBrowserMode() {
-        console.log('[LeakFixer] initBrowserMode start');
         currentUser = { telegram_id: null, username: 'browser', day: 1, streak: 0, points: 0 };
         currentDay = 1;
 
         if (el.lessonTitle) el.lessonTitle.textContent = 'Демо-режим';
-        if (el.lessonDesc) el.lessonDesc.textContent = 'Открыто напрямую в браузере. Telegram-данные недоступны, но кнопки должны реагировать.';
+        if (el.lessonDesc) el.lessonDesc.textContent = 'Открыто в браузере. Telegram-данные недоступны.';
         if (el.video) el.video.style.display = 'none';
         setCompleteButtonState({ completed: false });
         updateUI();
-        console.log('[LeakFixer] initBrowserMode done');
       }
 
       async function loadDayFromSupabase() {
-        console.log('[LeakFixer] loadDayFromSupabase', { day: currentDay });
         const lessons = await fetch(`${SUPABASE_URL}/rest/v1/lessons?day=eq.${currentDay}`, {
           headers: { apikey: SUPABASE_KEY },
         }).then((r) => r.json());
 
         const lesson = Array.isArray(lessons) ? lessons[0] : null;
         if (!lesson) {
-          console.warn('[LeakFixer] No lesson for day', currentDay);
           if (el.lessonTitle) el.lessonTitle.textContent = `День ${currentDay}`;
           if (el.lessonDesc) el.lessonDesc.textContent = 'Урок не найден.';
           if (el.video) el.video.style.display = 'none';
@@ -218,7 +186,6 @@
         }).then((r) => r.json());
 
         const completed = Boolean(Array.isArray(logs) && logs[0]?.completed);
-        console.log('[LeakFixer] completion check', { completed });
         setCompleteButtonState({ completed });
       }
 
@@ -226,21 +193,14 @@
         currentDay++;
         if (currentUser) currentUser.day = currentDay;
 
-        console.log('[LeakFixer] nextDay', { currentDay });
-        showAlert(`Переходим на день ${currentDay}`);
-
-        if (supabaseEnabled) loadDayFromSupabase().catch((e) => console.error('[LeakFixer] loadDayFromSupabase failed', e));
+        if (supabaseEnabled) loadDayFromSupabase().catch(() => initBrowserMode());
         else initBrowserMode();
 
         updateUI();
       }
 
-      // Кнопки: обязательно навешиваем после загрузки DOM
       if (el.completeBtn) {
         el.completeBtn.addEventListener('click', async () => {
-          console.log('[LeakFixer][click] completeBtn', { currentDay, supabaseEnabled });
-          showAlert('Кнопка "✅ Выполнено" нажата');
-
           if (!supabaseEnabled) {
             setCompleteButtonState({ completed: true });
             nextDay();
@@ -266,30 +226,25 @@
                 tg.MainButton.setText('Следующий день →').show();
                 tg.MainButton.onClick(nextDay);
               } catch (e) {
-                console.warn('[LeakFixer] tg.MainButton failed, calling nextDay directly', e);
                 nextDay();
               }
             } else {
               nextDay();
             }
           } catch (e) {
-            console.error('[LeakFixer] complete failed', e);
-            showAlert('Ошибка при сохранении выполнения. Проверь консоль.');
+            showAlert('Ошибка при сохранении.');
           }
         });
       }
 
       if (el.habitsBtn) {
         el.habitsBtn.addEventListener('click', () => {
-          console.log('[LeakFixer][click] habitsBtn');
-          showAlert('Кнопка "Привычки" нажата (экран пока не реализован).');
+          // Экран привычек пока не реализован
         });
       }
 
       if (el.buddyBtn) {
         el.buddyBtn.addEventListener('click', () => {
-          console.log('[LeakFixer][click] buddyBtn');
-          showAlert('Кнопка "Buddy" нажата');
           el.main?.classList.add('hidden');
           el.buddyScreen?.classList.remove('hidden');
         });
@@ -297,7 +252,6 @@
 
       if (el.backBtn) {
         el.backBtn.addEventListener('click', () => {
-          console.log('[LeakFixer][click] backBtn');
           el.buddyScreen?.classList.add('hidden');
           el.main?.classList.remove('hidden');
         });
