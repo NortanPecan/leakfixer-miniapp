@@ -57,8 +57,16 @@
 
       const showAlert = (message) => {
         console.log('[LeakFixer][alert]', message);
-        if (isTelegram && typeof tg?.showAlert === 'function') tg.showAlert(message);
-        else window.alert(message);
+        if (isTelegram && typeof tg?.showAlert === 'function') {
+          try {
+            tg.showAlert(message);
+          } catch (e) {
+            console.warn('[LeakFixer] tg.showAlert failed, using window.alert', e);
+            window.alert(message);
+          }
+        } else {
+          window.alert(message);
+        }
       };
 
       if (isTelegram) {
@@ -254,8 +262,13 @@
             showAlert('✅ День выполнен! +10 баллов');
 
             if (isTelegram && tg?.MainButton) {
-              tg.MainButton.setText('Следующий день →').show();
-              tg.MainButton.onClick(nextDay);
+              try {
+                tg.MainButton.setText('Следующий день →').show();
+                tg.MainButton.onClick(nextDay);
+              } catch (e) {
+                console.warn('[LeakFixer] tg.MainButton failed, calling nextDay directly', e);
+                nextDay();
+              }
             } else {
               nextDay();
             }
