@@ -11,6 +11,20 @@
     <div id="main" class="space-y-6">
       <h1 class="text-3xl font-bold text-center">LeakFixer</h1>
       
+      <!-- Профиль -->
+      <div id="profile" class="flex items-center mb-4">
+        <img id="profilePhoto" class="w-14 h-14 rounded-full mr-3 border border-white/50" src="" alt="avatar">
+        <div>
+          <div id="profileName" class="font-semibold text-lg"></div>
+          <div class="text-sm opacity-80">@<span id="profileUsername"></span></div>
+        </div>
+      </div>
+
+      <!-- Привычки -->
+      <div id="profileHabits" class="grid grid-cols-2 gap-3 mb-6">
+        <!-- сюда JS подставит карточки привычек -->
+      </div>
+      
       <div class="bg-white/20 backdrop-blur-xl rounded-2xl p-6">
         <div class="text-4xl font-black text-center mb-4" id="currentDay">День 1</div>
         <div class="grid grid-cols-2 gap-4 text-xl">
