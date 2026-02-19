@@ -144,13 +144,65 @@
           </div>
         </div>
         
-        <!-- Карточка калорий -->
-        <div id="fitnessCaloriesCard" class="bg-white/20 backdrop-blur-xl rounded-2xl p-3">
-          <div class="text-xs opacity-90">Калории наели: <span id="fitnessCalEaten">0</span></div>
-          <div class="text-xs opacity-90">Калории потратили: <span id="fitnessCalBurned">0</span></div>
-          <div class="mt-1 text-sm font-semibold">Баланс: <span id="fitnessBalance">0</span></div>
+        <div id="fitnessCaloriesCard" class="bg-white/20 backdrop-blur-xl rounded-2xl p-4 w-full space-y-3">
+          <!-- Заголовок + статус дня -->
+          <div class="flex items-center justify-between mb-1">
+            <div>
+              <div class="text-[11px] uppercase tracking-wide opacity-70">Энергия тела</div>
+              <div class="text-sm font-semibold opacity-90">Сводка дня</div>
+            </div>
+            <!-- Статус дня (потом менять логикой) -->
+            <span class="text-[11px] px-2 py-1 rounded-full bg-emerald-400/20 text-emerald-100">
+              день в плюс к цели
+            </span>
+          </div>
+        
+          <!-- Мини‑бар цели vs факт (декор, без логики пока) -->
+          <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden mb-2">
+            <!-- линия цели -->
+            <div class="absolute left-1/2 top-0 bottom-0 w-px bg-white/40"></div>
+            <!-- пример факта: лёгкий профицит вправо -->
+            <div class="absolute left-1/2 top-0 bottom-0 bg-gradient-to-r from-emerald-400 to-rose-400 w-1/4"></div>
+          </div>
+        
+          <!-- Основные цифры -->
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div class="bg-white/10 rounded-xl px-2 py-2 flex flex-col justify-between">
+              <div class="opacity-70">Съели</div>
+              <div class="text-sm font-semibold">
+                <span id="fitnessCalEaten">0</span> ккал
+              </div>
+            </div>
+            <div class="bg-white/10 rounded-xl px-2 py-2 flex flex-col justify-between">
+              <div class="opacity-70">Сожгли</div>
+              <div class="text-sm font-semibold">
+                <span id="fitnessCalBurned">0</span> ккал
+              </div>
+            </div>
+            <div class="bg-white/10 rounded-xl px-2 py-2 flex flex-col justify-between">
+              <div class="opacity-70">Баланс</div>
+              <div class="text-sm font-semibold">
+                <span id="fitnessBalance">0</span> ккал
+              </div>
+            </div>
+          </div>
+        
+          <!-- Блок цели/отклонения + тренд дня -->
+          <div class="flex items-start justify-between text-[11px] opacity-80 border-t border-white/10 pt-2">
+            <div class="pr-2">
+              <div>Цель: дефицит 500 ккал</div>
+              <div class="mt-1">
+                Отклонение от цели: <span class="font-semibold">+0 ккал</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="font-semibold">Тренд дня</div>
+              <div class="mt-1">нейтральный · вес ~ без изменений</div>
+            </div>
+          </div>
         </div>
         
+
         <!-- Выбор даты -->
         <div class="flex items-center justify-between bg-white/10 rounded-xl px-4 py-3">
           <button type="button" id="fitnessDatePrev" class="p-2 rounded-lg hover:bg-white/20">‹</button>
