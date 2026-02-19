@@ -217,9 +217,13 @@
             <span>Сессий: <span id="fitnessActivitySessions">0</span></span>
           </div>
 
-          <div class="space-y-3 text-xs">
-            <!-- Силовая тренировка -->
-            <div class="space-y-1">
+          <div class="space-y-2 text-xs">
+            <!-- Силовая тренировка (кнопка-бар) -->
+            <button
+              type="button"
+              data-activity="gym"
+              class="w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1"
+            >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
                   <span>🏋️</span>
@@ -230,15 +234,17 @@
                 </span>
               </div>
               <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                <!-- План (условная отметка цели по силовой) -->
                 <div class="absolute left-2/3 top-0 bottom-0 w-px bg-white/40"></div>
-                <!-- Факт (пока просто примерная длина) -->
                 <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-fuchsia-400 to-orange-400 w-1/4"></div>
               </div>
-            </div>
+            </button>
 
             <!-- Аэробная на свежем воздухе -->
-            <div class="space-y-1">
+            <button
+              type="button"
+              data-activity="cardio"
+              class="w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1"
+            >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
                   <span>🏃</span>
@@ -252,10 +258,14 @@
                 <div class="absolute left-1/2 top-0 bottom-0 w-px bg-white/40"></div>
                 <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-emerald-400 to-sky-400 w-1/3"></div>
               </div>
-            </div>
+            </button>
 
             <!-- Шаги за день -->
-            <div class="space-y-1">
+            <button
+              type="button"
+              data-activity="steps"
+              class="w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1"
+            >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
                   <span>🚶</span>
@@ -266,15 +276,17 @@
                 </span>
               </div>
               <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                <!-- цель шагов -->
                 <div class="absolute left-full top-0 bottom-0 w-px bg-white/40 translate-x-[-4px]"></div>
-                <!-- факт (примерно 60% цели) -->
                 <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-amber-300 to-amber-500 w-3/5"></div>
               </div>
-            </div>
+            </button>
 
             <!-- Повседневная активность (NEAT) -->
-            <div class="space-y-1">
+            <button
+              type="button"
+              data-activity="neat"
+              class="w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1"
+            >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
                   <span>🧺</span>
@@ -288,12 +300,13 @@
                 <div class="absolute left-1/2 top-0 bottom-0 w-px bg-white/40"></div>
                 <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-slate-200/70 to-slate-50/80 w-1/5"></div>
               </div>
-            </div>
+            </button>
           </div>
 
-          <!-- Лента активностей (как сейчас, оставляем для будущего) -->
+          <!-- Лента активностей как была -->
           <ul id="fitnessActivityList" class="space-y-2 text-xs mt-3"></ul>
         </div>
+
 
 
         <!-- Еда -->
