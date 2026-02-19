@@ -211,7 +211,7 @@
             </span>
           </div>
 
-          <!-- Мини‑итог по активности -->
+          <!-- Мини‑итог по активности (пока только визуал, id на будущее) -->
           <div class="mb-3 text-xs opacity-80 flex justify-between">
             <span>Сожжено за день: <span id="fitnessActivityBurnedTotal">0</span> ккал</span>
             <span>Сессий: <span id="fitnessActivitySessions">0</span></span>
@@ -222,7 +222,7 @@
             <button
               type="button"
               data-activity="gym"
-              class="w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1"
+              class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1"
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
@@ -234,16 +234,18 @@
                 </span>
               </div>
               <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                <!-- план (целевой уровень силовой) -->
                 <div class="absolute left-2/3 top-0 bottom-0 w-px bg-white/40"></div>
+                <!-- факт (пока примерная длина) -->
                 <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-fuchsia-400 to-orange-400 w-1/4"></div>
               </div>
             </button>
 
-            <!-- Аэробная на свежем воздухе -->
+            <!-- Аэробная на свежем воздухе (кнопка-бар) -->
             <button
               type="button"
               data-activity="cardio"
-              class="w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1"
+              class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1"
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
@@ -260,11 +262,11 @@
               </div>
             </button>
 
-            <!-- Шаги за день -->
+            <!-- Шаги за день (кнопка-бар) -->
             <button
               type="button"
               data-activity="steps"
-              class="w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1"
+              class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1"
             >
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-1.5">
@@ -276,15 +278,16 @@
                 </span>
               </div>
               <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                <!-- цель по шагам (конец бара) -->
                 <div class="absolute left-full top-0 bottom-0 w-px bg-white/40 translate-x-[-4px]"></div>
+                <!-- факт (примерно 60% цели) -->
                 <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-amber-300 to-amber-500 w-3/5"></div>
               </div>
             </button>
 
-            <!-- Повседневная активность (NEAT) -->
+            <!-- Повседневная активность (визуал, можно позже привязать к логике) -->
             <button
               type="button"
-              data-activity="neat"
               class="w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1"
             >
               <div class="flex items-center justify-between">
@@ -303,9 +306,10 @@
             </button>
           </div>
 
-          <!-- Лента активностей как была -->
+          <!-- Лента активностей (как была, используется fitnessRenderActivityList) -->
           <ul id="fitnessActivityList" class="space-y-2 text-xs mt-3"></ul>
         </div>
+
 
 
 
