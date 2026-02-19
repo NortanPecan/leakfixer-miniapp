@@ -6,13 +6,16 @@ Telegram Mini App для бота LeakFixer — приложение для еж
 
 ```
 leakfixer-miniapp/
-├── index.html          # Главный HTML файл с разметкой
-├── app.js              # Основная логика приложения (JavaScript)
+├── index.html          # Разметка (в т.ч. экран Фитнес)
+├── app.js              # Glue: инициализация, навигация, рендер в DOM
+├── fitness.js          # Фитнес: состояние, типы (JSDoc), чистая логика, persistence
 ├── api/
-│   └── telegram-avatar.js # Серверный эндпоинт для фото Telegram (Vercel)
-├── .gitignore          # Игнорируемые файлы для Git
-└── README.md           # Этот файл
+│   └── telegram-avatar.js # Эндпоинт фото Telegram (Vercel)
+├── .gitignore
+└── README.md
 ```
+
+**Архитектура фитнеса:** `fitness.js` — типы, селекторы (`getCaloriesSummary`, `get*ListViewModel`), чистые обновления (`merge*`, `remove*ById`, `build*Entry`). `app.js` — только привязка к DOM и события. При переносе в React: типы → `types/fitness.ts`, селекторы и билдеры переиспользовать; состояние — `useState`/API вместо `getDayData`/`updateDayData`.
 
 ## 🎯 Текущее состояние проекта
 

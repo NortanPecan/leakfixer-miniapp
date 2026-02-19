@@ -315,6 +315,349 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- Fitness tab (glue only: DOM refs, events, render; logic in fitness.js) ---
+  const FITNESS_SETUP_DONE_KEY = 'leakfixer_fitness_setup_done';
+  let fitnessSelectedDate = new Date();
+  const FS = window.FitnessState;
+
+  const fitnessEl = {
+    screen: document.getElementById('fitnessScreen'),
+    backBtn: document.getElementById('fitnessBackBtn'),
+    profileSetup: document.getElementById('fitnessProfileSetup'),
+    dashboard: document.getElementById('fitnessDashboard'),
+    weight: document.getElementById('fitnessWeight'),
+    height: document.getElementById('fitnessHeight'),
+    age: document.getElementById('fitnessAge'),
+    targetWeight: document.getElementById('fitnessTargetWeight'),
+    profileSkip: document.getElementById('fitnessProfileSkip'),
+    profileSave: document.getElementById('fitnessProfileSave'),
+    avatar: document.getElementById('fitnessAvatar'),
+    calEaten: document.getElementById('fitnessCalEaten'),
+    calBurned: document.getElementById('fitnessCalBurned'),
+    balance: document.getElementById('fitnessBalance'),
+    datePrev: document.getElementById('fitnessDatePrev'),
+    dateNext: document.getElementById('fitnessDateNext'),
+    dateLabel: document.getElementById('fitnessDateLabel'),
+    activityList: document.getElementById('fitnessActivityList'),
+    foodList: document.getElementById('fitnessFoodList'),
+    foodAdd: document.getElementById('fitnessFoodAdd'),
+    waterTotal: document.getElementById('fitnessWaterTotal'),
+    supplementList: document.getElementById('fitnessSupplementList'),
+    supplementAdd: document.getElementById('fitnessSupplementAdd'),
+    modalOverlay: document.getElementById('fitnessModalOverlay'),
+    modalContent: document.getElementById('fitnessModalContent'),
+  };
+
+  function isFitnessSetupDone() {
+    return localStorage.getItem(FITNESS_SETUP_DONE_KEY) === '1';
+  }
+  function setFitnessSetupDone() {
+    localStorage.setItem(FITNESS_SETUP_DONE_KEY, '1');
+  }
+
+  function fitnessGetDateKey() {
+    return FS.formatDateKey(fitnessSelectedDate);
+  }
+
+  function fitnessRenderCalories() {
+    if (!fitnessEl.calEaten || !fitnessEl.calBurned || !fitnessEl.balance) return;
+    const profile = FS.getFitnessProfile();
+    const dayData = FS.getDayData(fitnessGetDateKey());
+    const summary = FS.getCaloriesSummary(profile, dayData);
+    fitnessEl.calEaten.textContent = summary.eaten;
+    fitnessEl.calBurned.textContent = summary.burned;
+    fitnessEl.balance.textContent = summary.balance;
+    fitnessEl.balance.className = 'font-semibold ' + (summary.balanceColor === 'green' ? 'text-green-300' : summary.balanceColor === 'red' ? 'text-red-300' : '');
+  }
+
+  function fitnessRenderDate() {
+    if (fitnessEl.dateLabel) fitnessEl.dateLabel.textContent = FS.formatDateLocal(fitnessSelectedDate);
+  }
+
+  function fitnessRenderActivityList() {
+    if (!fitnessEl.activityList) return;
+    const dayData = FS.getDayData(fitnessGetDateKey());
+    const items = FS.getActivityListViewModel(dayData.activities);
+    const empty = '<li class="opacity-70 text-sm">Нет записей</li>';
+    fitnessEl.activityList.innerHTML = items.length
+      ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
+        <span>${item.label}</span>
+        <span>
+          <button type="button" class="fitness-activity-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
+          <button type="button" class="fitness-activity-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
+        </span>
+      </li>`).join('')
+      : empty;
+    fitnessEl.activityList.querySelectorAll('.fitness-activity-edit').forEach((btn) => {
+      btn.addEventListener('click', () => fitnessOpenActivityModal(btn.dataset.id));
+    });
+    fitnessEl.activityList.querySelectorAll('.fitness-activity-delete').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const k = fitnessGetDateKey();
+        const dayData = FS.getDayData(k);
+        const next = FS.removeActivityById(dayData.activities, btn.dataset.id);
+        FS.updateDayData(k, { activities: next });
+        fitnessRenderActivityList();
+        fitnessRenderCalories();
+      });
+    });
+  }
+
+  function fitnessRenderFoodList() {
+    if (!fitnessEl.foodList) return;
+    const dayData = FS.getDayData(fitnessGetDateKey());
+    const items = FS.getFoodListViewModel(dayData.foods);
+    const empty = '<li class="opacity-70 text-sm">Нет записей</li>';
+    fitnessEl.foodList.innerHTML = items.length
+      ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
+        <span>${item.name} ${item.amount}${item.caloriesText ? ' • ' + item.caloriesText : ''}</span>
+        <span>
+          <button type="button" class="fitness-food-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
+          <button type="button" class="fitness-food-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
+        </span>
+      </li>`).join('')
+      : empty;
+    fitnessEl.foodList.querySelectorAll('.fitness-food-edit').forEach((btn) => {
+      btn.addEventListener('click', () => fitnessOpenFoodModal(btn.dataset.id));
+    });
+    fitnessEl.foodList.querySelectorAll('.fitness-food-delete').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const k = fitnessGetDateKey();
+        const dayData = FS.getDayData(k);
+        const next = FS.removeFoodById(dayData.foods, btn.dataset.id);
+        FS.updateDayData(k, { foods: next });
+        fitnessRenderFoodList();
+        fitnessRenderCalories();
+      });
+    });
+  }
+
+  function fitnessRenderWater() {
+    if (fitnessEl.waterTotal) {
+      const dayData = FS.getDayData(fitnessGetDateKey());
+      fitnessEl.waterTotal.textContent = FS.formatWaterLiters(dayData.waterMl);
+    }
+  }
+
+  function fitnessRenderSupplementList() {
+    if (!fitnessEl.supplementList) return;
+    const dayData = FS.getDayData(fitnessGetDateKey());
+    const items = FS.getSupplementListViewModel(dayData.supplements);
+    const empty = '<li class="opacity-70 text-sm">Нет записей</li>';
+    fitnessEl.supplementList.innerHTML = items.length
+      ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
+        <span>${item.name} ${item.dose} — ${item.taken ? '✓' : '—'}</span>
+        <span>
+          <button type="button" class="fitness-supplement-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
+          <button type="button" class="fitness-supplement-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
+        </span>
+      </li>`).join('')
+      : empty;
+    fitnessEl.supplementList.querySelectorAll('.fitness-supplement-edit').forEach((btn) => {
+      btn.addEventListener('click', () => fitnessOpenSupplementModal(btn.dataset.id));
+    });
+    fitnessEl.supplementList.querySelectorAll('.fitness-supplement-delete').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const k = fitnessGetDateKey();
+        const dayData = FS.getDayData(k);
+        const next = FS.removeSupplementById(dayData.supplements, btn.dataset.id);
+        FS.updateDayData(k, { supplements: next });
+        fitnessRenderSupplementList();
+      });
+    });
+  }
+
+  function fitnessRenderDashboard() {
+    const photoEl = document.getElementById('profilePhoto');
+    if (fitnessEl.avatar && photoEl?.src) fitnessEl.avatar.src = photoEl.src;
+    fitnessRenderDate();
+    fitnessRenderCalories();
+    fitnessRenderActivityList();
+    fitnessRenderFoodList();
+    fitnessRenderWater();
+    fitnessRenderSupplementList();
+  }
+
+  function fitnessCloseModal() {
+    if (fitnessEl.modalOverlay) fitnessEl.modalOverlay.classList.add('hidden');
+  }
+
+  function fitnessOpenModal(html, onMount) {
+    if (!fitnessEl.modalContent || !fitnessEl.modalOverlay) return;
+    fitnessEl.modalContent.innerHTML = html;
+    fitnessEl.modalOverlay.classList.remove('hidden');
+    if (onMount) onMount();
+  }
+
+  function fitnessReadActivityForm(kind) {
+    const g = (id) => document.getElementById(id)?.value;
+    if (kind === 'gym') return { durationMinutes: g('fmGymMinutes'), intensity: g('fmGymIntensity') };
+    if (kind === 'cardio') return { durationMinutes: g('fmCardioMinutes'), type: g('fmCardioType') };
+    return { steps: g('fmSteps') };
+  }
+
+  function fitnessOpenActivityModal(editId, forceKind) {
+    const dayData = FS.getDayData(fitnessGetDateKey());
+    const existing = editId ? (dayData.activities || []).find((a) => a.id === editId) : null;
+    const kind = forceKind || existing?.kind || 'gym';
+    let html = '<h3 class="font-semibold mb-4">Добавить активность</h3>';
+    html += '<input type="hidden" id="fmActivityKind" value="' + kind + '">';
+    html += '<input type="hidden" id="fmActivityEditId" value="' + (editId || '') + '">';
+    if (kind === 'gym') {
+      html += '<div class="space-y-3"><label class="block">Минуты</label><input type="number" id="fmGymMinutes" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.durationMinutes ?? '') + '">';
+      html += '<label class="block">Интенсивность</label><select id="fmGymIntensity" class="w-full p-3 bg-white/30 rounded-xl text-white">';
+      ['low','medium','high'].forEach((v) => { html += '<option value="' + v + '"' + (existing?.intensity === v ? ' selected' : '') + '>' + (v === 'low' ? 'Низкая' : v === 'medium' ? 'Средняя' : 'Высокая') + '</option>'; });
+      html += '</select></div>';
+    } else if (kind === 'cardio') {
+      html += '<div class="space-y-3"><label class="block">Минуты</label><input type="number" id="fmCardioMinutes" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.durationMinutes ?? '') + '">';
+      html += '<label class="block">Тип</label><select id="fmCardioType" class="w-full p-3 bg-white/30 rounded-xl text-white">';
+      ['run','walk','bike','other'].forEach((v) => { html += '<option value="' + v + '"' + (existing?.type === v ? ' selected' : '') + '>' + (v === 'run' ? 'Бег' : v === 'walk' ? 'Ходьба' : v === 'bike' ? 'Велосипед' : 'Другое') + '</option>'; });
+      html += '</select></div>';
+    } else {
+      html += '<div class="space-y-3"><label class="block">Шаги</label><input type="number" id="fmSteps" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.steps ?? '') + '"></div>';
+    }
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmActivityCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmActivitySave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
+    fitnessOpenModal(html, () => {
+      fitnessEl.modalOverlay.querySelector('#fmActivityCancel')?.addEventListener('click', fitnessCloseModal);
+      fitnessEl.modalOverlay.querySelector('#fmActivitySave')?.addEventListener('click', () => {
+        const k = fitnessGetDateKey();
+        const dayData = FS.getDayData(k);
+        const formKind = document.getElementById('fmActivityKind')?.value || 'gym';
+        const formValues = fitnessReadActivityForm(formKind);
+        const entry = FS.buildActivityEntry(formKind, formValues, editId);
+        const next = FS.mergeActivity(dayData.activities, entry, editId);
+        FS.updateDayData(k, { activities: next });
+        fitnessCloseModal();
+        fitnessRenderActivityList();
+        fitnessRenderCalories();
+      });
+    });
+  }
+
+  function fitnessOpenFoodModal(editId) {
+    const dayData = FS.getDayData(fitnessGetDateKey());
+    const existing = editId ? (dayData.foods || []).find((f) => f.id === editId) : null;
+    let html = '<h3 class="font-semibold mb-4">Добавить приём пищи</h3>';
+    html += '<div class="space-y-3"><label class="block">Название</label><input type="text" id="fmFoodName" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.name ?? '') + '" placeholder="Что съели">';
+    html += '<label class="block">Количество</label><input type="text" id="fmFoodAmount" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.amount ?? '') + '" placeholder="200 г, 1 порция">';
+    html += '<label class="block">Калории (опционально)</label><input type="number" id="fmFoodCalories" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.calories ?? '') + '"></div>';
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmFoodCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmFoodSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
+    fitnessOpenModal(html, () => {
+      fitnessEl.modalOverlay.querySelector('#fmFoodCancel')?.addEventListener('click', fitnessCloseModal);
+      fitnessEl.modalOverlay.querySelector('#fmFoodSave')?.addEventListener('click', () => {
+        const k = fitnessGetDateKey();
+        const dayData = FS.getDayData(k);
+        const formValues = { name: document.getElementById('fmFoodName')?.value, amount: document.getElementById('fmFoodAmount')?.value, calories: document.getElementById('fmFoodCalories')?.value };
+        const entry = FS.buildFoodEntry(formValues, editId);
+        const next = FS.mergeFood(dayData.foods, entry, editId);
+        FS.updateDayData(k, { foods: next });
+        fitnessCloseModal();
+        fitnessRenderFoodList();
+        fitnessRenderCalories();
+      });
+    });
+  }
+
+  function fitnessOpenSupplementModal(editId) {
+    const dayData = FS.getDayData(fitnessGetDateKey());
+    const existing = editId ? (dayData.supplements || []).find((s) => s.id === editId) : null;
+    let html = '<h3 class="font-semibold mb-4">Добавить БАД</h3>';
+    html += '<div class="space-y-3"><label class="block">Название</label><input type="text" id="fmSuppName" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.name ?? '') + '" placeholder="Омега-3">';
+    html += '<label class="block">Доза</label><input type="text" id="fmSuppDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.dose ?? '') + '" placeholder="2 капсулы, 500 мг">';
+    html += '<label class="flex items-center gap-2 mt-2"><input type="checkbox" id="fmSuppTaken" class="rounded"' + (existing?.taken ? ' checked' : '') + '> Принято сегодня</label></div>';
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmSuppCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmSuppSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
+    fitnessOpenModal(html, () => {
+      fitnessEl.modalOverlay.querySelector('#fmSuppCancel')?.addEventListener('click', fitnessCloseModal);
+      fitnessEl.modalOverlay.querySelector('#fmSuppSave')?.addEventListener('click', () => {
+        const k = fitnessGetDateKey();
+        const dayData = FS.getDayData(k);
+        const formValues = { name: document.getElementById('fmSuppName')?.value, dose: document.getElementById('fmSuppDose')?.value, taken: !!document.getElementById('fmSuppTaken')?.checked };
+        const entry = FS.buildSupplementEntry(formValues, editId);
+        const next = FS.mergeSupplement(dayData.supplements, entry, editId);
+        FS.updateDayData(k, { supplements: next });
+        fitnessCloseModal();
+        fitnessRenderSupplementList();
+      });
+    });
+  }
+
+  document.getElementById('fitnessBtn')?.addEventListener('click', () => {
+    el.main?.classList.add('hidden');
+    el.buddyScreen?.classList.add('hidden');
+    fitnessEl.screen?.classList.remove('hidden');
+    fitnessSelectedDate = new Date();
+    if (!isFitnessSetupDone()) {
+      fitnessEl.profileSetup?.classList.remove('hidden');
+      fitnessEl.dashboard?.classList.add('hidden');
+      const p = FS.getFitnessProfile();
+      if (fitnessEl.weight) fitnessEl.weight.value = p.weight ?? '';
+      if (fitnessEl.height) fitnessEl.height.value = p.height ?? '';
+      if (fitnessEl.age) fitnessEl.age.value = p.age ?? '';
+      if (fitnessEl.targetWeight) fitnessEl.targetWeight.value = p.targetWeight ?? '';
+    } else {
+      fitnessEl.profileSetup?.classList.add('hidden');
+      fitnessEl.dashboard?.classList.remove('hidden');
+      fitnessRenderDashboard();
+    }
+  });
+
+  fitnessEl.backBtn?.addEventListener('click', () => {
+    fitnessEl.screen?.classList.add('hidden');
+    el.main?.classList.remove('hidden');
+  });
+
+  fitnessEl.profileSkip?.addEventListener('click', () => {
+    setFitnessSetupDone();
+    fitnessEl.profileSetup?.classList.add('hidden');
+    fitnessEl.dashboard?.classList.remove('hidden');
+    fitnessRenderDashboard();
+  });
+
+  fitnessEl.profileSave?.addEventListener('click', () => {
+    const profile = FS.parseProfileFromValues({
+      weight: fitnessEl.weight?.value,
+      height: fitnessEl.height?.value,
+      age: fitnessEl.age?.value,
+      targetWeight: fitnessEl.targetWeight?.value,
+    });
+    FS.setFitnessProfile(profile);
+    setFitnessSetupDone();
+    fitnessEl.profileSetup?.classList.add('hidden');
+    fitnessEl.dashboard?.classList.remove('hidden');
+    fitnessRenderDashboard();
+  });
+
+  fitnessEl.datePrev?.addEventListener('click', () => {
+    fitnessSelectedDate.setDate(fitnessSelectedDate.getDate() - 1);
+    fitnessRenderDashboard();
+  });
+  fitnessEl.dateNext?.addEventListener('click', () => {
+    fitnessSelectedDate.setDate(fitnessSelectedDate.getDate() + 1);
+    fitnessRenderDashboard();
+  });
+
+  document.querySelectorAll('.fitness-activity-btn').forEach(btn => {
+    btn.addEventListener('click', () => { fitnessOpenActivityModal(null, btn.dataset.activity); });
+  });
+
+  fitnessEl.foodAdd?.addEventListener('click', () => fitnessOpenFoodModal(null));
+  fitnessEl.supplementAdd?.addEventListener('click', () => fitnessOpenSupplementModal(null));
+
+  document.querySelectorAll('.fitness-water-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const addMl = Number(btn.dataset.water) || 0;
+      const k = fitnessGetDateKey();
+      const dayData = FS.getDayData(k);
+      const nextMl = FS.addWaterToDay(dayData.waterMl, addMl);
+      FS.updateDayData(k, { waterMl: nextMl });
+      fitnessRenderWater();
+    });
+  });
+
+  fitnessEl.modalOverlay?.addEventListener('click', (e) => {
+    if (e.target === fitnessEl.modalOverlay) fitnessCloseModal();
+  });
+
   // Инициализация профиля
   initProfileHeader();
 
