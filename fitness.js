@@ -11,6 +11,7 @@
  * @property {number} [height] - cm
  * @property {number} [age] - years
  * @property {number} [targetWeight] - kg
+ * @property {'sedentary'|'mixed'|'physical'|'variable'} [workProfile]
  *
  * @typedef {'gym'|'cardio'|'steps'} ActivityKind
  * @typedef {'low'|'medium'|'high'} GymIntensity
@@ -52,6 +53,7 @@
  * @property {FoodEntry[]} foods
  * @property {number} waterMl
  * @property {SupplementEntry[]} supplements
+ * @property {'low'|'normal'|'high'|undefined} [workDay]
  *
  * @typedef {Object} CaloriesSummary
  * @property {number} eaten
@@ -126,7 +128,7 @@ function getDayData(dateKey) {
 
 /** @returns {FitnessDayData} */
 function createEmptyDayData() {
-  return { activities: [], foods: [], waterMl: 0, supplements: [] };
+  return { activities: [], foods: [], waterMl: 0, supplements: [], workDay: undefined };
 }
 
 /** @param {string} dateKey
@@ -138,6 +140,7 @@ function updateDayData(dateKey, patch) {
   if (patch.foods !== undefined) day.foods = patch.foods;
   if (patch.waterMl !== undefined) day.waterMl = patch.waterMl;
   if (patch.supplements !== undefined) day.supplements = patch.supplements;
+  if (patch.workDay !== undefined) day.workDay = patch.workDay;
   all[dateKey] = day;
   saveAllFitnessData(all);
 }
@@ -219,9 +222,13 @@ function getBalanceColor(balance) {
  */
 function getCaloriesSummary(profile, dayData) {
   const eaten = (dayData.foods || []).reduce((s, f) => s + (f.calories || 0), 0);
-  const base = calculateBaseMetabolism(profile);
+  const baseRest = calculateBaseMetabolism(profile); // чистый BMR
   const activityCal = calculateActivityCalories(dayData.activities || []);
-  const burned = base + activityCal;
+
+  const workMultiplier = getWorkActivityMultiplier(profile, dayData);
+  const baseWithWork = Math.round(baseRest * workMultiplier);
+
+  const burned = baseWithWork + activityCal;
   const balance = eaten - burned;
   return {
     eaten,
@@ -230,6 +237,27 @@ function getCaloriesSummary(profile, dayData) {
     balanceColor: getBalanceColor(balance),
   };
 }
+
+/**
+ * @param {ProfileFitnessSettings} profile
+ * @param {FitnessDayData} dayData
+ * @returns {number} multiplier
+ */
+function getWorkActivityMultiplier(profile, dayData) {
+  let base = 1.2; // по умолчанию сидячий
+  if (profile.workProfile === 'mixed') base = 1.4;
+  if (profile.workProfile === 'physical') base = 1.6;
+  if (profile.workProfile === 'variable' || !profile.workProfile) base = 1.3;
+
+  // дневная поправка
+  if (dayData.workDay === 'low') base -= 0.1;
+  if (dayData.workDay === 'high') base += 0.1;
+
+  if (base < 1.1) base = 1.1;
+  if (base > 1.8) base = 1.8;
+  return base;
+}
+
 
 // ─── Pure: list view models (for rendering; React can map over these) ───────
 
@@ -344,7 +372,7 @@ function addWaterToDay(currentMl, addMl) {
 
 // ─── Pure: parse form values → domain objects (React: pass form state here) ──
 
-/** @param {{ weight?: string|number, height?: string|number, age?: string|number, targetWeight?: string|number }} values
+/** @param {{ weight?: string|number, height?: string|number, age?: string|number, targetWeight?: string|number, workProfile?: string }} values
  *  @returns {ProfileFitnessSettings} */
 function parseProfileFromValues(values) {
   const profile = {};
@@ -352,6 +380,12 @@ function parseProfileFromValues(values) {
   if (values.height != null && values.height !== '') profile.height = Number(values.height);
   if (values.age != null && values.age !== '') profile.age = Number(values.age);
   if (values.targetWeight != null && values.targetWeight !== '') profile.targetWeight = Number(values.targetWeight);
+
+  const allowedWork = ['sedentary', 'mixed', 'physical', 'variable'];
+  if (values.workProfile && allowedWork.includes(values.workProfile)) {
+    profile.workProfile = /** @type {'sedentary'|'mixed'|'physical'|'variable'} */ (values.workProfile);
+  }
+
   return profile;
 }
 
@@ -451,4 +485,5 @@ window.FitnessState = {
   buildSupplementEntry,
   BALANCE_GREEN_MAX,
   BALANCE_RED_THRESHOLD,
+  getWorkActivityMultiplier,
 };

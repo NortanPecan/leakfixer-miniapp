@@ -346,6 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
     supplementAdd: document.getElementById('fitnessSupplementAdd'),
     modalOverlay: document.getElementById('fitnessModalOverlay'),
     modalContent: document.getElementById('fitnessModalContent'),
+    workDayLabel: document.getElementById('fitnessWorkDayLabel'),
+    profileEdit: document.getElementById('fitnessProfileEdit'),
   };
 
   function isFitnessSetupDone() {
@@ -368,6 +370,17 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessEl.calBurned.textContent = summary.burned;
     fitnessEl.balance.textContent = summary.balance;
     fitnessEl.balance.className = 'font-semibold ' + (summary.balanceColor === 'green' ? 'text-green-300' : summary.balanceColor === 'red' ? 'text-red-300' : '');
+  }
+
+  function fitnessRenderWorkDay() {
+    if (!fitnessEl.workDayLabel) return;
+    const dayData = FS.getDayData(fitnessGetDateKey());
+    const v = dayData.workDay;
+    let text = 'Как обычно';
+    if (v === 'low') text = 'Больше сидел';
+    if (v === 'normal') text = 'Обычный день';
+    if (v === 'high') text = 'Очень активный день';
+    fitnessEl.workDayLabel.textContent = text;
   }
 
   function fitnessRenderDate() {
@@ -476,6 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessRenderFoodList();
     fitnessRenderWater();
     fitnessRenderSupplementList();
+    fitnessRenderWorkDay(); // НОВОЕ
   }
 
   function fitnessCloseModal() {
@@ -581,19 +595,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function fitnessGetSelectedWorkProfile() {
+    const input = document.querySelector('input[name="fitnessWorkProfile"]:checked');
+    return input ? input.value : undefined;
+  }
+
+  function fitnessSetSelectedWorkProfile(value) {
+    const all = document.querySelectorAll('input[name="fitnessWorkProfile"]');
+    all.forEach((input) => {
+      if (value && input.value === value) {
+        input.checked = true;
+      } else if (!value) {
+        input.checked = false;
+      }
+    });
+  }
+
   document.getElementById('fitnessBtn')?.addEventListener('click', () => {
     el.main?.classList.add('hidden');
     el.buddyScreen?.classList.add('hidden');
     fitnessEl.screen?.classList.remove('hidden');
     fitnessSelectedDate = new Date();
+    const p = FS.getFitnessProfile();
     if (!isFitnessSetupDone()) {
       fitnessEl.profileSetup?.classList.remove('hidden');
       fitnessEl.dashboard?.classList.add('hidden');
-      const p = FS.getFitnessProfile();
       if (fitnessEl.weight) fitnessEl.weight.value = p.weight ?? '';
       if (fitnessEl.height) fitnessEl.height.value = p.height ?? '';
       if (fitnessEl.age) fitnessEl.age.value = p.age ?? '';
       if (fitnessEl.targetWeight) fitnessEl.targetWeight.value = p.targetWeight ?? '';
+      fitnessSetSelectedWorkProfile(p.workProfile); // НОВОЕ
     } else {
       fitnessEl.profileSetup?.classList.add('hidden');
       fitnessEl.dashboard?.classList.remove('hidden');
@@ -614,11 +645,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   fitnessEl.profileSave?.addEventListener('click', () => {
+    const workProfile = fitnessGetSelectedWorkProfile();
     const profile = FS.parseProfileFromValues({
       weight: fitnessEl.weight?.value,
       height: fitnessEl.height?.value,
       age: fitnessEl.age?.value,
       targetWeight: fitnessEl.targetWeight?.value,
+      workProfile, // НОВОЕ
     });
     FS.setFitnessProfile(profile);
     setFitnessSetupDone();
@@ -635,10 +668,24 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessSelectedDate.setDate(fitnessSelectedDate.getDate() + 1);
     fitnessRenderDashboard();
   });
+  fitnessEl.profileEdit?.addEventListener('click', () => {
+    const p = FS.getFitnessProfile();
+    // показать форму профиля вместо дашборда
+    fitnessEl.dashboard?.classList.add('hidden');
+    fitnessEl.profileSetup?.classList.remove('hidden');
+
+    if (fitnessEl.weight) fitnessEl.weight.value = p.weight ?? '';
+    if (fitnessEl.height) fitnessEl.height.value = p.height ?? '';
+    if (fitnessEl.age) fitnessEl.age.value = p.age ?? '';
+    if (fitnessEl.targetWeight) fitnessEl.targetWeight.value = p.targetWeight ?? '';
+    fitnessSetSelectedWorkProfile(p.workProfile);
+  });
 
   document.querySelectorAll('.fitness-activity-btn').forEach(btn => {
     btn.addEventListener('click', () => { fitnessOpenActivityModal(null, btn.dataset.activity); });
   });
+
+  
 
   fitnessEl.foodAdd?.addEventListener('click', () => fitnessOpenFoodModal(null));
   fitnessEl.supplementAdd?.addEventListener('click', () => fitnessOpenSupplementModal(null));
@@ -651,6 +698,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const nextMl = FS.addWaterToDay(dayData.waterMl, addMl);
       FS.updateDayData(k, { waterMl: nextMl });
       fitnessRenderWater();
+    });
+  });
+
+  document.querySelectorAll('.fitness-workday-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const value = btn.dataset.workday; // 'low' | 'normal' | 'high'
+      const k = fitnessGetDateKey();
+      const dayData = FS.getDayData(k);
+      FS.updateDayData(k, { workDay: value });
+      fitnessRenderWorkDay();
+      fitnessRenderCalories(); // чтобы пересчитать ккал с учётом workDay
     });
   });
 

@@ -84,18 +84,75 @@
       <!-- Онбординг: параметры профиля (все опционально) -->
       <div id="fitnessProfileSetup" class="bg-white/20 backdrop-blur-xl rounded-2xl p-6 space-y-4">
         <h2 class="text-xl font-semibold">Параметры для расчёта калорий</h2>
+
         <input type="number" id="fitnessWeight" placeholder="Вес (кг)" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
         <input type="number" id="fitnessHeight" placeholder="Рост (см)" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
         <input type="number" id="fitnessAge" placeholder="Возраст (лет)" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
         <input type="number" id="fitnessTargetWeight" placeholder="Целевой вес (кг)" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
+
+        <!-- Новый блок: тип рабочего дня -->
+        <div class="space-y-2 pt-2 border-t border-white/10">
+          <div class="text-sm font-medium">Тип рабочего дня</div>
+          <p class="text-xs opacity-80">
+            Это поможет точнее считать расход энергии. Если график нестабильный — выберите «График меняется».
+          </p>
+
+          <div class="grid grid-cols-1 gap-2 text-xs">
+            <label class="flex items-center gap-2 bg-white/15 rounded-xl px-3 py-2">
+              <input type="radio" name="fitnessWorkProfile" value="sedentary" class="accent-emerald-400">
+              <span>
+                <div class="font-medium">Сидячая работа</div>
+                <div class="opacity-70">В основном за компьютером или за столом</div>
+              </span>
+            </label>
+
+            <label class="flex items-center gap-2 bg-white/15 rounded-xl px-3 py-2">
+              <input type="radio" name="fitnessWorkProfile" value="mixed" class="accent-emerald-400">
+              <span>
+                <div class="font-medium">На ногах весь день</div>
+                <div class="opacity-70">Много стоите или ходите по работе</div>
+              </span>
+            </label>
+
+            <label class="flex items-center gap-2 bg-white/15 rounded-xl px-3 py-2">
+              <input type="radio" name="fitnessWorkProfile" value="physical" class="accent-emerald-400">
+              <span>
+                <div class="font-medium">Физическая работа</div>
+                <div class="opacity-70">Много движения и тяжёлый труд</div>
+              </span>
+            </label>
+
+            <label class="flex items-center gap-2 bg-white/15 rounded-xl px-3 py-2">
+              <input type="radio" name="fitnessWorkProfile" value="variable" class="accent-emerald-400">
+              <span>
+                <div class="font-medium">График меняется / не работаю</div>
+                <div class="opacity-70">Нет стабильного расписания или сейчас не работаю</div>
+              </span>
+            </label>
+          </div>
+        </div>
+
         <div class="flex gap-3">
           <button id="fitnessProfileSkip" class="flex-1 py-3 rounded-xl font-semibold bg-white/20 hover:bg-white/30">Пропустить</button>
           <button id="fitnessProfileSave" class="flex-1 py-3 rounded-xl font-semibold bg-green-500 hover:bg-green-600">Сохранить и дальше</button>
         </div>
       </div>
 
+
       <!-- Основной дашборд фитнеса -->
       <div id="fitnessDashboard" class="hidden space-y-6">
+        <!-- Заголовок и доступ к настройкам -->
+        <div class="flex items-center justify-between">
+          <div class="text-sm opacity-80">Фитнес-профиль</div>
+          <button
+            type="button"
+            id="fitnessProfileEdit"
+            class="text-xs px-2 py-1 rounded-full bg-white/20 hover:bg-white/30"
+          >
+            Настройки тела
+          </button>
+        </div>
+
         <!-- Верхняя строка: аватар-квадрат + справа график и бар -->
         <div class="flex items-start gap-3">
           <!-- Квадратный аватар -->
@@ -194,6 +251,38 @@
           </div>
         </div>
         
+        <!-- Блок «День по работе» -->
+        <div class="bg-white/10 rounded-xl px-4 py-3 text-xs flex items-center justify-between">
+          <div>
+            <div class="opacity-70">День по работе</div>
+            <div class="font-medium" id="fitnessWorkDayLabel">
+              Как обычно
+            </div>
+          </div>
+          <div class="flex gap-1">
+            <button
+              type="button"
+              class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25"
+              data-workday="low"
+            >
+              Больше сидел
+            </button>
+            <button
+              type="button"
+              class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25"
+              data-workday="normal"
+            >
+              Обычный
+            </button>
+            <button
+              type="button"
+              class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25"
+              data-workday="high"
+            >
+              Очень активный
+            </button>
+          </div>
+        </div>
 
         <!-- Выбор даты -->
         <div class="flex items-center justify-between bg-white/10 rounded-xl px-4 py-3">
