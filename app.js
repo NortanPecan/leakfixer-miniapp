@@ -551,17 +551,25 @@ document.addEventListener('DOMContentLoaded', () => {
   function fitnessOpenFoodModal(editId) {
     const dayData = FS.getDayData(fitnessGetDateKey());
     const existing = editId ? (dayData.foods || []).find((f) => f.id === editId) : null;
+    const defaultTime = existing?.time || FS.formatTimeHM(new Date());
     let html = '<h3 class="font-semibold mb-4">Добавить приём пищи</h3>';
     html += '<div class="space-y-3"><label class="block">Название</label><input type="text" id="fmFoodName" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.name ?? '') + '" placeholder="Что съели">';
     html += '<label class="block">Количество</label><input type="text" id="fmFoodAmount" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.amount ?? '') + '" placeholder="200 г, 1 порция">';
-    html += '<label class="block">Калории (опционально)</label><input type="number" id="fmFoodCalories" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.calories ?? '') + '"></div>';
+    html += '<label class="block">Калории (опционально)</label><input type="number" id="fmFoodCalories" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.calories ?? '') + '">';
+    html += '<label class="block">Время (примерно)</label><input type="time" id="fmFoodTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
     html += '<div class="flex gap-3 mt-4"><button type="button" id="fmFoodCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmFoodSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
     fitnessOpenModal(html, () => {
       fitnessEl.modalOverlay.querySelector('#fmFoodCancel')?.addEventListener('click', fitnessCloseModal);
       fitnessEl.modalOverlay.querySelector('#fmFoodSave')?.addEventListener('click', () => {
         const k = fitnessGetDateKey();
         const dayData = FS.getDayData(k);
-        const formValues = { name: document.getElementById('fmFoodName')?.value, amount: document.getElementById('fmFoodAmount')?.value, calories: document.getElementById('fmFoodCalories')?.value };
+        const formValues = {
+          name: document.getElementById('fmFoodName')?.value,
+          amount: document.getElementById('fmFoodAmount')?.value,
+          calories: document.getElementById('fmFoodCalories')?.value,
+          time: document.getElementById('fmFoodTime')?.value,
+        };
+  
         const entry = FS.buildFoodEntry(formValues, editId);
         const next = FS.mergeFood(dayData.foods, entry, editId);
         FS.updateDayData(k, { foods: next });
@@ -575,9 +583,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function fitnessOpenSupplementModal(editId) {
     const dayData = FS.getDayData(fitnessGetDateKey());
     const existing = editId ? (dayData.supplements || []).find((s) => s.id === editId) : null;
+    const defaultTime = existing?.time || FS.formatTimeHM(new Date());
     let html = '<h3 class="font-semibold mb-4">Добавить БАД</h3>';
     html += '<div class="space-y-3"><label class="block">Название</label><input type="text" id="fmSuppName" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.name ?? '') + '" placeholder="Омега-3">';
     html += '<label class="block">Доза</label><input type="text" id="fmSuppDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.dose ?? '') + '" placeholder="2 капсулы, 500 мг">';
+    html += '<label class="block">Время приёма (примерно)</label><input type="time" id="fmSuppTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
     html += '<label class="flex items-center gap-2 mt-2"><input type="checkbox" id="fmSuppTaken" class="rounded"' + (existing?.taken ? ' checked' : '') + '> Принято сегодня</label></div>';
     html += '<div class="flex gap-3 mt-4"><button type="button" id="fmSuppCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmSuppSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
     fitnessOpenModal(html, () => {
@@ -585,7 +595,13 @@ document.addEventListener('DOMContentLoaded', () => {
       fitnessEl.modalOverlay.querySelector('#fmSuppSave')?.addEventListener('click', () => {
         const k = fitnessGetDateKey();
         const dayData = FS.getDayData(k);
-        const formValues = { name: document.getElementById('fmSuppName')?.value, dose: document.getElementById('fmSuppDose')?.value, taken: !!document.getElementById('fmSuppTaken')?.checked };
+        const formValues = {
+          name: document.getElementById('fmSuppName')?.value,
+          dose: document.getElementById('fmSuppDose')?.value,
+          taken: !!document.getElementById('fmSuppTaken')?.checked,
+          time: document.getElementById('fmSuppTime')?.value,
+        };
+  
         const entry = FS.buildSupplementEntry(formValues, editId);
         const next = FS.mergeSupplement(dayData.supplements, entry, editId);
         FS.updateDayData(k, { supplements: next });

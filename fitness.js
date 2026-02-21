@@ -41,12 +41,15 @@
  * @property {string} name
  * @property {string} amount
  * @property {number} [calories]
- *
+ * @property {string} time
+...
  * @typedef {Object} SupplementEntry
  * @property {string} id
  * @property {string} name
  * @property {string} dose
  * @property {boolean} taken
+ * @property {string} time
+
  *
  * @typedef {Object} FitnessDayData
  * @property {ActivityEntry[]} activities
@@ -172,6 +175,12 @@ function parseDateKey(dateKey) {
  *  @returns {string} localized */
 function formatDateLocal(date) {
   return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatTimeHM(date) {
+  const h = String(date.getHours()).padStart(2, '0');
+  const m = String(date.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
 }
 
 // ─── Pure: calorie calculations (replace with real formulas later) ───────────
@@ -430,25 +439,31 @@ function buildFoodEntry(form, editId) {
   const name = String(form.name || '').trim();
   const amount = String(form.amount || '').trim();
   const calories = form.calories !== '' && form.calories != null ? Number(form.calories) : undefined;
+  const time = form.time && String(form.time).trim() ? String(form.time).trim() : formatTimeHM(new Date());
   return {
     id: editId || generateId(),
     name,
     amount,
     calories,
+    time,
   };
 }
+
 
 /** @param {{ name?: string, dose?: string, taken?: boolean }} form
  *  @param {string} [editId]
  *  @returns {SupplementEntry} */
 function buildSupplementEntry(form, editId) {
+  const time = form.time && String(form.time).trim() ? String(form.time).trim() : formatTimeHM(new Date());
   return {
     id: editId || generateId(),
     name: String(form.name || '').trim(),
     dose: String(form.dose || '').trim(),
     taken: !!form.taken,
+    time,
   };
 }
+
 
 // ─── Public API ───────────────────────────────────────────────────────────
 
@@ -463,6 +478,7 @@ window.FitnessState = {
   formatDateKey,
   parseDateKey,
   formatDateLocal,
+  formatTimeHM,
   calculateBaseMetabolism,
   calculateActivityCalories,
   getBalanceColor,

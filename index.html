@@ -402,30 +402,82 @@
 
 
 
-        <!-- Еда -->
-        <div class="bg-white/10 rounded-xl p-4">
-          <h3 class="font-semibold mb-3">Еда</h3>
-          <button type="button" id="fitnessFoodAdd" class="w-full py-3 rounded-xl font-semibold bg-white/15 hover:bg-white/25 mb-3">Добавить приём пищи</button>
-          <ul id="fitnessFoodList" class="space-y-2 text-sm"></ul>
-        </div>
+        <!-- Поддержка тела: Еда, Вода, БАДы -->
+        <div class="bg-white/10 rounded-2xl p-4 space-y-4">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-semibold">Поддержка тела</h3>
+            <span class="text-[11px] px-2 py-1 rounded-full bg-white/15 opacity-80">
+              питание · вода · БАДы
+            </span>
+          </div>
 
-        <!-- Вода -->
-        <div class="bg-white/10 rounded-xl p-4">
-          <h3 class="font-semibold mb-3">Вода</h3>
-          <p class="text-sm opacity-90 mb-3">Выпито за день: <span id="fitnessWaterTotal">0</span> л</p>
-          <div class="flex gap-2">
-            <button type="button" data-water="200" class="fitness-water-btn flex-1 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-sm font-medium">+200 мл</button>
-            <button type="button" data-water="500" class="fitness-water-btn flex-1 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-sm font-medium">+500 мл</button>
-            <button type="button" data-water="1000" class="fitness-water-btn flex-1 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-sm font-medium">+1 л</button>
+          <!-- Еда -->
+          <div class="bg-white/5 rounded-xl p-3">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="font-semibold text-sm">Еда</h4>
+              <!-- сюда позже можно добавить мини-сводку по ккал -->
+            </div>
+            <button
+              type="button"
+              id="fitnessFoodAdd"
+              class="w-full py-2.5 rounded-xl font-semibold bg-white/15 hover:bg-white/25 mb-2 text-sm"
+            >
+              Добавить приём пищи
+            </button>
+            <ul id="fitnessFoodList" class="space-y-2 text-xs"></ul>
+          </div>
+
+          <!-- Вода -->
+          <div class="bg-white/5 rounded-xl p-3">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="font-semibold text-sm">Вода</h4>
+              <!-- в будущем тут можно показать цель, например "цель 1.8 л" -->
+            </div>
+            <p class="text-xs opacity-90 mb-2">
+              Выпито за день: <span id="fitnessWaterTotal">0</span> л
+            </p>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                data-water="200"
+                class="fitness-water-btn flex-1 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-medium"
+              >
+                +200 мл
+              </button>
+              <button
+                type="button"
+                data-water="500"
+                class="fitness-water-btn flex-1 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-medium"
+              >
+                +500 мл
+              </button>
+              <button
+                type="button"
+                data-water="1000"
+                class="fitness-water-btn flex-1 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-medium"
+              >
+                +1 л
+              </button>
+            </div>
+          </div>
+
+          <!-- БАДы -->
+          <div class="bg-white/5 rounded-xl p-3">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="font-semibold text-sm">БАДы</h4>
+              <!-- можно будет добавить маленький индикатор регулярности -->
+            </div>
+            <button
+              type="button"
+              id="fitnessSupplementAdd"
+              class="w-full py-2.5 rounded-xl font-semibold bg-white/15 hover:bg-white/25 mb-2 text-sm"
+            >
+              Добавить БАД
+            </button>
+            <ul id="fitnessSupplementList" class="space-y-2 text-xs"></ul>
           </div>
         </div>
 
-        <!-- БАДы -->
-        <div class="bg-white/10 rounded-xl p-4">
-          <h3 class="font-semibold mb-3">БАДы</h3>
-          <button type="button" id="fitnessSupplementAdd" class="w-full py-3 rounded-xl font-semibold bg-white/15 hover:bg-white/25 mb-3">Добавить БАД</button>
-          <ul id="fitnessSupplementList" class="space-y-2 text-sm"></ul>
-        </div>
       </div>
     </div>
 
