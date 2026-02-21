@@ -423,13 +423,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const empty = '<li class="opacity-70 text-sm">Нет записей</li>';
     fitnessEl.foodList.innerHTML = items.length
       ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
-        <span>${item.name} ${item.amount}${item.caloriesText ? ' • ' + item.caloriesText : ''}</span>
-        <span>
-          <button type="button" class="fitness-food-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
-          <button type="button" class="fitness-food-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
-        </span>
-      </li>`).join('')
-      : empty;
+            <span>
+              ${item.timeText ? `<span class="opacity-70 mr-1">${item.timeText}</span>` : ''}
+              ${item.name} ${item.amount}${item.caloriesText ? ' • ' + item.caloriesText : ''}
+            </span>
+            <span>
+              <button type="button" class="fitness-food-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
+              <button type="button" class="fitness-food-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
+            </span>
+          </li>`).join('')
+      : empty;    
     fitnessEl.foodList.querySelectorAll('.fitness-food-edit').forEach((btn) => {
       btn.addEventListener('click', () => fitnessOpenFoodModal(btn.dataset.id));
     });
@@ -459,13 +462,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const empty = '<li class="opacity-70 text-sm">Нет записей</li>';
     fitnessEl.supplementList.innerHTML = items.length
       ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
-        <span>${item.name} ${item.dose} — ${item.taken ? '✓' : '—'}</span>
-        <span>
-          <button type="button" class="fitness-supplement-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
-          <button type="button" class="fitness-supplement-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
-        </span>
-      </li>`).join('')
-      : empty;
+            <span>
+              ${item.timeText ? `<span class="opacity-70 mr-1">${item.timeText}</span>` : ''}
+              ${item.name} ${item.dose} — ${item.taken ? '✓' : '—'}
+            </span>
+            <span>
+              <button type="button" class="fitness-supplement-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
+              <button type="button" class="fitness-supplement-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
+            </span>
+          </li>`).join('')
+      : empty;    
     fitnessEl.supplementList.querySelectorAll('.fitness-supplement-edit').forEach((btn) => {
       btn.addEventListener('click', () => fitnessOpenSupplementModal(btn.dataset.id));
     });

@@ -73,12 +73,14 @@
  * @property {string} name
  * @property {string} amount
  * @property {string} caloriesText
+ * @property {string} timeText
  *
  * @typedef {Object} SupplementListItem
  * @property {string} id
  * @property {string} name
  * @property {string} dose
  * @property {boolean} taken
+ * @property {string} timeText
  */
 
 const FITNESS_PROFILE_KEY = 'leakfixer_fitness_profile';
@@ -293,8 +295,10 @@ function getFoodListViewModel(foods) {
     name: f.name,
     amount: f.amount,
     caloriesText: f.calories != null ? `${f.calories} ккал` : '',
+    timeText: f.time || '',
   }));
 }
+
 
 /** @param {SupplementEntry[]} supplements
  *  @returns {SupplementListItem[]} */
@@ -304,8 +308,10 @@ function getSupplementListViewModel(supplements) {
     name: s.name,
     dose: s.dose,
     taken: s.taken,
+    timeText: s.time || '',
   }));
 }
+
 
 /** @param {number} waterMl
  *  @returns {string} e.g. "1.5" */
