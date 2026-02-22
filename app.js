@@ -1550,18 +1550,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // старый экран (конкретный период) пока оставляем как был — он не привязан к periods
   function gymGetCurrentCycle() {
-    // временный упрощённый вариант: одна "виртуальная" неделя с группами
     const period = gymGetActivePeriod();
-    if (!period.__runtime) {
-      period.__runtime = {
-        currentCycle: period.progress?.currentCycle || 1,
-        totalCycles: period.totalCycles || 8,
-        periodDone: period.progress?.currentCycle || 1,
-        groups: {},
+    if (!period) return null;
+  
+    if (!gymState.runtime) gymState.runtime = {};
+    if (!gymState.runtime[period.id]) {
+      gymState.runtime[period.id] = {
+        currentCycleIndex: 1,
+        cycles: [],
       };
     }
-    return period.__runtime;
+  
+    const rt = gymState.runtime[period.id];
+  
+    if (!rt.cycles || !rt.cycles.length) {
+      rt.cycles = [{
+        index: 1,
+        days: {}, // сюда будем писать упражнения по дням
+      }];
+    }
+  
+    if (!rt.currentCycleIndex) rt.currentCycleIndex = 1;
+    const idx = Math.max(1, Math.min(rt.currentCycleIndex, rt.cycles.length));
+  
+    const cycle = rt.cycles[idx - 1];
+    if (!cycle.days) cycle.days = {};
+  
+    gymSaveState(gymState);
+    return cycle;
   }
+  
 
   function gymRenderHeader() {
     if (!gymEl.cycleInfo || !gymEl.periodInfo || !gymEl.progressBar || !gymEl.progressLabel) return;
@@ -1605,9 +1623,17 @@ document.addEventListener('DOMContentLoaded', () => {
   
     daysToRender.forEach(day => {
       if (!day.enabled) return;
+      
+      const dayIndex = day.dayIndex;
+      if (!runtime.days[dayIndex]) {
+        runtime.days[dayIndex] = { groups: {} };
+      }
+      const dayRuntime = runtime.days[dayIndex];
+      if (!dayRuntime.groups) dayRuntime.groups = {};
   
       const dayWrapper = document.createElement('div');
       dayWrapper.className = 'bg-white/5 rounded-2xl px-3 py-3 space-y-2';
+      dayWrapper.dataset.dayIndex = String(dayIndex); // ← ВАЖНО
   
       const title = document.createElement('div');
       title.className = 'flex items-center justify-between mb-2';
@@ -1645,7 +1671,7 @@ document.addEventListener('DOMContentLoaded', () => {
         listContainer.className = 'space-y-2';
         listContainer.dataset.group = groupName;
   
-        const exercises = groupsData[groupName] || [];
+        const exercises = dayRuntime.groups[groupName] || [];
         if (!exercises.length) {
           const empty = document.createElement('div');
           empty.className = 'text-xs text-slate-400';
@@ -1729,34 +1755,52 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   
     // добавление упражнения
-    gymEl.groupsContainer.querySelectorAll('button[data-group]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const groupName = btn.dataset.group;
-        const runtime = gymGetCurrentCycle();
-        if (!runtime.groups[groupName]) runtime.groups[groupName] = [];
-        runtime.groups[groupName].push({
-          name: '',
-          sets: '',
-          warmup: '',
-          rpe: 7,
-          progressNote: '',
-          nextCyclePlan: '',
+      gymEl.groupsContainer.querySelectorAll('button[data-group]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const groupName = btn.dataset.group;
+          const dayWrapper = btn.closest('[data-day-index], [data-dayindex]');
+          const dayIndexAttr = dayWrapper?.querySelector('[data-group]').dataset.dayIndex
+            || dayWrapper?.dataset.dayIndex;
+          const dayIndex = Number(dayIndexAttr || '1');
+      
+          const runtime = gymGetCurrentCycle();
+          if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
+          const dayRuntime = runtime.days[dayIndex];
+          if (!dayRuntime.groups[groupName]) dayRuntime.groups[groupName] = [];
+      
+          dayRuntime.groups[groupName].push({
+            name: '',
+            sets: '',
+            warmup: '',
+            rpe: 7,
+            progressNote: '',
+            nextCyclePlan: '',
+          });
+      
+          gymSaveState(gymState);
+          gymRenderGroups();
         });
-        gymSaveState(gymState);
-        gymRenderGroups();
       });
-    });
+    
   
     // изменения
     gymEl.groupsContainer.querySelectorAll('[data-field]').forEach(input => {
       input.addEventListener('input', () => {
         const card = input.closest('[data-index]');
         const list = input.closest('[data-group]');
-        if (!card || !list) return;
+        const dayWrapper = input.closest('[data-day-index]');
+        if (!card || !list || !dayWrapper) return;
+    
         const idx = Number(card.dataset.index || '0');
         const groupName = list.dataset.group;
+        const dayIndex = Number(dayWrapper.dataset.dayIndex || '1');
+    
         const runtime = gymGetCurrentCycle();
-        const arr = runtime.groups[groupName] || [];
+        if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
+        const dayRuntime = runtime.days[dayIndex];
+        if (!dayRuntime.groups[groupName]) dayRuntime.groups[groupName] = [];
+        const arr = dayRuntime.groups[groupName];
+    
         if (!arr[idx]) return;
         const field = input.dataset.field;
         if (field === 'rpe') {
@@ -1767,22 +1811,32 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           arr[idx][field] = input.value;
         }
+    
         gymSaveState(gymState);
       });
     });
+    
   
     // удаление упражнения
     gymEl.groupsContainer.querySelectorAll('button[data-delete]').forEach(btn => {
       btn.addEventListener('click', () => {
         const card = btn.closest('[data-index]');
         const list = btn.closest('[data-group]');
-        if (!card || !list) return;
+        const dayWrapper = btn.closest('[data-day-index]');
+        if (!card || !list || !dayWrapper) return;
+    
         const idx = Number(card.dataset.index || '0');
         const groupName = list.dataset.group;
+        const dayIndex = Number(dayWrapper.dataset.dayIndex || '1');
+    
         const runtime = gymGetCurrentCycle();
-        const arr = runtime.groups[groupName] || [];
+        if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
+        const dayRuntime = runtime.days[dayIndex];
+        const arr = dayRuntime.groups[groupName] || [];
+    
         arr.splice(idx, 1);
-        runtime.groups[groupName] = arr;
+        dayRuntime.groups[groupName] = arr;
+    
         gymSaveState(gymState);
         gymRenderGroups();
       });
