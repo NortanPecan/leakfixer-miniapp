@@ -583,7 +583,7 @@
 
       </div> 
     </div>
-    
+
     <!-- НОВЫЙ ЭКРАН: список периодов -->
     <div id="gymPeriodsScreen" class="hidden px-4 py-4 space-y-4">
       <div class="flex items-center justify-between mb-2">
@@ -696,84 +696,6 @@
         </button>
       </div>
     </div>
-
-    <!-- Отдельный экран зала -->
-    <div id="gymScreen" class="hidden px-4 py-4 space-y-4">
-      <div class="flex items-center justify-between mb-2">
-        <h2 class="text-xl font-semibold text-white">Тренировка в зале</h2>
-        <button id="gymBackBtn" class="text-sm text-slate-300 underline">
-          Назад
-        </button>
-      </div>
-    
-      <!-- Верхняя панель -->
-      <div class="flex flex-col gap-2 text-sm">
-        <div>
-          <label class="block text-slate-300 mb-1">День</label>
-          <select id="gymDay" class="w-full bg-white/10 text-white rounded-xl px-3 py-2">
-            <option>Сегодня</option>
-            <option>Пн</option>
-            <option>Вт</option>
-            <option>Ср</option>
-            <option>Чт</option>
-            <option>Пт</option>
-            <option>Сб</option>
-            <option>Вс</option>
-          </select>
-        </div>
-    
-        <div class="flex gap-2">
-          <div class="flex-1 bg-white/5 rounded-xl px-3 py-2 text-xs text-slate-200" id="gymCycleInfo">
-            Цикл 1/8 · 22.02–28.02
-          </div>
-          <div class="flex-1 bg-white/5 rounded-xl px-3 py-2 text-xs text-slate-200" id="gymPeriodInfo">
-            Период: Силовой 8 нед · 1/8
-          </div>
-        </div>
-      </div>
-    
-      <!-- Контейнер для групп и упражнений -->
-      <div id="gymGroupsContainer" class="space-y-3 text-sm"></div>
-    
-      <!-- Краткая визуализация периода -->
-      <div class="bg-white/5 rounded-xl px-3 py-3 text-xs text-slate-200">
-        <div class="flex justify-between mb-1">
-          <span id="gymProgressLabel">Период: 1/8 циклов</span>
-        </div>
-        <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-          <div id="gymProgressBar" class="h-full bg-gradient-to-r from-emerald-400 to-blue-500" style="width: 12%;"></div>
-        </div>
-      </div>
-    
-      <!-- Кнопки действий -->
-      <div class="flex flex-col gap-2">
-        <button id="gymSaveBtn" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold text-lg">
-          Сохранить тренировку
-        </button>
-        <button id="gymHistoryBtn" class="w-full bg-white/10 py-2 rounded-xl text-sm text-slate-200">
-          История (позже)
-        </button>
-        <button id="gymNewCycleBtn" class="w-full bg-transparent border border-white/20 py-2 rounded-xl text-sm text-slate-200">
-          Новый цикл
-        </button>
-      </div>
-    </div> 
-
-    <!-- Модалки фитнеса -->
-    <div id="fitnessModalOverlay" class="fixed inset-0 bg-black/50 hidden z-40 flex items-center justify-center p-4">
-      <div id="fitnessModalContent" class="bg-white/20 backdrop-blur-xl rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"></div>
-    </div>
-
-    <!-- Экран Бадди -->
-    <div id="buddyScreen" class="hidden space-y-6">
-      <button id="backBtn" class="text-2xl">←</button>
-      <div class="bg-white/20 backdrop-blur-xl rounded-2xl p-6 text-center">
-        <h2 class="text-2xl font-bold mb-4">Выбери напарника</h2>
-        <input id="buddyInput" placeholder="@username" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
-        <button id="addBuddy" class="w-full mt-4 bg-pink-500 hover:bg-pink-600 py-3 rounded-xl font-semibold">Добавить</button>
-      </div>
-    </div>
-  </div>
 
   <script src="./fitness.js"></script>
   <script src="./app.js" defer></script>
