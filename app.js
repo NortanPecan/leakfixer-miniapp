@@ -1025,6 +1025,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Запуск приложения
   if (supabaseEnabled) initFromSupabase();
   else initBrowserMode();
+
+  let gymCurrentDayIndex = 1;
+
+
   // --- GYM: Тренировка в зале ---------------------------------------------
   const gymEl = {
     // экран списка периодов
@@ -1759,15 +1763,41 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  if (gymEl.daySelect) {
+    gymEl.daySelect.addEventListener('change', () => {
+      const period = gymGetActivePeriod();
+      if (!period) return;
+  
+      // привязка вариантов к индексу дня цикла
+      const value = gymEl.daySelect.value;
+      if (value === 'Сегодня') {
+        gymCurrentDayIndex = 1; // MVP: всегда День 1, позже привяжем к календарю
+      } else {
+        // если опции будут вида "День 1", "День 2" и т.п.
+        const match = value.match(/\d+/);
+        gymCurrentDayIndex = match ? Number(match[0]) : 1;
+      }
+  
+      gymRenderGroups();
+    });
+  }
   
 
   function gymOpen() {
     if (!gymEl.screen) return;
     if (gymEl.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
     gymEl.screen.classList.remove('hidden');
+  
+    const period = gymGetActivePeriod();
+    if (period) {
+      gymCurrentDayIndex = 1; // всегда начинаем с Дня 1 цикла
+    }
+  
     gymRenderHeader();
     gymRenderGroups();
   }
+  
 
   function gymClose() {
     if (!gymEl.screen) return;
