@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentUser = null;
   let currentDay = 1;
+  let currentAppUserId = null; // единый ID пользователя в нашем приложении
 
   const el = {
     main: document.getElementById('main'),
@@ -136,12 +137,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 2. Получаем логи выполнения по текущему пользователю
       const logsRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/habit_logs?user_id=eq.${user.id}&completed=eq.true&select=habit_id,day`,
+        `${SUPABASE_URL}/rest/v1/habit_logs?app_user_id=eq.${currentAppUserId}&completed=eq.true&select=habit_id,day`,
         { headers: { apikey: SUPABASE_KEY } }
       );
       const logs = await logsRes.json();
-
-      // 3. Считаем n/30 по каждой привычке
+      
       const counts = {};
       if (Array.isArray(logs)) {
         for (const log of logs) {
@@ -170,27 +170,89 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function initFromSupabase() {
     try {
-      const users = await fetch(`${SUPABASE_URL}/rest/v1/users?telegram_id=eq.${user.id}`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
-      }).then((r) => r.json());
+      // 1. Ищем/создаем app_user по telegram_id
+      const usersRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/app_users?telegram_id=eq.${user.id}`,
+        {
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+          },
+        }
+      );
+      const appUsers = await usersRes.json();
+      let appUser = Array.isArray(appUsers) ? appUsers[0] : null;
 
-      const existing = Array.isArray(users) ? users[0] : null;
-
-      if (!existing) {
-        await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+      if (!appUser) {
+        const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/app_users`, {
           method: 'POST',
           headers: {
             apikey: SUPABASE_KEY,
             Authorization: `Bearer ${SUPABASE_KEY}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ telegram_id: user.id, username: user.username }),
+          body: JSON.stringify({
+            telegram_id: user.id,
+            username: user.username,
+          }),
         });
-        currentUser = { telegram_id: user.id, username: user.username, day: 1, streak: 0, points: 0 };
+        const inserted = await insertRes.json();
+        appUser = Array.isArray(inserted) ? inserted[0] : null;
+      }
+
+      if (!appUser) {
+        throw new Error('app_user not resolved');
+      }
+
+      currentAppUserId = appUser.id;
+
+      // 2. Старую таблицу users можно временно использовать как «профиль прогресса»
+      const legacyUsers = await fetch(
+        `${SUPABASE_URL}/rest/v1/users?app_user_id=eq.${currentAppUserId}`,
+        {
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+          },
+        }
+      ).then(r => r.json());
+      
+      const existing = Array.isArray(legacyUsers) ? legacyUsers[0] : null;
+      
+      if (!existing) {
+        const createRes = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            telegram_id: user.id,
+            username: user.username,
+            app_user_id: currentAppUserId,
+            day: 1,
+            streak: 0,
+            points: 0,
+          }),
+        });
+        const createdArr = await createRes.json();
+        const created = Array.isArray(createdArr) ? createdArr[0] : null;
+      
+        currentUser = created || {
+          telegram_id: user.id,
+          username: user.username,
+          day: 1,
+          streak: 0,
+          points: 0,
+          app_user_id: currentAppUserId,
+        };
+        currentDay = 1;
       } else {
         currentUser = existing;
         currentDay = Number(existing.day ?? 1);
       }
+      
 
       await loadDayFromSupabase();
       updateUI();
@@ -200,6 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
       initBrowserMode();
     }
   }
+
 
   function initBrowserMode() {
     currentUser = { telegram_id: null, username: 'browser', day: 1, streak: 0, points: 0 };
@@ -239,9 +302,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    const logs = await fetch(`${SUPABASE_URL}/rest/v1/daily_logs?user_id=eq.${user.id}&day=eq.${currentDay}`, {
-      headers: { apikey: SUPABASE_KEY },
-    }).then((r) => r.json());
+    const logs = await fetch(
+      `${SUPABASE_URL}/rest/v1/daily_logs?app_user_id=eq.${currentAppUserId}&day=eq.${currentDay}`,
+      {
+        headers: { apikey: SUPABASE_KEY },
+      }
+    ).then((r) => r.json());
+    
 
     const completed = Boolean(Array.isArray(logs) && logs[0]?.completed);
     setCompleteButtonState({ completed });
@@ -273,7 +340,11 @@ document.addEventListener('DOMContentLoaded', () => {
             Authorization: `Bearer ${SUPABASE_KEY}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ user_id: user.id, day: currentDay, completed: true }),
+          body: JSON.stringify({
+            app_user_id: currentAppUserId,
+            day: currentDay,
+            completed: true,
+          }),
         });
 
         setCompleteButtonState({ completed: true });
