@@ -1167,9 +1167,10 @@ document.addEventListener('DOMContentLoaded', () => {
       dayDiv.dataset.dayIndex = String(dayIndex);
 
       const label = `День ${dayIndex}`;
+      // внутри цикла for (let dayIndex = 1; dayIndex <= cycleLengthDays; dayIndex++)
       dayDiv.innerHTML = `
         <div class="flex items-center justify-between mb-1">
-          <span class="text-sm font-medium text-white">${label}</span>
+          <span class="text-sm font-medium text-white">День ${dayIndex}</span>
           <label class="flex items-center gap-1 text-[11px] text-slate-200">
             <input type="checkbox" data-field="dayEnabled" class="accent-emerald-400" checked>
             <span>Тренировочный день</span>
@@ -1178,9 +1179,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="text-[11px] text-slate-300 mb-1">
           Группы мышц в этот день
         </div>
-        <div data-role="muscleList" class="space-y-1">
-          <!-- сюда добавим группы -->
-        </div>
+        <div data-role="muscleList" class="space-y-1"></div>
         <button
           type="button"
           data-role="addMuscleGroup"
@@ -1189,6 +1188,7 @@ document.addEventListener('DOMContentLoaded', () => {
           + Добавить группу мышц
         </button>
       `;
+
 
       // добавим одну дефолтную группу
       const muscleList = dayDiv.querySelector('[data-role="muscleList"]');
