@@ -1013,580 +1013,577 @@ document.addEventListener('DOMContentLoaded', () => {
   if (supabaseEnabled) initFromSupabase();
   else initBrowserMode();
   // --- GYM: Тренировка в зале ---------------------------------------------
-    const gymEl = {
-      // экран списка периодов
-      periodsScreen: document.getElementById('gymPeriodsScreen'),
-      periodsBackBtn: document.getElementById('gymPeriodsBackBtn'),
-      noPeriodsState: document.getElementById('gymNoPeriodsState'),
-      periodsListWrapper: document.getElementById('gymPeriodsListWrapper'),
-      periodsList: document.getElementById('gymPeriodsList'),
-      createPeriodBtn: document.getElementById('gymCreatePeriodBtn'),
-      createPeriodTopBtn: document.getElementById('gymCreatePeriodTopBtn'),
+  const gymEl = {
+    // экран списка периодов
+    periodsScreen: document.getElementById('gymPeriodsScreen'),
+    periodsBackBtn: document.getElementById('gymPeriodsBackBtn'),
+    noPeriodsState: document.getElementById('gymNoPeriodsState'),
+    periodsListWrapper: document.getElementById('gymPeriodsListWrapper'),
+    periodsList: document.getElementById('gymPeriodsList'),
+    createPeriodBtn: document.getElementById('gymCreatePeriodBtn'),
+    createPeriodTopBtn: document.getElementById('gymCreatePeriodTopBtn'),
 
-      // старый экран конкретного периода
-      screen: document.getElementById('gymScreen'),
-      backBtn: document.getElementById('gymBackBtn'),
-      fromFitnessBtn: document.getElementById('gymBtn'),
-      daySelect: document.getElementById('gymDay'),
-      groupsContainer: document.getElementById('gymGroupsContainer'),
-      cycleInfo: document.getElementById('gymCycleInfo'),
-      periodInfo: document.getElementById('gymPeriodInfo'),
-      progressLabel: document.getElementById('gymProgressLabel'),
-      progressBar: document.getElementById('gymProgressBar'),
-      saveBtn: document.getElementById('gymSaveBtn'),
-      historyBtn: document.getElementById('gymHistoryBtn'),
-      newCycleBtn: document.getElementById('gymNewCycleBtn'),
+    // экран конкретного периода
+    screen: document.getElementById('gymScreen'),
+    backBtn: document.getElementById('gymBackBtn'),
+    fromFitnessBtn: document.getElementById('gymBtn'),
+    daySelect: document.getElementById('gymDay'),
+    groupsContainer: document.getElementById('gymGroupsContainer'),
+    cycleInfo: document.getElementById('gymCycleInfo'),
+    periodInfo: document.getElementById('gymPeriodInfo'),
+    progressLabel: document.getElementById('gymProgressLabel'),
+    progressBar: document.getElementById('gymProgressBar'),
+    saveBtn: document.getElementById('gymSaveBtn'),
+    historyBtn: document.getElementById('gymHistoryBtn'),
+    newCycleBtn: document.getElementById('gymNewCycleBtn'),
+  };
+
+  const GYM_STORAGE_KEY = 'leakfixer_gym_data';
+  const GYM_DEFAULT_GROUPS = ['Грудь + Трицепс', 'Спина + Бицепс', 'Ноги + Икры'];
+
+  function gymLoadState() {
+    try {
+      const raw = localStorage.getItem(GYM_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.periods) return parsed;
+      }
+    } catch (e) {}
+    return {
+      periods: {},
+      periodOrder: [],
+      activePeriodId: null,
     };
+  }
 
-    function gymOpenCreatePeriodWizard() {
-      if (!fitnessModalOverlay || !fitnessModalContent) return;
-  
-      fitnessModalContent.innerHTML = `
-        <h2 class="text-xl font-semibold mb-3">Новый период тренировок</h2>
-        <p class="text-xs text-slate-200 mb-4">
-          Выбери цель, длину цикла и длительность периода. Потом настроим сплит и упражнения.
-        </p>
-  
-        <div class="space-y-3 text-sm">
-          <!-- 3.1 Тип периода -->
+  function gymSaveState(state) {
+    localStorage.setItem(GYM_STORAGE_KEY, JSON.stringify(state));
+  }
+
+  let gymState = gymLoadState();
+
+  function gymCreatePeriodId() {
+    const n = (gymState.periodOrder?.length || 0) + 1;
+    return 'period_' + n;
+  }
+
+  function gymGetActivePeriod() {
+    if (!gymState.activePeriodId) return null;
+    return gymState.periods[gymState.activePeriodId] || null;
+  }
+
+  function gymSetActivePeriod(periodId) {
+    gymState.activePeriodId = periodId;
+    gymSaveState(gymState);
+  }
+
+  // экран списка периодов
+  function gymRenderPeriodsList() {
+    if (!gymEl.periodsList || !gymEl.noPeriodsState || !gymEl.periodsListWrapper) return;
+
+    const hasPeriods = gymState.periodOrder && gymState.periodOrder.length > 0;
+
+    if (!hasPeriods) {
+      gymEl.noPeriodsState.classList.remove('hidden');
+      gymEl.periodsListWrapper.classList.add('hidden');
+      gymEl.periodsList.innerHTML = '';
+      return;
+    }
+
+    gymEl.noPeriodsState.classList.add('hidden');
+    gymEl.periodsListWrapper.classList.remove('hidden');
+
+    gymEl.periodsList.innerHTML = '';
+    gymState.periodOrder.forEach(id => {
+      const p = gymState.periods[id];
+      if (!p) return;
+
+      const btn = document.createElement('button');
+      btn.className = 'w-full text-left bg-white/10 hover:bg-white/15 rounded-xl px-3 py-3 flex flex-col gap-1';
+      btn.dataset.periodId = id;
+
+      const cyclesDone = p.progress?.currentCycle || 1;
+      const totalCycles = p.totalCycles || 1;
+      const pct = Math.max(0, Math.min(100, (cyclesDone / totalCycles) * 100));
+
+      const typeLabel =
+        p.type === 'strength'
+          ? 'На силу'
+          : p.type === 'endurance'
+          ? 'На выносливость'
+          : 'Своя';
+
+      btn.innerHTML = `
+        <div class="flex items-center justify-between">
           <div>
-            <div class="text-xs text-slate-300 mb-1">Тип периода</div>
-            <div class="grid grid-cols-1 gap-2 text-xs">
-              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-                <input type="radio" name="gymPeriodType" value="strength" class="accent-emerald-400" checked>
-                <span>
-                  <div class="font-medium">На силу</div>
-                  <div class="opacity-70">Рост рабочих весов и силы</div>
-                </span>
-              </label>
-              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-                <input type="radio" name="gymPeriodType" value="endurance" class="accent-emerald-400">
-                <span>
-                  <div class="font-medium">На выносливость</div>
-                  <div class="opacity-70">Объём, пульс, работа длиннее</div>
-                </span>
-              </label>
-              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-                <input type="radio" name="gymPeriodType" value="custom" class="accent-emerald-400">
-                <span class="w-full">
-                  <div class="font-medium mb-1">Своё название</div>
-                  <input
-                    id="gymPeriodCustomName"
-                    class="w-full bg-white/10 rounded-lg px-2 py-1 text-xs text-white"
-                    placeholder="Например, Подтянуть жим и спину"
-                  />
-                </span>
-              </label>
+            <div class="text-sm font-semibold text-white">${p.name}</div>
+            <div class="text-[11px] text-slate-300">
+              ${typeLabel} · цикл ${p.cycleLengthDays} дн · ${p.totalCycles} циклов
             </div>
           </div>
-  
-          <!-- 3.2 Длина цикла -->
-          <div>
-            <div class="text-xs text-slate-300 mb-1">Длина цикла (дней)</div>
-            <input
-              id="gymPeriodCycleLength"
-              type="number"
-              min="3"
-              max="14"
-              value="7"
-              class="w-full bg-white/10 rounded-xl px-3 py-2 text-sm text-white"
-            />
-            <div class="text-[10px] text-slate-300 mt-1">
-              Стандартно 7 дней, но можно сделать, например, 5 или 10.
-            </div>
-          </div>
-  
-          <!-- 3.3 Количество циклов -->
-          <div>
-            <div class="text-xs text-slate-300 mb-1">Сколько циклов в периоде</div>
-            <input
-              id="gymPeriodTotalCycles"
-              type="number"
-              min="1"
-              max="24"
-              value="8"
-              class="w-full bg-white/10 rounded-xl px-3 py-2 text-sm text-white"
-            />
-            <div class="text-[10px] text-slate-300 mt-1">
-              8 циклов = примерно 8 недель, если цикл 7 дней.
-            </div>
-          </div>
-  
-          <!-- 3.4 Тип плана -->
-          <div>
-            <div class="text-xs text-slate-300 mb-1">Формат тренировок</div>
-            <div class="grid grid-cols-1 gap-2 text-xs">
-              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-                <input type="radio" name="gymPeriodSplit" value="split" class="accent-emerald-400" checked>
-                <span>
-                  <div class="font-medium">Сплит</div>
-                  <div class="opacity-70">Разделение по группам: грудь/спина/ноги...</div>
-                </span>
-              </label>
-              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-                <input type="radio" name="gymPeriodSplit" value="fullbody" class="accent-emerald-400">
-                <span>
-                  <div class="font-medium">Фулбади</div>
-                  <div class="opacity-70">Все тело за одну тренировку, 2–4 раза в неделю</div>
-                </span>
-              </label>
-              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-                <input type="radio" name="gymPeriodSplit" value="custom" class="accent-emerald-400">
-                <span>
-                  <div class="font-medium">Своя схема</div>
-                  <div class="opacity-70">Сам определишь, какие дни и мышцы</div>
-                </span>
-              </label>
-            </div>
+          <div class="text-[11px] text-slate-200">
+            ${cyclesDone}/${totalCycles}
           </div>
         </div>
-  
-        <div class="mt-4 flex gap-2">
-          <button id="gymPeriodCancelBtn" class="flex-1 py-2 rounded-xl bg-white/10 text-sm">
-            Отмена
-          </button>
-          <button id="gymPeriodNextBtn" class="flex-1 py-2 rounded-xl bg-emerald-500 text-sm font-semibold">
-            Дальше: дни и мышцы
-          </button>
+        <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
+          <div class="h-full bg-gradient-to-r from-emerald-400 to-blue-500" style="width: ${pct}%;"></div>
         </div>
       `;
-  
-      // показать модалку
-      fitnessModalOverlay.classList.remove('hidden');
-  
-      const cancelBtn = document.getElementById('gymPeriodCancelBtn');
-      const nextBtn = document.getElementById('gymPeriodNextBtn');
-  
-      cancelBtn?.addEventListener('click', () => {
-        fitnessModalOverlay.classList.add('hidden');
-      });
-  
-      nextBtn?.addEventListener('click', () => {
-        const typeInput = document.querySelector('input[name="gymPeriodType"]:checked');
-        const splitInput = document.querySelector('input[name="gymPeriodSplit"]:checked');
-        const customNameInput = document.getElementById('gymPeriodCustomName');
-        const cycleLenInput = document.getElementById('gymPeriodCycleLength');
-        const totalCyclesInput = document.getElementById('gymPeriodTotalCycles');
-  
-        const type = typeInput?.value || 'strength';
-        const splitType = splitInput?.value || 'split';
-        const cycleLengthDays = Math.max(1, Number(cycleLenInput?.value || 7));
-        const totalCycles = Math.max(1, Number(totalCyclesInput?.value || 8));
-  
-        let name = 'Период';
-        if (type === 'strength') name = 'На силу';
-        else if (type === 'endurance') name = 'На выносливость';
-        if (type === 'custom') {
-          const v = (customNameInput?.value || '').trim();
-          if (v) name = v;
-        }
-  
-        // создаём период с базовой структурой (шаблон дней потом расширим)
-        const id = gymCreatePeriodId();
-        const period = {
-          id,
-          name,
-          type,
-          splitType,
-          cycleLengthDays,
-          totalCycles,
-          template: {
-            // пока пусто, следующий шаг — настроим дни/мышцы/упражнения
-            days: [],
-          },
-          progress: {
-            currentCycle: 1,
-          },
-        };
-  
-        if (!gymState.periods) gymState.periods = {};
-        if (!gymState.periodOrder) gymState.periodOrder = [];
-  
-        gymState.periods[id] = period;
-        gymState.periodOrder.push(id);
-        gymSetActivePeriod(id);
-  
-        gymSaveState(gymState);
-        fitnessModalOverlay.classList.add('hidden');
-  
-        // после создания показываем пока просто список периодов (позже — настройка дней)
-        gymRenderPeriodsList();
-        gymOpenPeriodsScreen();
-      });
-    }
-  
 
-        // Пока используем только список периодов без сложной структуры
-    function gymOpenPeriodsScreen() {
-      if (!gymEl.periodsScreen) return;
-      if (fitnessEl?.screen) fitnessEl.screen.classList.add('hidden');
-      if (gymEl.screen) gymEl.screen.classList.add('hidden');
+      btn.addEventListener('click', () => {
+        gymSetActivePeriod(id);
+        gymOpen(); // пока старый экран; позже привяжем к данным периода
+      });
+
+      gymEl.periodsList.appendChild(btn);
+    });
+  }
+
+  function gymOpenPeriodsScreen() {
+    if (!gymEl.periodsScreen) return;
+    if (fitnessEl?.screen) fitnessEl.screen.classList.add('hidden');
+    if (gymEl.screen) gymEl.screen.classList.add('hidden');
+
+    gymRenderPeriodsList();
+    gymEl.periodsScreen.classList.remove('hidden');
+  }
+
+  function gymClosePeriodsScreen() {
+    if (!gymEl.periodsScreen) return;
+    gymEl.periodsScreen.classList.add('hidden');
+    if (fitnessEl?.screen) fitnessEl.screen.classList.remove('hidden');
+  }
+
+  // модалка создания периода
+  function gymOpenCreatePeriodWizard() {
+    if (!fitnessModalOverlay || !fitnessModalContent) return;
+
+    fitnessModalContent.innerHTML = `
+      <h2 class="text-xl font-semibold mb-3">Новый период тренировок</h2>
+      <p class="text-xs text-slate-200 mb-4">
+        Выбери цель, длину цикла и длительность периода. Потом настроим сплит и упражнения.
+      </p>
+
+      <div class="space-y-3 text-sm">
+        <div>
+          <div class="text-xs text-slate-300 mb-1">Тип периода</div>
+          <div class="grid grid-cols-1 gap-2 text-xs">
+            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+              <input type="radio" name="gymPeriodType" value="strength" class="accent-emerald-400" checked>
+              <span>
+                <div class="font-medium">На силу</div>
+                <div class="opacity-70">Рост рабочих весов и силы</div>
+              </span>
+            </label>
+            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+              <input type="radio" name="gymPeriodType" value="endurance" class="accent-emerald-400">
+              <span>
+                <div class="font-medium">На выносливость</div>
+                <div class="opacity-70">Объём, пульс, работа длиннее</div>
+              </span>
+            </label>
+            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+              <input type="radio" name="gymPeriodType" value="custom" class="accent-emerald-400">
+              <span class="w-full">
+                <div class="font-medium mb-1">Своё название</div>
+                <input
+                  id="gymPeriodCustomName"
+                  class="w-full bg-white/10 rounded-lg px-2 py-1 text-xs text-white"
+                  placeholder="Например, Подтянуть жим и спину"
+                />
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <div class="text-xs text-slate-300 mb-1">Длина цикла (дней)</div>
+          <input
+            id="gymPeriodCycleLength"
+            type="number"
+            min="3"
+            max="14"
+            value="7"
+            class="w-full bg-white/10 rounded-xl px-3 py-2 text-sm text-white"
+          />
+          <div class="text-[10px] text-slate-300 mt-1">
+            Стандартно 7 дней, но можно сделать, например, 5 или 10.
+          </div>
+        </div>
+
+        <div>
+          <div class="text-xs text-slate-300 mb-1">Сколько циклов в периоде</div>
+          <input
+            id="gymPeriodTotalCycles"
+            type="number"
+            min="1"
+            max="24"
+            value="8"
+            class="w-full bg-white/10 rounded-xl px-3 py-2 text-sm text-white"
+          />
+          <div class="text-[10px] text-slate-300 mt-1">
+            8 циклов = примерно 8 недель, если цикл 7 дней.
+          </div>
+        </div>
+
+        <div>
+          <div class="text-xs text-slate-300 mb-1">Формат тренировок</div>
+          <div class="grid grid-cols-1 gap-2 text-xs">
+            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+              <input type="radio" name="gymPeriodSplit" value="split" class="accent-emerald-400" checked>
+              <span>
+                <div class="font-medium">Сплит</div>
+                <div class="opacity-70">Разделение по группам: грудь/спина/ноги...</div>
+              </span>
+            </label>
+            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+              <input type="radio" name="gymPeriodSplit" value="fullbody" class="accent-emerald-400">
+              <span>
+                <div class="font-medium">Фулбади</div>
+                <div class="opacity-70">Все тело за одну тренировку, 2–4 раза в неделю</div>
+              </span>
+            </label>
+            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+              <input type="radio" name="gymPeriodSplit" value="custom" class="accent-emerald-400">
+              <span>
+                <div class="font-medium">Своя схема</div>
+                <div class="opacity-70">Сам определишь, какие дни и мышцы</div>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 flex gap-2">
+        <button id="gymPeriodCancelBtn" class="flex-1 py-2 rounded-xl bg-white/10 text-sm">
+          Отмена
+        </button>
+        <button id="gymPeriodNextBtn" class="flex-1 py-2 rounded-xl bg-emerald-500 text-sm font-semibold">
+          Дальше: дни и мышцы
+        </button>
+      </div>
+    `;
+
+    fitnessModalOverlay.classList.remove('hidden');
+
+    const cancelBtn = document.getElementById('gymPeriodCancelBtn');
+    const nextBtn = document.getElementById('gymPeriodNextBtn');
+
+    cancelBtn?.addEventListener('click', () => {
+      fitnessModalOverlay.classList.add('hidden');
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      const typeInput = document.querySelector('input[name="gymPeriodType"]:checked');
+      const splitInput = document.querySelector('input[name="gymPeriodSplit"]:checked');
+      const customNameInput = document.getElementById('gymPeriodCustomName');
+      const cycleLenInput = document.getElementById('gymPeriodCycleLength');
+      const totalCyclesInput = document.getElementById('gymPeriodTotalCycles');
+
+      const type = typeInput?.value || 'strength';
+      const splitType = splitInput?.value || 'split';
+      const cycleLengthDays = Math.max(1, Number(cycleLenInput?.value || 7));
+      const totalCycles = Math.max(1, Number(totalCyclesInput?.value || 8));
+
+      let name = 'Период';
+      if (type === 'strength') name = 'На силу';
+      else if (type === 'endurance') name = 'На выносливость';
+      if (type === 'custom') {
+        const v = (customNameInput?.value || '').trim();
+        if (v) name = v;
+      }
+
+      const id = gymCreatePeriodId();
+      const period = {
+        id,
+        name,
+        type,
+        splitType,
+        cycleLengthDays,
+        totalCycles,
+        template: {
+          days: [],
+        },
+        progress: {
+          currentCycle: 1,
+        },
+      };
+
+      if (!gymState.periods) gymState.periods = {};
+      if (!gymState.periodOrder) gymState.periodOrder = [];
+
+      gymState.periods[id] = period;
+      gymState.periodOrder.push(id);
+      gymSetActivePeriod(id);
+
+      gymSaveState(gymState);
+      fitnessModalOverlay.classList.add('hidden');
 
       gymRenderPeriodsList();
-      gymEl.periodsScreen.classList.remove('hidden');
-    }
+      gymOpenPeriodsScreen();
+    });
+  }
 
-
-    function gymRenderPeriodsList() {
-      if (!gymEl.periodsList || !gymEl.noPeriodsState || !gymEl.periodsListWrapper) return;
-  
-      const hasPeriods = gymState.periodOrder && gymState.periodOrder.length > 0;
-  
-      if (!hasPeriods) {
-        gymEl.noPeriodsState.classList.remove('hidden');
-        gymEl.periodsListWrapper.classList.add('hidden');
-        gymEl.periodsList.innerHTML = '';
-        return;
-      }
-  
-      gymEl.noPeriodsState.classList.add('hidden');
-      gymEl.periodsListWrapper.classList.remove('hidden');
-  
-      gymEl.periodsList.innerHTML = '';
-      gymState.periodOrder.forEach(id => {
-        const p = gymState.periods[id];
-        if (!p) return;
-  
-        const div = document.createElement('button');
-        div.className = 'w-full text-left bg-white/10 hover:bg-white/15 rounded-xl px-3 py-3 flex flex-col gap-1';
-        div.dataset.periodId = id;
-  
-        const cyclesDone = p.progress?.currentCycle || 1;
-        const totalCycles = p.totalCycles || 1;
-        const pct = Math.max(0, Math.min(100, (cyclesDone / totalCycles) * 100));
-  
-        const typeLabel =
-          p.type === 'strength'
-            ? 'На силу'
-            : p.type === 'endurance'
-            ? 'На выносливость'
-            : 'Своя';
-  
-        div.innerHTML = `
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-sm font-semibold text-white">${p.name}</div>
-              <div class="text-[11px] text-slate-300">
-                ${typeLabel} · цикл ${p.cycleLengthDays} дн · ${p.totalCycles} циклов
-              </div>
-            </div>
-            <div class="text-[11px] text-slate-200">
-              ${cyclesDone}/${totalCycles}
-            </div>
-          </div>
-          <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
-            <div class="h-full bg-gradient-to-r from-emerald-400 to-blue-500" style="width: ${pct}%;"></div>
-          </div>
-        `;
-  
-        div.addEventListener('click', () => {
-          gymSetActivePeriod(id);
-          // пока просто откроем старый экран с циклами (следующий шаг — привязать туда данные периода)
-          gymOpen();
-        });
-  
-        gymEl.periodsList.appendChild(div);
-      });
-    }
-  
-
-    function gymClosePeriodsScreen() {
-      if (!gymEl.periodsScreen) return;
-      gymEl.periodsScreen.classList.add('hidden');
-
-      // возвращаемся в фитнес
-      if (fitnessEl?.screen) fitnessEl.screen.classList.remove('hidden');
-    }
-
-    const GYM_STORAGE_KEY = 'leakfixer_gym_data';
-    const GYM_DEFAULT_GROUPS = ['Грудь + Трицепс', 'Спина + Бицепс', 'Ноги + Икры'];
-  
-    function gymLoadState() {
-      try {
-        const raw = localStorage.getItem(GYM_STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed.periods) return parsed;
-        }
-      } catch (e) {}
-  
-      // дефолтное состояние, если ещё нет периодов
-      return {
-        periods: {},
-        periodOrder: [],
-        activePeriodId: null,
+  // старый экран (конкретный период) пока оставляем как был — он не привязан к periods
+  function gymGetCurrentCycle() {
+    // временный упрощённый вариант: одна "виртуальная" неделя с группами
+    const period = gymGetActivePeriod();
+    if (!period.__runtime) {
+      period.__runtime = {
+        currentCycle: period.progress?.currentCycle || 1,
+        totalCycles: period.totalCycles || 8,
+        periodDone: period.progress?.currentCycle || 1,
+        groups: {},
       };
     }
-  
-    function gymSaveState(state) {
-      localStorage.setItem(GYM_STORAGE_KEY, JSON.stringify(state));
-    }
-  
-    function gymCreatePeriodId() {
-      const n = (gymState.periodOrder?.length || 0) + 1;
-      return 'period_' + n;
-    }
-  
-    function gymGetActivePeriod() {
-      if (!gymState.activePeriodId) return null;
-      return gymState.periods[gymState.activePeriodId] || null;
-    }
-  
-    function gymSetActivePeriod(periodId) {
-      gymState.activePeriodId = periodId;
-      gymSaveState(gymState);
-    }
-  
+    return period.__runtime;
+  }
 
-    function gymGetCurrentCycleKey() {
-      return 'cycle_' + gymState.currentCycle;
-    }
-  
-    function gymGetCurrentCycle() {
-      const key = gymGetCurrentCycleKey();
-      if (!gymState.cycles[key]) {
-        gymState.cycles[key] = {
-          groups: {},
-          // можно потом добавить даты цикла, сейчас заглушка
-        };
+  function gymRenderHeader() {
+    if (!gymEl.cycleInfo || !gymEl.periodInfo || !gymEl.progressBar || !gymEl.progressLabel) return;
+    const period = gymGetActivePeriod();
+    if (!period) return;
+    const runtime = period.__runtime || {
+      currentCycle: 1,
+      totalCycles: period.totalCycles || 8,
+      periodDone: 1,
+    };
+
+    const cycleText = `Цикл ${runtime.currentCycle}/${runtime.totalCycles}`;
+    gymEl.cycleInfo.textContent = `${cycleText} · неделя`;
+    gymEl.periodInfo.textContent = `${period.name} · ${runtime.periodDone}/${runtime.totalCycles}`;
+
+    const pct = Math.max(0, Math.min(100, (runtime.periodDone / runtime.totalCycles) * 100));
+    gymEl.progressBar.style.width = `${pct}%`;
+    gymEl.progressLabel.textContent = `Период: ${runtime.periodDone}/${runtime.totalCycles} циклов`;
+  }
+
+  function gymRenderGroups() {
+    if (!gymEl.groupsContainer) return;
+    const period = gymGetActivePeriod();
+    if (!period) return;
+    const runtime = gymGetCurrentCycle();
+    const groupsData = runtime.groups;
+
+    gymEl.groupsContainer.innerHTML = '';
+
+    GYM_DEFAULT_GROUPS.forEach(groupName => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'bg-white/5 rounded-xl px-3 py-3 space-y-2';
+
+      const header = document.createElement('div');
+      header.className = 'flex items-center justify-between mb-1';
+      header.innerHTML = `
+        <span class="text-sm text-slate-100 font-medium">${groupName}</span>
+        <button class="text-xs px-2 py-1 rounded-full bg-emerald-500 text-white" data-group="${groupName}">
+          + Упражнение
+        </button>
+      `;
+      wrapper.appendChild(header);
+
+      const listContainer = document.createElement('div');
+      listContainer.className = 'space-y-2';
+      listContainer.dataset.group = groupName;
+
+      const exercises = groupsData[groupName] || [];
+      if (!exercises.length) {
+        const empty = document.createElement('div');
+        empty.className = 'text-xs text-slate-400';
+        empty.textContent = 'Добавь упражнение для этой группы.';
+        listContainer.appendChild(empty);
+      } else {
+        exercises.forEach((ex, idx) => {
+          const card = document.createElement('div');
+          card.className = 'bg-slate-900/80 rounded-xl px-3 py-3 space-y-2';
+          card.dataset.index = String(idx);
+          card.innerHTML = `
+            <input
+              class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
+              placeholder="Название (Жим гантелей)"
+              value="${ex.name || ''}"
+              data-field="name"
+            />
+
+            <div class="flex gap-2 text-xs">
+              <div class="flex-1">
+                <div class="text-slate-400 mb-1">Рабочие подходы</div>
+                <input
+                  class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
+                  placeholder="4x10x35 кг"
+                  value="${ex.sets || ''}"
+                  data-field="sets"
+                />
+              </div>
+              <div class="flex-1">
+                <div class="text-slate-400 mb-1">Разминка (опц.)</div>
+                <input
+                  class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
+                  placeholder="2x15"
+                  value="${ex.warmup || ''}"
+                  data-field="warmup"
+                />
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex-1 mr-2">
+                <div class="text-slate-400 mb-1">RPE 1–10</div>
+                <div class="flex items-center gap-2">
+                  <input type="range" min="1" max="10" value="${ex.rpe || 7}" data-field="rpe" class="flex-1">
+                  <span class="text-slate-100 text-xs" data-rpe-label>${ex.rpe || 7}/10</span>
+                </div>
+              </div>
+              <button class="text-[11px] text-red-300 underline" data-delete="1">Удалить</button>
+            </div>
+
+            <div class="flex gap-2 text-xs">
+              <div class="flex-1">
+                <div class="text-slate-400 mb-1">Прогресс за период</div>
+                <input
+                  class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
+                  placeholder="+5 кг с начала"
+                  value="${ex.progressNote || ''}"
+                  data-field="progressNote"
+                />
+              </div>
+              <div class="flex-1">
+                <div class="text-slate-400 mb-1">План на след. цикл</div>
+                <input
+                  class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
+                  placeholder="След. цикл: 37 кг"
+                  value="${ex.nextCyclePlan || ''}"
+                  data-field="nextCyclePlan"
+                />
+              </div>
+            </div>
+          `;
+          listContainer.appendChild(card);
+        });
       }
-      return gymState.cycles[key];
-    }
-  
-    function gymRenderHeader() {
-      if (!gymEl.cycleInfo || !gymEl.periodInfo || !gymEl.progressBar || !gymEl.progressLabel) return;
-      const cycleText = `Цикл ${gymState.currentCycle}/${gymState.totalCycles}`;
-      gymEl.cycleInfo.textContent = `${cycleText} · неделя`;
-      gymEl.periodInfo.textContent = `${gymState.periodName} · ${gymState.periodDone}/${gymState.totalCycles}`;
-  
-      const pct = Math.max(0, Math.min(100, (gymState.periodDone / gymState.totalCycles) * 100));
-      gymEl.progressBar.style.width = `${pct}%`;
-      gymEl.progressLabel.textContent = `Период: ${gymState.periodDone}/${gymState.totalCycles} циклов`;
-    }
-  
-    function gymRenderGroups() {
-      if (!gymEl.groupsContainer) return;
-      const cycle = gymGetCurrentCycle();
-      const groupsData = cycle.groups;
-      gymEl.groupsContainer.innerHTML = '';
-  
-      GYM_DEFAULT_GROUPS.forEach(groupName => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'bg-white/5 rounded-xl px-3 py-3 space-y-2';
-  
-        const header = document.createElement('div');
-        header.className = 'flex items-center justify-between mb-1';
-        header.innerHTML = `
-          <span class="text-sm text-slate-100 font-medium">${groupName}</span>
-          <button class="text-xs px-2 py-1 rounded-full bg-emerald-500 text-white" data-group="${groupName}">
-            + Упражнение
-          </button>
-        `;
-        wrapper.appendChild(header);
-  
-        const listContainer = document.createElement('div');
-        listContainer.className = 'space-y-2';
-        listContainer.dataset.group = groupName;
-  
-        const exercises = groupsData[groupName] || [];
-        if (!exercises.length) {
-          const empty = document.createElement('div');
-          empty.className = 'text-xs text-slate-400';
-          empty.textContent = 'Добавь упражнение для этой группы.';
-          listContainer.appendChild(empty);
-        } else {
-          exercises.forEach((ex, idx) => {
-            const card = document.createElement('div');
-            card.className = 'bg-slate-900/80 rounded-xl px-3 py-3 space-y-2';
-            card.dataset.index = String(idx);
-            card.innerHTML = `
-              <input
-                class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
-                placeholder="Название (Жим гантелей)"
-                value="${ex.name || ''}"
-                data-field="name"
-              />
-  
-              <div class="flex gap-2 text-xs">
-                <div class="flex-1">
-                  <div class="text-slate-400 mb-1">Рабочие подходы</div>
-                  <input
-                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                    placeholder="4x10x35 кг"
-                    value="${ex.sets || ''}"
-                    data-field="sets"
-                  />
-                </div>
-                <div class="flex-1">
-                  <div class="text-slate-400 mb-1">Разминка (опц.)</div>
-                  <input
-                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                    placeholder="2x15"
-                    value="${ex.warmup || ''}"
-                    data-field="warmup"
-                  />
-                </div>
-              </div>
-  
-              <div class="flex items-center justify-between text-xs">
-                <div class="flex-1 mr-2">
-                  <div class="text-slate-400 mb-1">RPE 1–10</div>
-                  <div class="flex items-center gap-2">
-                    <input type="range" min="1" max="10" value="${ex.rpe || 7}" data-field="rpe" class="flex-1">
-                    <span class="text-slate-100 text-xs" data-rpe-label>${ex.rpe || 7}/10</span>
-                  </div>
-                </div>
-                <button class="text-[11px] text-red-300 underline" data-delete="1">Удалить</button>
-              </div>
-  
-              <div class="flex gap-2 text-xs">
-                <div class="flex-1">
-                  <div class="text-slate-400 mb-1">Прогресс за период</div>
-                  <input
-                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                    placeholder="+5 кг с начала"
-                    value="${ex.progressNote || ''}"
-                    data-field="progressNote"
-                  />
-                </div>
-                <div class="flex-1">
-                  <div class="text-slate-400 mb-1">План на след. цикл</div>
-                  <input
-                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                    placeholder="След. цикл: 37 кг"
-                    value="${ex.nextCyclePlan || ''}"
-                    data-field="nextCyclePlan"
-                  />
-                </div>
-              </div>
-            `;
-            listContainer.appendChild(card);
-          });
-        }
-  
-        wrapper.appendChild(listContainer);
-        gymEl.groupsContainer.appendChild(wrapper);
-      });
-  
-      // обработчики: добавление упражнений
-      gymEl.groupsContainer.querySelectorAll('button[data-group]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const groupName = btn.dataset.group;
-          const cycle = gymGetCurrentCycle();
-          if (!cycle.groups[groupName]) cycle.groups[groupName] = [];
-          cycle.groups[groupName].push({
-            name: '',
-            sets: '',
-            warmup: '',
-            rpe: 7,
-            progressNote: '',
-            nextCyclePlan: '',
-          });
-          gymSaveState(gymState);
-          gymRenderGroups();
-        });
-      });
-  
-      // обработка изменений полей
-      gymEl.groupsContainer.querySelectorAll('[data-field]').forEach(input => {
-        input.addEventListener('input', () => {
-          const card = input.closest('[data-index]');
-          const list = input.closest('[data-group]');
-          if (!card || !list) return;
-          const idx = Number(card.dataset.index || '0');
-          const groupName = list.dataset.group;
-          const field = input.dataset.field;
-          const cycle = gymGetCurrentCycle();
-          const arr = cycle.groups[groupName] || [];
-          if (!arr[idx]) return;
-          if (field === 'rpe') {
-            const val = Number(input.value) || 1;
-            arr[idx][field] = val;
-            const label = card.querySelector('[data-rpe-label]');
-            if (label) label.textContent = `${val}/10`;
-          } else {
-            arr[idx][field] = input.value;
-          }
-          gymSaveState(gymState);
-        });
-      });
-  
-      // удаление упражнения
-      gymEl.groupsContainer.querySelectorAll('button[data-delete]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const card = btn.closest('[data-index]');
-          const list = btn.closest('[data-group]');
-          if (!card || !list) return;
-          const idx = Number(card.dataset.index || '0');
-          const groupName = list.dataset.group;
-          const cycle = gymGetCurrentCycle();
-          const arr = cycle.groups[groupName] || [];
-          arr.splice(idx, 1);
-          cycle.groups[groupName] = arr;
-          gymSaveState(gymState);
-          gymRenderGroups();
-        });
-      });
-    }
-  
-    function gymOpen() {
-      if (!gymEl.screen) return;
-      // показываем экран зала из fitnessScreen
-      fitnessEl.screen?.classList.add('hidden');
-      gymEl.screen.classList.remove('hidden');
-      gymRenderHeader();
-      gymRenderGroups();
-    }
-  
-    function gymClose() {
-      if (!gymEl.screen) return;
-      gymEl.screen.classList.add('hidden');
-      fitnessEl.screen?.classList.remove('hidden');
-    }
-  
-    // события
-    if (gymEl.fromFitnessBtn) {
-      gymEl.fromFitnessBtn.addEventListener('click', gymOpenPeriodsScreen);
-    }
-    if (gymEl.periodsBackBtn) {
-      gymEl.periodsBackBtn.addEventListener('click', gymClosePeriodsScreen);
-    }
-    if (gymEl.createPeriodBtn) {
-      gymEl.createPeriodBtn.addEventListener('click', () => {
-        gymOpenCreatePeriodWizard();
-      });
-    }
-    if (gymEl.createPeriodTopBtn) {
-      gymEl.createPeriodTopBtn.addEventListener('click', () => {
-        gymOpenCreatePeriodWizard();
-      });
-    }   
-    if (gymEl.backBtn) {
-      gymEl.backBtn.addEventListener('click', gymClose);
-    }
-    if (gymEl.newCycleBtn) {
-      gymEl.newCycleBtn.addEventListener('click', () => {
-        if (gymState.currentCycle < gymState.totalCycles) {
-          gymState.currentCycle += 1;
-          gymState.periodDone = Math.max(gymState.periodDone, gymState.currentCycle);
-          gymSaveState(gymState);
-          gymRenderHeader();
-          gymRenderGroups();
-        }
-      });
-    }
-    if (gymEl.saveBtn) {
-      gymEl.saveBtn.addEventListener('click', () => {
-        // пока только локальное сохранение, потом можно отправлять в Supabase
-        gymSaveState(gymState);
-        showAlert('Тренировка в зале сохранена');
-      });
-    }
-    if (gymEl.historyBtn) {
-      gymEl.historyBtn.addEventListener('click', () => {
-        showAlert('История тренировок появится позже');
-      });
-    }
-  
-});
 
+      wrapper.appendChild(listContainer);
+      gymEl.groupsContainer.appendChild(wrapper);
+    });
+
+    // добавление
+    gymEl.groupsContainer.querySelectorAll('button[data-group]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const groupName = btn.dataset.group;
+        const runtime = gymGetCurrentCycle();
+        if (!runtime.groups[groupName]) runtime.groups[groupName] = [];
+        runtime.groups[groupName].push({
+          name: '',
+          sets: '',
+          warmup: '',
+          rpe: 7,
+          progressNote: '',
+          nextCyclePlan: '',
+        });
+        gymSaveState(gymState);
+        gymRenderGroups();
+      });
+    });
+
+    // изменения
+    gymEl.groupsContainer.querySelectorAll('[data-field]').forEach(input => {
+      input.addEventListener('input', () => {
+        const card = input.closest('[data-index]');
+        const list = input.closest('[data-group]');
+        if (!card || !list) return;
+        const idx = Number(card.dataset.index || '0');
+        const groupName = list.dataset.group;
+        const runtime = gymGetCurrentCycle();
+        const arr = runtime.groups[groupName] || [];
+        if (!arr[idx]) return;
+        const field = input.dataset.field;
+        if (field === 'rpe') {
+          const val = Number(input.value) || 1;
+          arr[idx][field] = val;
+          const label = card.querySelector('[data-rpe-label]');
+          if (label) label.textContent = `${val}/10`;
+        } else {
+          arr[idx][field] = input.value;
+        }
+        gymSaveState(gymState);
+      });
+    });
+
+    // удаление
+    gymEl.groupsContainer.querySelectorAll('button[data-delete]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('[data-index]');
+        const list = btn.closest('[data-group]');
+        if (!card || !list) return;
+        const idx = Number(card.dataset.index || '0');
+        const groupName = list.dataset.group;
+        const runtime = gymGetCurrentCycle();
+        const arr = runtime.groups[groupName] || [];
+        arr.splice(idx, 1);
+        runtime.groups[groupName] = arr;
+        gymSaveState(gymState);
+        gymRenderGroups();
+      });
+    });
+  }
+
+  function gymOpen() {
+    if (!gymEl.screen) return;
+    if (gymEl.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
+    gymEl.screen.classList.remove('hidden');
+    gymRenderHeader();
+    gymRenderGroups();
+  }
+
+  function gymClose() {
+    if (!gymEl.screen) return;
+    gymEl.screen.classList.add('hidden');
+    if (gymEl.periodsScreen) gymEl.periodsScreen.classList.remove('hidden');
+  }
+
+  // события
+  if (gymEl.fromFitnessBtn) {
+    gymEl.fromFitnessBtn.addEventListener('click', gymOpenPeriodsScreen);
+  }
+  if (gymEl.periodsBackBtn) {
+    gymEl.periodsBackBtn.addEventListener('click', gymClosePeriodsScreen);
+  }
+  if (gymEl.createPeriodBtn) {
+    gymEl.createPeriodBtn.addEventListener('click', () => {
+      gymOpenCreatePeriodWizard();
+    });
+  }
+  if (gymEl.createPeriodTopBtn) {
+    gymEl.createPeriodTopBtn.addEventListener('click', () => {
+      gymOpenCreatePeriodWizard();
+    });
+  }
+  if (gymEl.backBtn) {
+    gymEl.backBtn.addEventListener('click', gymClose);
+  }
+  if (gymEl.newCycleBtn) {
+    gymEl.newCycleBtn.addEventListener('click', () => {
+      const period = gymGetActivePeriod();
+      if (!period) return;
+      const runtime = gymGetCurrentCycle();
+      if (runtime.currentCycle < runtime.totalCycles) {
+        runtime.currentCycle += 1;
+        runtime.periodDone = Math.max(runtime.periodDone, runtime.currentCycle);
+        gymSaveState(gymState);
+        gymRenderHeader();
+        gymRenderGroups();
+      }
+    });
+  }
+  if (gymEl.saveBtn) {
+    gymEl.saveBtn.addEventListener('click', () => {
+      gymSaveState(gymState);
+      showAlert('Тренировка в зале сохранена');
+    });
+  }
+  if (gymEl.historyBtn) {
+    gymEl.historyBtn.addEventListener('click', () => {
+      showAlert('История тренировок появится позже');
+    });
+  }
+
+}); // конец DOMContentLoaded
