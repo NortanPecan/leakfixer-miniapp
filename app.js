@@ -740,7 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Глобальная шкала настроения (главный экран) ---
 
-  function renderGlobalMood(moodValue = 7.3, yesterdayValue = 6.5) {
+    function renderGlobalMood(moodValue = 7.3, yesterdayValue = 6.5) {
     const container = document.getElementById('moodScaleContainer');
     const scoreEl = document.getElementById('moodScore');
     const yesterdayEl = document.getElementById('moodYesterday');
@@ -755,31 +755,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const yesterday = Math.max(0, Math.min(10, Number(yesterdayValue) || 0));
 
     const fullSegments = Math.floor(value);
-    const partialFill = value - fullSegments;
 
     segments.forEach((segment, index) => {
-      const level = 10 - index; // верхний = 10
-      const fill = document.createElement('div');
-      fill.className = 'h-full w-full transition-all duration-500 ease-out';
+      const level = 10 - index; // 10 = верхний
+      segment.innerHTML = '';   // очищаем на всякий случай
 
-      let fillAmount = 0;
+      // базовый фон (неактивный)
+      segment.style.backgroundColor = 'rgba(15,23,42,0.6)';
+
       if (level <= fullSegments) {
-        fillAmount = 1;
-      } else if (level === fullSegments + 1 && partialFill > 0) {
-        fillAmount = partialFill;
+        // активный сегмент
+        const hue = 120 - level * 8; // зелёный → красный
+        const color = `hsl(${hue}, 70%, 50%)`;
+        segment.style.backgroundColor = color;
       }
-
-      // градиент цвета по высоте (зелёный → жёлтый → красный)
-      const hue = 120 - level * 8; // от ~120 до ~40/0
-      const color = `hsl(${hue}, 70%, 50%)`;
-
-      fill.style.height = `${fillAmount * 100}%`;
-      fill.style.background = `linear-gradient(to top, ${color}55, ${color})`;
-
-      segment.innerHTML = '';
-      if (fillAmount > 0) segment.appendChild(fill);
     });
 
+    // числа
     scoreEl.textContent = value.toFixed(1);
     yesterdayEl.textContent = yesterday.toFixed(1);
 
@@ -795,6 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
       trendEl.className = 'text-[10px] text-red-300';
     }
 
+    // статус
     let statusText = '';
     let statusClass = 'text-xs font-medium ';
     if (value >= 8.5) {
@@ -817,6 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
     statusEl.className = statusClass;
   }
 
+
   function initGlobalMoodWidget() {
     const btn = document.getElementById('logMoodBtn');
     if (btn) {
@@ -824,15 +818,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const raw = prompt('Текущее состояние (0–10):', '7');
         if (raw == null) return;
         const num = parseFloat(raw);
-        if (Number.isNaN(num)) return;
-        // пока без сложной логики вчерашнего — можно подтянуть позже из Supabase
-        renderGlobalMood(num, 6.5);
+        if (!Number.isNaN(num)) renderGlobalMood(num, 6.5);
       });
     }
-
-    // начальный рендер (потом подставим real calc из фитнес/работы)
+  
     renderGlobalMood(7.3, 6.5);
   }
+  
 
 
   // Инициализация профиля
