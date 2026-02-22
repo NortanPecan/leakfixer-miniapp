@@ -1438,10 +1438,27 @@ document.addEventListener('DOMContentLoaded', () => {
   
 
   function gymClosePeriodsScreen() {
-    if (!gymEl.periodsScreen) return;
-    gymEl.periodsScreen.classList.add('hidden');
-    if (fitnessEl?.screen) fitnessEl.screen.classList.remove('hidden');
+    if (gymEl.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
+  
+    // если есть фитнес-экран – возвращаемся к фитнес-дашборду
+    if (fitnessEl?.screen) {
+      fitnessEl.screen.classList.remove('hidden');
+  
+      if (fitnessEl.profileSetup) fitnessEl.profileSetup.classList.add('hidden');
+      if (fitnessEl.dashboard) fitnessEl.dashboard.classList.remove('hidden');
+  
+      // на всякий случай прячем мастер и экран периода
+      if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
+      if (gymEl.screen) gymEl.screen.classList.add('hidden');
+  
+      return;
+    }
+  
+    // fallback: если по какой-то причине fitnessScreen нет – вернёмся на главный экран
+    const main = document.getElementById('main');
+    if (main) main.classList.remove('hidden');
   }
+  
 
   // старый экран (конкретный период) пока оставляем как был — он не привязан к periods
   function gymGetCurrentCycle() {
