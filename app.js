@@ -1012,8 +1012,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // Запуск приложения
   if (supabaseEnabled) initFromSupabase();
   else initBrowserMode();
-    // --- GYM: Тренировка в зале ---------------------------------------------
+  // --- GYM: Тренировка в зале ---------------------------------------------
     const gymEl = {
+      // экран списка периодов
+      periodsScreen: document.getElementById('gymPeriodsScreen'),
+      periodsBackBtn: document.getElementById('gymPeriodsBackBtn'),
+      noPeriodsState: document.getElementById('gymNoPeriodsState'),
+      periodsListWrapper: document.getElementById('gymPeriodsListWrapper'),
+      periodsList: document.getElementById('gymPeriodsList'),
+      createPeriodBtn: document.getElementById('gymCreatePeriodBtn'),
+      createPeriodTopBtn: document.getElementById('gymCreatePeriodTopBtn'),
+
+      // старый экран конкретного периода
       screen: document.getElementById('gymScreen'),
       backBtn: document.getElementById('gymBackBtn'),
       fromFitnessBtn: document.getElementById('gymBtn'),
@@ -1027,7 +1037,32 @@ document.addEventListener('DOMContentLoaded', () => {
       historyBtn: document.getElementById('gymHistoryBtn'),
       newCycleBtn: document.getElementById('gymNewCycleBtn'),
     };
-  
+
+        // Пока используем только список периодов без сложной структуры
+    function gymOpenPeriodsScreen() {
+      if (!gymEl.periodsScreen) return;
+      // скрываем фитнес
+      if (fitnessEl?.screen) fitnessEl.screen.classList.add('hidden');
+
+      // скрываем старый экран зала (если вдруг был открыт)
+      if (gymEl.screen) gymEl.screen.classList.add('hidden');
+
+      // показываем список периодов
+      gymEl.periodsScreen.classList.remove('hidden');
+
+      // пока периодов нет — показываем стейт "нет периодов"
+      if (gymEl.noPeriodsState) gymEl.noPeriodsState.classList.remove('hidden');
+      if (gymEl.periodsListWrapper) gymEl.periodsListWrapper.classList.add('hidden');
+    }
+
+    function gymClosePeriodsScreen() {
+      if (!gymEl.periodsScreen) return;
+      gymEl.periodsScreen.classList.add('hidden');
+
+      // возвращаемся в фитнес
+      if (fitnessEl?.screen) fitnessEl.screen.classList.remove('hidden');
+    }
+
     const GYM_STORAGE_KEY = 'leakfixer_gym_data';
   
     // базовые группы, дальше можно вынести в настройки
@@ -1264,8 +1299,21 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // события
     if (gymEl.fromFitnessBtn) {
-      gymEl.fromFitnessBtn.addEventListener('click', gymOpen);
+      gymEl.fromFitnessBtn.addEventListener('click', gymOpenPeriodsScreen);
     }
+    if (gymEl.periodsBackBtn) {
+      gymEl.periodsBackBtn.addEventListener('click', gymClosePeriodsScreen);
+    }
+    if (gymEl.createPeriodBtn) {
+      gymEl.createPeriodBtn.addEventListener('click', () => {
+        showAlert('Создание периода мы добавим следующим шагом');
+      });
+    }
+    if (gymEl.createPeriodTopBtn) {
+      gymEl.createPeriodTopBtn.addEventListener('click', () => {
+        showAlert('Создание периода мы добавим следующим шагом');
+      });
+    }    
     if (gymEl.backBtn) {
       gymEl.backBtn.addEventListener('click', gymClose);
     }
