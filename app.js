@@ -1094,35 +1094,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function gymOpenPeriodWizardStep1() {
     if (!gymEl.periodWizardScreen) return;
-
+  
     // скрываем список периодов и экран тренировки
     if (gymEl.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
     if (gymEl.screen) gymEl.screen.classList.add('hidden');
-
+  
     // включаем мастер, шаг 1
     gymEl.periodWizardScreen.classList.remove('hidden');
     if (gymEl.periodStep1) gymEl.periodStep1.classList.remove('hidden');
     if (gymEl.periodStep2) gymEl.periodStep2.classList.add('hidden');
-
-    // дефолтный драфт
+  
     gymPeriodWizardDraft = {
       type: 'strength',
       name: 'На силу',
       splitType: 'split',
       cycleLengthDays: 7,
       totalCycles: 8,
-      days: [], // заполним на шаге 2
+      days: [],
     };
-
-    // сброс значений полей
+  
     const cycleLenInput = document.getElementById('gymPeriodCycleLength');
     const totalCyclesInput = document.getElementById('gymPeriodTotalCycles');
     const customNameInput = document.getElementById('gymPeriodCustomName');
-
+  
     if (cycleLenInput) cycleLenInput.value = '7';
     if (totalCyclesInput) totalCyclesInput.value = '8';
     if (customNameInput) customNameInput.value = '';
   }
+  
 
   function gymClosePeriodWizard() {
     if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
