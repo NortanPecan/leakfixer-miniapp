@@ -1023,6 +1023,17 @@ document.addEventListener('DOMContentLoaded', () => {
     createPeriodBtn: document.getElementById('gymCreatePeriodBtn'),
     createPeriodTopBtn: document.getElementById('gymCreatePeriodTopBtn'),
 
+    // экран мастера периода
+    periodWizardScreen: document.getElementById('gymPeriodWizardScreen'),
+    periodWizardBackBtn: document.getElementById('gymPeriodWizardBackBtn'),
+    periodStep1: document.getElementById('gymPeriodStep1'),
+    periodStep2: document.getElementById('gymPeriodStep2'),
+    periodStep1CancelBtn: document.getElementById('gymPeriodStep1CancelBtn'),
+    periodStep1NextBtn: document.getElementById('gymPeriodStep1NextBtn'),
+    periodDaysContainer: document.getElementById('gymPeriodDaysContainer'),
+    periodStep2BackBtn: document.getElementById('gymPeriodStep2BackBtn'),
+    periodStep2CreateBtn: document.getElementById('gymPeriodStep2CreateBtn'),
+
     // экран конкретного периода
     screen: document.getElementById('gymScreen'),
     backBtn: document.getElementById('gymBackBtn'),
@@ -1037,6 +1048,7 @@ document.addEventListener('DOMContentLoaded', () => {
     historyBtn: document.getElementById('gymHistoryBtn'),
     newCycleBtn: document.getElementById('gymNewCycleBtn'),
   };
+
 
   const GYM_STORAGE_KEY = 'leakfixer_gym_data';
   const GYM_DEFAULT_GROUPS = ['Грудь + Трицепс', 'Спина + Бицепс', 'Ноги + Икры'];
@@ -1061,6 +1073,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   let gymState = gymLoadState();
+   // временный буфер для мастера периода
+  let gymPeriodWizardDraft = null;
+
 
   function gymCreatePeriodId() {
     const n = (gymState.periodOrder?.length || 0) + 1;
@@ -1075,6 +1090,212 @@ document.addEventListener('DOMContentLoaded', () => {
   function gymSetActivePeriod(periodId) {
     gymState.activePeriodId = periodId;
     gymSaveState(gymState);
+  }
+
+  function gymOpenPeriodWizardStep1() {
+    if (!gymEl.periodWizardScreen) return;
+
+    // скрываем список периодов и экран тренировки
+    if (gymEl.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
+    if (gymEl.screen) gymEl.screen.classList.add('hidden');
+
+    // включаем мастер, шаг 1
+    gymEl.periodWizardScreen.classList.remove('hidden');
+    if (gymEl.periodStep1) gymEl.periodStep1.classList.remove('hidden');
+    if (gymEl.periodStep2) gymEl.periodStep2.classList.add('hidden');
+
+    // дефолтный драфт
+    gymPeriodWizardDraft = {
+      type: 'strength',
+      name: 'На силу',
+      splitType: 'split',
+      cycleLengthDays: 7,
+      totalCycles: 8,
+      days: [], // заполним на шаге 2
+    };
+
+    // сброс значений полей
+    const cycleLenInput = document.getElementById('gymPeriodCycleLength');
+    const totalCyclesInput = document.getElementById('gymPeriodTotalCycles');
+    const customNameInput = document.getElementById('gymPeriodCustomName');
+
+    if (cycleLenInput) cycleLenInput.value = '7';
+    if (totalCyclesInput) totalCyclesInput.value = '8';
+    if (customNameInput) customNameInput.value = '';
+  }
+
+  function gymClosePeriodWizard() {
+    if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
+    // возвращаемся к списку периодов
+    gymOpenPeriodsScreen();
+  }
+
+  function gymPeriodWizardStep1Next() {
+    if (!gymPeriodWizardDraft) return;
+
+    const typeInput = document.querySelector('input[name="gymPeriodType"]:checked');
+    const splitInput = document.querySelector('input[name="gymPeriodSplit"]:checked');
+    const customNameInput = document.getElementById('gymPeriodCustomName');
+    const cycleLenInput = document.getElementById('gymPeriodCycleLength');
+    const totalCyclesInput = document.getElementById('gymPeriodTotalCycles');
+
+    const type = typeInput?.value || 'strength';
+    const splitType = splitInput?.value || 'split';
+    const cycleLengthDays = Math.max(1, Number(cycleLenInput?.value || 7));
+    const totalCycles = Math.max(1, Number(totalCyclesInput?.value || 8));
+
+    let name = 'Период';
+    if (type === 'strength') name = 'На силу';
+    else if (type === 'endurance') name = 'На выносливость';
+    if (type === 'custom') {
+      const v = (customNameInput?.value || '').trim();
+      if (v) name = v;
+    }
+
+    gymPeriodWizardDraft.type = type;
+    gymPeriodWizardDraft.splitType = splitType;
+    gymPeriodWizardDraft.cycleLengthDays = cycleLengthDays;
+    gymPeriodWizardDraft.totalCycles = totalCycles;
+    gymPeriodWizardDraft.name = name;
+
+    // генерим дни цикла
+    if (!gymEl.periodDaysContainer) return;
+    gymEl.periodDaysContainer.innerHTML = '';
+
+    for (let dayIndex = 1; dayIndex <= cycleLengthDays; dayIndex++) {
+      const dayDiv = document.createElement('div');
+      dayDiv.className = 'bg-white/10 rounded-xl px-3 py-3 space-y-2';
+      dayDiv.dataset.dayIndex = String(dayIndex);
+
+      const label = `День ${dayIndex}`;
+      dayDiv.innerHTML = `
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-sm font-medium text-white">${label}</span>
+          <label class="flex items-center gap-1 text-[11px] text-slate-200">
+            <input type="checkbox" data-field="dayEnabled" class="accent-emerald-400" checked>
+            <span>Тренировочный день</span>
+          </label>
+        </div>
+        <div class="text-[11px] text-slate-300 mb-1">
+          Группы мышц в этот день
+        </div>
+        <div data-role="muscleList" class="space-y-1">
+          <!-- сюда добавим группы -->
+        </div>
+        <button
+          type="button"
+          data-role="addMuscleGroup"
+          class="mt-1 text-[11px] text-emerald-300 underline"
+        >
+          + Добавить группу мышц
+        </button>
+      `;
+
+      // добавим одну дефолтную группу
+      const muscleList = dayDiv.querySelector('[data-role="muscleList"]');
+      if (muscleList) {
+        const g = document.createElement('div');
+        g.className = 'flex items-center gap-1';
+        g.innerHTML = `
+          <input
+            type="text"
+            class="flex-1 bg-white/15 rounded-lg px-2 py-1 text-xs text-white"
+            placeholder="Например, Грудь + Трицепс"
+            value="${GYM_DEFAULT_GROUPS[0]}"
+            data-field="muscleGroupName"
+          />
+        `;
+        muscleList.appendChild(g);
+      }
+
+      gymEl.periodDaysContainer.appendChild(dayDiv);
+    }
+
+    // включаем шаг 2
+    if (gymEl.periodStep1) gymEl.periodStep1.classList.add('hidden');
+    if (gymEl.periodStep2) gymEl.periodStep2.classList.remove('hidden');
+
+    // логика добавления групп на шаге 2
+    gymEl.periodDaysContainer.querySelectorAll('button[data-role="addMuscleGroup"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const container = btn.closest('[data-day-index]');
+        if (!container) return;
+        const muscleList = container.querySelector('[data-role="muscleList"]');
+        if (!muscleList) return;
+        const g = document.createElement('div');
+        g.className = 'flex items-center gap-1';
+        g.innerHTML = `
+          <input
+            type="text"
+            class="flex-1 bg-white/15 rounded-lg px-2 py-1 text-xs text-white"
+            placeholder="Например, Спина + Бицепс"
+            data-field="muscleGroupName"
+          />
+        `;
+        muscleList.appendChild(g);
+      });
+    });
+  }
+  
+  function gymPeriodWizardCreatePeriod() {
+    if (!gymPeriodWizardDraft) return;
+    if (!gymEl.periodDaysContainer) return;
+
+    const days = [];
+    gymEl.periodDaysContainer.querySelectorAll('[data-day-index]').forEach(dayDiv => {
+      const dayIndex = Number(dayDiv.dataset.dayIndex || '0') || 0;
+      const enabledInput = dayDiv.querySelector('input[data-field="dayEnabled"]');
+      const enabled = enabledInput ? enabledInput.checked : true;
+
+      const muscles = [];
+      dayDiv.querySelectorAll('input[data-field="muscleGroupName"]').forEach(inp => {
+        const name = (inp.value || '').trim();
+        if (name) {
+          muscles.push({
+            group: name,
+            exercises: [], // потом добавим шаблоны упражнений
+          });
+        }
+      });
+
+      days.push({
+        dayIndex,
+        enabled,
+        muscles,
+      });
+    });
+
+    gymPeriodWizardDraft.days = days;
+
+    const id = gymCreatePeriodId();
+    const period = {
+      id,
+      name: gymPeriodWizardDraft.name,
+      type: gymPeriodWizardDraft.type,
+      splitType: gymPeriodWizardDraft.splitType,
+      cycleLengthDays: gymPeriodWizardDraft.cycleLengthDays,
+      totalCycles: gymPeriodWizardDraft.totalCycles,
+      template: {
+        days: gymPeriodWizardDraft.days,
+      },
+      progress: {
+        currentCycle: 1,
+      },
+    };
+
+    if (!gymState.periods) gymState.periods = {};
+    if (!gymState.periodOrder) gymState.periodOrder = [];
+
+    gymState.periods[id] = period;
+    gymState.periodOrder.push(id);
+    gymSetActivePeriod(id);
+    gymSaveState(gymState);
+
+    // очищаем драфт и возвращаемся к списку периодов
+    gymPeriodWizardDraft = null;
+    if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
+    gymRenderPeriodsList();
+    gymOpenPeriodsScreen();
   }
 
   // экран списка периодов
@@ -1370,47 +1591,58 @@ document.addEventListener('DOMContentLoaded', () => {
     if (gymEl.periodsScreen) gymEl.periodsScreen.classList.remove('hidden');
   }
 
-  // события
+  // кнопка "Фитнес → Зал"
   if (gymEl.fromFitnessBtn) {
     gymEl.fromFitnessBtn.addEventListener('click', gymOpenPeriodsScreen);
   }
+
+  // список периодов: назад
   if (gymEl.periodsBackBtn) {
     gymEl.periodsBackBtn.addEventListener('click', gymClosePeriodsScreen);
   }
-  function gymQuickCreatePeriod() {
-    const id = gymCreatePeriodId();
-    const period = {
-      id,
-      name: 'На силу',
-      type: 'strength',
-      splitType: 'split',
-      cycleLengthDays: 7,
-      totalCycles: 8,
-      template: { days: [] },
-      progress: { currentCycle: 1 },
-    };
 
-    if (!gymState.periods) gymState.periods = {};
-    if (!gymState.periodOrder) gymState.periodOrder = [];
-
-    gymState.periods[id] = period;
-    gymState.periodOrder.push(id);
-    gymSetActivePeriod(id);
-    gymSaveState(gymState);
-    gymRenderPeriodsList();
-  }
-
+  // кнопки "Создать период"
   if (gymEl.createPeriodBtn) {
     gymEl.createPeriodBtn.addEventListener('click', () => {
-      gymQuickCreatePeriod();
+      gymOpenPeriodWizardStep1();
     });
   }
   if (gymEl.createPeriodTopBtn) {
     gymEl.createPeriodTopBtn.addEventListener('click', () => {
-      gymQuickCreatePeriod();
+      gymOpenPeriodWizardStep1();
     });
   }
 
+  // мастер периода: навигация и действия
+  if (gymEl.periodWizardBackBtn) {
+    gymEl.periodWizardBackBtn.addEventListener('click', () => {
+      gymClosePeriodWizard();
+    });
+  }
+  if (gymEl.periodStep1CancelBtn) {
+    gymEl.periodStep1CancelBtn.addEventListener('click', () => {
+      gymClosePeriodWizard();
+    });
+  }
+  if (gymEl.periodStep1NextBtn) {
+    gymEl.periodStep1NextBtn.addEventListener('click', () => {
+      gymPeriodWizardStep1Next();
+    });
+  }
+  if (gymEl.periodStep2BackBtn) {
+    gymEl.periodStep2BackBtn.addEventListener('click', () => {
+      // назад на шаг 1
+      if (gymEl.periodStep2) gymEl.periodStep2.classList.add('hidden');
+      if (gymEl.periodStep1) gymEl.periodStep1.classList.remove('hidden');
+    });
+  }
+  if (gymEl.periodStep2CreateBtn) {
+    gymEl.periodStep2CreateBtn.addEventListener('click', () => {
+      gymPeriodWizardCreatePeriod();
+    });
+  }
+
+  // экран конкретного периода
   if (gymEl.backBtn) {
     gymEl.backBtn.addEventListener('click', gymClose);
   }
