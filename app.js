@@ -1589,121 +1589,146 @@ document.addEventListener('DOMContentLoaded', () => {
   
     const runtime = gymGetCurrentCycle();
     if (!runtime) return;
-    const groupsData = runtime.groups || {};
+    if (!runtime.groups) runtime.groups = {};
+    const groupsData = runtime.groups;
   
     gymEl.groupsContainer.innerHTML = '';
   
-    // пока всегда День 1 (потом можно привязать к селектору дня)
-    const currentDayIndex = 1;
+    const days = Array.isArray(period.days) && period.days.length
+      ? period.days
+      : [];
   
-    // ищем конфиг дня из мастера
-    const dayConfig = (period.days || []).find(
-      d => d.dayIndex === currentDayIndex && d.enabled
-    );
+    // если дней нет (старый период) – покажем один "день по умолчанию"
+    const daysToRender = days.length
+      ? days
+      : [{ dayIndex: 1, enabled: true, muscles: GYM_DEFAULT_GROUPS }];
   
-    const muscleGroups = dayConfig && dayConfig.muscles && dayConfig.muscles.length
-      ? dayConfig.muscles
-      : GYM_DEFAULT_GROUPS; // fallback, если нет сохранённых данных
+    daysToRender.forEach(day => {
+      if (!day.enabled) return;
   
-    muscleGroups.forEach(groupName => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'bg-white/5 rounded-xl px-3 py-3 space-y-2';
+      const dayWrapper = document.createElement('div');
+      dayWrapper.className = 'bg-white/5 rounded-2xl px-3 py-3 space-y-2';
   
-      const header = document.createElement('div');
-      header.className = 'flex items-center justify-between mb-1';
-      header.innerHTML = `
-        <span class="text-sm text-slate-100 font-medium">${groupName}</span>
-        <button class="text-xs px-2 py-1 rounded-full bg-emerald-500 text-white" data-group="${groupName}">
-          + Упражнение
-        </button>
+      const title = document.createElement('div');
+      title.className = 'flex items-center justify-between mb-2';
+      title.innerHTML = `
+        <div>
+          <div class="text-sm font-semibold text-white">День ${day.dayIndex}</div>
+          <div class="text-xs text-slate-300">
+            ${day.muscles && day.muscles.length
+              ? day.muscles.join(', ')
+              : 'Добавь группы мышц в мастере периода'}
+          </div>
+        </div>
       `;
-      wrapper.appendChild(header);
+      dayWrapper.appendChild(title);
   
-      const listContainer = document.createElement('div');
-      listContainer.className = 'space-y-2';
-      listContainer.dataset.group = groupName;
+      const muscleGroups = day.muscles && day.muscles.length
+        ? day.muscles
+        : GYM_DEFAULT_GROUPS;
   
-      const exercises = groupsData[groupName] || [];
-      if (!exercises.length) {
-        const empty = document.createElement('div');
-        empty.className = 'text-xs text-slate-400';
-        empty.textContent = 'Добавь упражнение для этой группы.';
-        listContainer.appendChild(empty);
-      } else {
-        exercises.forEach((ex, idx) => {
-          const card = document.createElement('div');
-          card.className = 'bg-slate-900/80 rounded-xl px-3 py-3 space-y-2';
-          card.dataset.index = String(idx);
-          card.innerHTML = `
-            <input
-              class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
-              placeholder="Название (Жим гантелей)"
-              value="${ex.name || ''}"
-              data-field="name"
-            />
+      muscleGroups.forEach(groupName => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bg-slate-900/60 rounded-xl px-3 py-3 space-y-2';
   
-            <div class="flex gap-2 text-xs">
-              <div class="flex-1">
-                <div class="text-slate-400 mb-1">Рабочие подходы</div>
-                <input
-                  class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                  placeholder="4x10x35 кг"
-                  value="${ex.sets || ''}"
-                  data-field="sets"
-                />
-              </div>
-              <div class="flex-1">
-                <div class="text-slate-400 mb-1">Разминка (опц.)</div>
-                <input
-                  class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                  placeholder="2x15"
-                  value="${ex.warmup || ''}"
-                  data-field="warmup"
-                />
-              </div>
-            </div>
+        const header = document.createElement('div');
+        header.className = 'flex items-center justify-between mb-1';
+        header.innerHTML = `
+          <span class="text-sm text-slate-100 font-medium">${groupName}</span>
+          <button class="text-xs px-2 py-1 rounded-full bg-emerald-500 text-white" data-group="${groupName}">
+            + Упражнение
+          </button>
+        `;
+        wrapper.appendChild(header);
   
-            <div class="flex items-center justify-between text-xs">
-              <div class="flex-1 mr-2">
-                <div class="text-slate-400 mb-1">RPE 1–10</div>
-                <div class="flex items-center gap-2">
-                  <input type="range" min="1" max="10" value="${ex.rpe || 7}" data-field="rpe" class="flex-1">
-                  <span class="text-slate-100 text-xs" data-rpe-label>${ex.rpe || 7}/10</span>
+        const listContainer = document.createElement('div');
+        listContainer.className = 'space-y-2';
+        listContainer.dataset.group = groupName;
+  
+        const exercises = groupsData[groupName] || [];
+        if (!exercises.length) {
+          const empty = document.createElement('div');
+          empty.className = 'text-xs text-slate-400';
+          empty.textContent = 'Добавь упражнение для этой группы.';
+          listContainer.appendChild(empty);
+        } else {
+          exercises.forEach((ex, idx) => {
+            const card = document.createElement('div');
+            card.className = 'bg-slate-900/80 rounded-xl px-3 py-3 space-y-2';
+            card.dataset.index = String(idx);
+            card.innerHTML = `
+              <input
+                class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
+                placeholder="Название (Жим гантелей)"
+                value="${ex.name || ''}"
+                data-field="name"
+              />
+  
+              <div class="flex gap-2 text-xs">
+                <div class="flex-1">
+                  <div class="text-slate-400 mb-1">Рабочие подходы</div>
+                  <input
+                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
+                    placeholder="4x10x35 кг"
+                    value="${ex.sets || ''}"
+                    data-field="sets"
+                  />
+                </div>
+                <div class="flex-1">
+                  <div class="text-slate-400 mb-1">Разминка (опц.)</div>
+                  <input
+                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
+                    placeholder="2x15"
+                    value="${ex.warmup || ''}"
+                    data-field="warmup"
+                  />
                 </div>
               </div>
-              <button class="text-[11px] text-red-300 underline" data-delete="1">Удалить</button>
-            </div>
   
-            <div class="flex gap-2 text-xs">
-              <div class="flex-1">
-                <div class="text-slate-400 mb-1">Прогресс за период</div>
-                <input
-                  class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                  placeholder="+5 кг с начала"
-                  value="${ex.progressNote || ''}"
-                  data-field="progressNote"
-                />
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex-1 mr-2">
+                  <div class="text-slate-400 mb-1">RPE 1–10</div>
+                  <div class="flex items-center gap-2">
+                    <input type="range" min="1" max="10" value="${ex.rpe || 7}" data-field="rpe" class="flex-1">
+                    <span class="text-slate-100 text-xs" data-rpe-label>${ex.rpe || 7}/10</span>
+                  </div>
+                </div>
+                <button class="text-[11px] text-red-300 underline" data-delete="1">Удалить</button>
               </div>
-              <div class="flex-1">
-                <div class="text-slate-400 mb-1">План на след. цикл</div>
-                <input
-                  class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                  placeholder="След. цикл: 37 кг"
-                  value="${ex.nextCyclePlan || ''}"
-                  data-field="nextCyclePlan"
-                />
-              </div>
-            </div>
-          `;
-          listContainer.appendChild(card);
-        });
-      }
   
-      wrapper.appendChild(listContainer);
-      gymEl.groupsContainer.appendChild(wrapper);
+              <div class="flex gap-2 text-xs">
+                <div class="flex-1">
+                  <div class="text-slate-400 mb-1">Прогресс за период</div>
+                  <input
+                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
+                    placeholder="+5 кг с начала"
+                    value="${ex.progressNote || ''}"
+                    data-field="progressNote"
+                  />
+                </div>
+                <div class="flex-1">
+                  <div class="text-slate-400 mb-1">План на след. цикл</div>
+                  <input
+                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
+                    placeholder="След. цикл: 37 кг"
+                    value="${ex.nextCyclePlan || ''}"
+                    data-field="nextCyclePlan"
+                  />
+                </div>
+              </div>
+            `;
+            listContainer.appendChild(card);
+          });
+        }
+  
+        wrapper.appendChild(listContainer);
+        dayWrapper.appendChild(wrapper);
+      });
+  
+      gymEl.groupsContainer.appendChild(dayWrapper);
     });
   
-    // добавление
+    // добавление упражнения
     gymEl.groupsContainer.querySelectorAll('button[data-group]').forEach(btn => {
       btn.addEventListener('click', () => {
         const groupName = btn.dataset.group;
@@ -1746,7 +1771,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   
-    // удаление
+    // удаление упражнения
     gymEl.groupsContainer.querySelectorAll('button[data-delete]').forEach(btn => {
       btn.addEventListener('click', () => {
         const card = btn.closest('[data-index]');
@@ -1763,6 +1788,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+  
 
   if (gymEl.daySelect) {
     gymEl.daySelect.addEventListener('change', () => {
