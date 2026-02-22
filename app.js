@@ -1099,9 +1099,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (gymEl.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
     if (gymEl.screen) gymEl.screen.classList.add('hidden');
   
-    // показываем ГЛАВНЫЙ экран, потому что мастер лежит внутри #main
-    if (mainEl?.screen) mainEl.screen.classList.remove('hidden');
-    if (fitnessEl?.screen) fitnessEl.screen.classList.add('hidden');
+    // фитнес-экран остаётся видимым, мастер просто занимает его область
+    // (fitnessEl.screen мы не трогаем)
   
     // включаем мастер, шаг 1
     gymEl.periodWizardScreen.classList.remove('hidden');
@@ -1126,14 +1125,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (customNameInput) customNameInput.value = '';
   }
   
-  
-
   function gymClosePeriodWizard() {
     if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
-    // возвращаемся к списку периодов в фитнесе
+    // возвращаемся к списку периодов
     gymOpenPeriodsScreen();
-  }
-  
+  }  
 
   function gymPeriodWizardStep1Next() {
     if (!gymPeriodWizardDraft) return;
