@@ -39,14 +39,33 @@
     <div id="main" class="space-y-6">
       <h1 class="text-3xl font-bold text-center">LeakFixer</h1>
       
-      <!-- Профиль -->
-      <div id="profile" class="flex items-center mb-4">
-        <img id="profilePhoto" class="w-14 h-14 rounded-full mr-3 border border-white/50" src="" alt="avatar">
-        <div>
-          <div id="profileName" class="font-semibold text-lg"></div>
-          <div class="text-sm opacity-80">@<span id="profileUsername"></span></div>
+      <!-- Профиль + Дни в одной строке -->
+      <div id="profile" class="flex items-center justify-between mb-4">
+        <!-- Левая часть: аватар + имя -->
+        <div class="flex items-center">
+          <img id="profilePhoto" class="w-14 h-14 rounded-full mr-3 border border-white/50" src="" alt="avatar">
+          <div>
+            <div id="profileName" class="font-semibold text-lg"></div>
+            <div class="text-sm opacity-80">@<span id="profileUsername"></span></div>
+          </div>
+        </div>
+
+        <!-- Правая часть: День / Стрик / Баллы -->
+        <div class="bg-white/15 rounded-xl px-3 py-2 text-right text-xs leading-tight min-w-[120px]">
+          <div id="currentDay" class="text-sm font-semibold mb-1">День 1/30</div>
+          <div class="flex items-center justify-end gap-3">
+            <div>
+              <div class="opacity-70">Стрик</div>
+              <div class="text-sm font-semibold" id="streak">0</div>
+            </div>
+            <div>
+              <div class="opacity-70">Баллы</div>
+              <div class="text-sm font-semibold" id="points">0</div>
+            </div>
+          </div>
         </div>
       </div>
+
       
       <!-- Вертикальная шкала глобального состояния (настроение/ресурс) -->
       <div id="globalMoodWidget" class="bg-white/15 backdrop-blur-xl rounded-2xl p-4 flex items-center gap-4">
@@ -106,15 +125,6 @@
           >
             ✏️ Обновить настроение
           </button>
-        </div>
-      </div>
-      
-
-      <div class="bg-white/20 backdrop-blur-xl rounded-2xl p-6">
-        <div class="text-4xl font-black text-center mb-4" id="currentDay">День 1</div>
-        <div class="grid grid-cols-2 gap-4 text-xl">
-          <div>Стрик: <span id="streak">0</span></div>
-          <div>Баллы: <span id="points">0</span></div>
         </div>
       </div>
   
