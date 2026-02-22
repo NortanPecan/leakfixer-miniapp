@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const SUPABASE_URL = 'https://zhpwehjbonzffpxdrbyl.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpocHdlaGpib256ZmZweGRyYnlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNzM3MjAsImV4cCI6MjA4Njk0OTcyMH0.em0tBA_YArxA2QQO-r5CWCFnyiknre88Mn6wsrX2ARs';
+  window.currentAppUserId = null; // для fitness синхронизации
 
   let currentUser = null;
   let currentDay = 1;
@@ -205,7 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       currentAppUserId = appUser.id;
-
+      window.currentAppUserId = currentAppUserId;
+      if (typeof initFitnessSync === 'function') {
+        initFitnessSync(currentAppUserId);
+      }
       // 2. Старую таблицу users можно временно использовать как «профиль прогресса»
       const legacyUsers = await fetch(
         `${SUPABASE_URL}/rest/v1/users?app_user_id=eq.${currentAppUserId}`,
@@ -441,6 +445,15 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessEl.calBurned.textContent = summary.burned;
     fitnessEl.balance.textContent = summary.balance;
     fitnessEl.balance.className = 'font-semibold ' + (summary.balanceColor === 'green' ? 'text-green-300' : summary.balanceColor === 'red' ? 'text-red-300' : '');
+    // АВТОСОХРАНЕНИЕ в Supabase
+    if (window.FitnessSync && window.currentAppUserId) {
+        const dateKey = fitnessGetDateKey();
+        const dayData = FS.getDayData(dateKey);
+        window.FitnessSync.saveDay(dateKey, {
+          water_ml: dayData.waterMl || 0,
+          work_day: dayData.workDay || 'normal'
+        }).catch(console.error);
+      }
   }
 
   function fitnessRenderWorkDay() {
@@ -452,7 +465,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (v === 'normal') text = 'Обычный день';
     if (v === 'high') text = 'Очень активный день';
     fitnessEl.workDayLabel.textContent = text;
+    // АВТОСОХРАНЕНИЕ
+    if (window.FitnessSync && window.currentAppUserId) {
+        const dateKey = fitnessGetDateKey();
+        const dayData = FS.getDayData(dateKey);
+        window.FitnessSync.saveDay(dateKey, {
+          work_day: dayData.workDay || 'normal'
+        }).catch(console.error);
   }
+}
 
   function fitnessRenderDate() {
     if (fitnessEl.dateLabel) fitnessEl.dateLabel.textContent = FS.formatDateLocal(fitnessSelectedDate);
@@ -523,6 +544,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fitnessEl.waterTotal) {
       const dayData = FS.getDayData(fitnessGetDateKey());
       fitnessEl.waterTotal.textContent = FS.formatWaterLiters(dayData.waterMl);
+      // АВТОСОХРАНЕНИЕ
+      if (window.FitnessSync && window.currentAppUserId) {
+          const dateKey = fitnessGetDateKey();
+          const dayData = FS.getDayData(dateKey);
+          window.FitnessSync.saveDay(dateKey, {
+            water_ml: dayData.waterMl || 0
+          }).catch(console.error);
+        }
     }
   }
 

@@ -89,12 +89,23 @@ const FITNESS_DATA_KEY = 'leakfixer_fitness_data';
 const BALANCE_GREEN_MAX = 300;
 const BALANCE_RED_THRESHOLD = 500;
 
-// ─── Persistence (can be replaced by API in React) ─────────────────────────
+
+// ─── Persistence (Supabase + localStorage cache) ─────────────────────────
+
+function getProfileStorageKey() {
+  const id = window.currentAppUserId || 'anon';
+  return `${FITNESS_PROFILE_KEY}_${id}`;
+}
+
+function getDataStorageKey() {
+  const id = window.currentAppUserId || 'anon';
+  return `${FITNESS_DATA_KEY}_${id}`;
+}
 
 /** @returns {ProfileFitnessSettings} */
 function getFitnessProfile() {
   try {
-    const raw = localStorage.getItem(FITNESS_PROFILE_KEY);
+    const raw = localStorage.getItem(getProfileStorageKey());
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -103,13 +114,16 @@ function getFitnessProfile() {
 
 /** @param {ProfileFitnessSettings} profile */
 function setFitnessProfile(profile) {
-  localStorage.setItem(FITNESS_PROFILE_KEY, JSON.stringify(profile));
+  localStorage.setItem(getProfileStorageKey(), JSON.stringify(profile));
+  if (window.FitnessSync && window.currentAppUserId) {
+    window.FitnessSync.saveProfile(profile).catch(() => {});
+  }
 }
 
 /** @returns {Record<string, FitnessDayData>} */
 function getAllFitnessData() {
   try {
-    const raw = localStorage.getItem(FITNESS_DATA_KEY);
+    const raw = localStorage.getItem(getDataStorageKey());
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -118,7 +132,12 @@ function getAllFitnessData() {
 
 /** @param {Record<string, FitnessDayData>} data */
 function saveAllFitnessData(data) {
-  localStorage.setItem(FITNESS_DATA_KEY, JSON.stringify(data));
+  localStorage.setItem(getDataStorageKey(), JSON.stringify(data));
+}
+
+/** @returns {FitnessDayData} */
+function createEmptyDayData() {
+  return { activities: [], foods: [], waterMl: 0, supplements: [], workDay: undefined };
 }
 
 /** @param {string} dateKey YYYY-MM-DD
@@ -129,11 +148,6 @@ function getDayData(dateKey) {
     all[dateKey] = createEmptyDayData();
   }
   return all[dateKey];
-}
-
-/** @returns {FitnessDayData} */
-function createEmptyDayData() {
-  return { activities: [], foods: [], waterMl: 0, supplements: [], workDay: undefined };
 }
 
 /** @param {string} dateKey
@@ -148,6 +162,19 @@ function updateDayData(dateKey, patch) {
   if (patch.workDay !== undefined) day.workDay = patch.workDay;
   all[dateKey] = day;
   saveAllFitnessData(all);
+
+  // синхронизация дня в Supabase
+  if (window.FitnessSync && window.currentAppUserId) {
+    window.FitnessSync.saveDay(dateKey, {
+      water_ml: day.waterMl || 0,
+      work_day: day.workDay || 'normal',
+      data: {
+        activities: day.activities || [],
+        foods: day.foods || [],
+        supplements: day.supplements || [],
+      },
+    }).catch(() => {});
+  }
 }
 
 /** @returns {string} */
