@@ -914,16 +914,30 @@ document.addEventListener('DOMContentLoaded', () => {
   function initGlobalMoodWidget() {
     const btn = document.getElementById('logMoodBtn');
     if (btn) {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const raw = prompt('Текущее состояние (0–10):', '7');
         if (raw == null) return;
         const num = parseFloat(raw);
-        if (!Number.isNaN(num)) renderGlobalMood(num, 6.5);
+        if (Number.isNaN(num)) return;
+  
+        // обновляем UI
+        renderGlobalMood(num, 6.5);
+  
+        // сохраняем в Supabase как daily_state + measurements
+        if (window.FitnessSync && window.currentAppUserId) {
+          const todayKey = FS.formatDateKey(new Date()); // YYYY-MM-DD
+          try {
+            await window.FitnessSync.saveMood(todayKey, num);
+          } catch (e) {
+            console.error('saveMood failed', e);
+          }
+        }
       });
     }
   
     renderGlobalMood(7.3, 6.5);
   }
+  
   
 
 
