@@ -405,40 +405,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Кнопки на главном экране
-  if (el.habitsBtn) {
-    el.habitsBtn.addEventListener('click', () => {
-      showAlert('Экран привычек будет позже');
-    });
-  }
-
-  if (el.buddyBtn) {
-    el.buddyBtn.addEventListener('click', () => {
-      showBuddy();
-    });
-  }
-
-  if (fitnessBtn) {
-    fitnessBtn.addEventListener('click', () => {
-      showFitness();
-    });
-  }
-
-  // Назад из фитнеса
-  if (fitnessEl?.backBtn) {
-    fitnessEl.backBtn.addEventListener('click', () => {
-      showMain();
-    });
-  }
-
-  // Назад из бадди
-  if (el.backBtn) {
-    el.backBtn.addEventListener('click', () => {
-      showMain();
-    });
-  }
-
-
   // --- Fitness tab (glue only: DOM refs, events, render; logic in fitness.js) ---
   const FITNESS_SETUP_DONE_KEY = 'leakfixer_fitness_setup_done';
   let fitnessSelectedDate = new Date();
