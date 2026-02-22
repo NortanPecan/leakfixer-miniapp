@@ -1421,16 +1421,20 @@ document.addEventListener('DOMContentLoaded', () => {
   function gymOpenPeriodsScreen() {
     if (!gymEl.periodsScreen) return;
   
-    // показываем фитнес-экран
+    // фитнес-экран включён, но сам фитнес-дашборд прячем
     if (fitnessEl?.screen) fitnessEl.screen.classList.remove('hidden');
-    // прячем экран конкретного периода
+    if (fitnessEl?.profileSetup) fitnessEl.profileSetup.classList.add('hidden');
+    if (fitnessEl?.dashboard) fitnessEl.dashboard.classList.add('hidden');
+  
+    // прячем экран конкретного периода и мастер
     if (gymEl.screen) gymEl.screen.classList.add('hidden');
-    // прячем мастер, если он открыт
     if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
   
+    // показываем "новое окно" – список периодов
     gymRenderPeriodsList();
     gymEl.periodsScreen.classList.remove('hidden');
   }
+  
   
 
   function gymClosePeriodsScreen() {
