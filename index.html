@@ -53,6 +53,66 @@
         <!-- сюда JS подставит карточки привычек -->
       </div>
       
+      <!-- Вертикальная шкала глобального состояния (настроение/ресурс) -->
+      <div id="globalMoodWidget" class="bg-white/15 backdrop-blur-xl rounded-2xl p-4 flex items-center gap-4">
+        <!-- Левая колонка: вертикальная шкала из 10 сегментов -->
+        <div class="flex flex-col items-center">
+          <div class="text-[10px] mb-1 text-orange-300 flex items-center gap-1 font-medium tracking-wide">
+            <span>ПИК</span> <span>🔥</span>
+          </div>
+
+          <div id="moodScaleContainer" class="relative w-9 h-40 bg-slate-900/60 rounded-xl border border-white/20 p-1 flex flex-col justify-between">
+            <!-- 10 сегментов сверху вниз (10 = верх, 1 = низ) -->
+            <div class="mood-segment h-4 mx-[1px] rounded overflow-hidden border border-slate-700/60" data-level="10"></div>
+            <div class="mood-segment h-4 mx-[1px] rounded overflow-hidden border border-slate-700/60" data-level="9"></div>
+            <div class="mood-segment h-4 mx-[1px] rounded overflow-hidden border border-slate-700/60" data-level="8"></div>
+            <div class="mood-segment h-4 mx-[1px] rounded overflow-hidden border border-slate-700/60" data-level="7"></div>
+            <div class="mood-segment h-4 mx-[1px] rounded overflow-hidden border border-slate-700/60" data-level="6"></div>
+            <div class="mood-segment h-4 mx-[1px] rounded overflow-hidden border border-slate-700/60" data-level="5"></div>
+            <div class="mood-segment h-4 mx-[1px] rounded overflow-hidden border border-slate-700/60" data-level="4"></div>
+            <div class="mood-segment h-4 mx-[1px] rounded overflow-hidden border border-slate-700/60" data-level="3"></div>
+            <div class="mood-segment h-4 mx-[1px] rounded overflow-hidden border border-slate-700/60" data-level="2"></div>
+            <div class="mood-segment h-4 mx-[1px] rounded overflow-hidden border border-slate-700/60" data-level="1"></div>
+          </div>
+
+          <div class="text-[10px] mt-1 text-red-300 flex items-center gap-1 font-medium tracking-wide">
+            <span>КРИЗИС</span> <span>💀</span>
+          </div>
+        </div>
+
+        <!-- Правая колонка: цифры и текст -->
+        <div class="flex-1 min-w-0 flex flex-col justify-between h-40">
+          <div>
+            <div class="text-[10px] opacity-70 uppercase tracking-wider mb-1">
+              Глобальное состояние
+            </div>
+            <div class="flex items-baseline gap-1.5 mb-1">
+              <span id="moodScore" class="text-3xl font-black bg-gradient-to-r from-emerald-300 to-emerald-500 bg-clip-text text-transparent">
+                7.3
+              </span>
+              <span class="text-sm opacity-70">/ 10</span>
+            </div>
+            <div id="moodStatus" class="text-xs font-medium text-emerald-300">
+              Хороший тон, есть ресурс
+            </div>
+          </div>
+
+          <div class="text-[10px] opacity-70 mt-2 flex items-center justify-between">
+            <span>Вчера: <span id="moodYesterday">6.5</span></span>
+            <span id="moodTrend">↗ +0.8</span>
+          </div>
+
+          <button
+            id="logMoodBtn"
+            type="button"
+            class="mt-2 self-start px-3 py-1.5 rounded-full bg-sky-500/90 hover:bg-sky-400 text-[11px] font-semibold transition"
+          >
+            ✏️ Обновить настроение
+          </button>
+        </div>
+      </div>
+      
+
       <div class="bg-white/20 backdrop-blur-xl rounded-2xl p-6">
         <div class="text-4xl font-black text-center mb-4" id="currentDay">День 1</div>
         <div class="grid grid-cols-2 gap-4 text-xl">
