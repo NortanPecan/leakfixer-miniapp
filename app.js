@@ -54,6 +54,43 @@ document.addEventListener('DOMContentLoaded', () => {
     points: document.getElementById('points'),
   };
 
+  // корневые экраны
+  const rootScreens = {
+    main: document.getElementById('main'),
+    fitness: document.getElementById('fitnessScreen'),
+    buddy: document.getElementById('buddyScreen'),
+  };
+
+  const fitnessBtn = document.getElementById('fitnessBtn');
+
+  function showMain() {
+    if (rootScreens.main) rootScreens.main.classList.remove('hidden');
+    if (rootScreens.fitness) rootScreens.fitness.classList.add('hidden');
+    if (rootScreens.buddy) rootScreens.buddy.classList.add('hidden');
+  }
+
+  function showFitness() {
+    if (rootScreens.main) rootScreens.main.classList.add('hidden');
+    if (rootScreens.buddy) rootScreens.buddy.classList.add('hidden');
+    if (rootScreens.fitness) rootScreens.fitness.classList.remove('hidden');
+
+    // при входе в фитнес — показываем дашборд, а не зал
+    if (fitnessEl?.profileSetup) fitnessEl.profileSetup.classList.add('hidden');
+    if (fitnessEl?.dashboard) fitnessEl.dashboard.classList.remove('hidden');
+
+    // скрываем экраны зала внутри фитнеса
+    if (gymEl?.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
+    if (gymEl?.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
+    if (gymEl?.screen) gymEl.screen.classList.add('hidden');
+  }
+
+  function showBuddy() {
+    if (rootScreens.main) rootScreens.main.classList.add('hidden');
+    if (rootScreens.fitness) rootScreens.fitness.classList.add('hidden');
+    if (rootScreens.buddy) rootScreens.buddy.classList.remove('hidden');
+  }
+
+
   function setCompleteButtonState({ completed }) {
     if (!el.completeBtn) return;
     if (completed) {
@@ -372,25 +409,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Кнопки на главном экране
   if (el.habitsBtn) {
     el.habitsBtn.addEventListener('click', () => {
-      // Экран привычек пока не реализован
+      showAlert('Экран привычек будет позже');
     });
   }
 
   if (el.buddyBtn) {
     el.buddyBtn.addEventListener('click', () => {
-      el.main?.classList.add('hidden');
-      el.buddyScreen?.classList.remove('hidden');
+      showBuddy();
     });
   }
 
-  if (el.backBtn) {
-    el.backBtn.addEventListener('click', () => {
-      el.buddyScreen?.classList.add('hidden');
-      el.main?.classList.remove('hidden');
+  if (fitnessBtn) {
+    fitnessBtn.addEventListener('click', () => {
+      showFitness();
     });
   }
+
+  // Назад из фитнеса
+  if (fitnessEl?.backBtn) {
+    fitnessEl.backBtn.addEventListener('click', () => {
+      showMain();
+    });
+  }
+
+  // Назад из бадди
+  if (el.backBtn) {
+    el.backBtn.addEventListener('click', () => {
+      showMain();
+    });
+  }
+
 
   // --- Fitness tab (glue only: DOM refs, events, render; logic in fitness.js) ---
   const FITNESS_SETUP_DONE_KEY = 'leakfixer_fitness_setup_done';
