@@ -1038,22 +1038,257 @@ document.addEventListener('DOMContentLoaded', () => {
       newCycleBtn: document.getElementById('gymNewCycleBtn'),
     };
 
+    function gymOpenCreatePeriodWizard() {
+      if (!fitnessModalOverlay || !fitnessModalContent) return;
+  
+      fitnessModalContent.innerHTML = `
+        <h2 class="text-xl font-semibold mb-3">Новый период тренировок</h2>
+        <p class="text-xs text-slate-200 mb-4">
+          Выбери цель, длину цикла и длительность периода. Потом настроим сплит и упражнения.
+        </p>
+  
+        <div class="space-y-3 text-sm">
+          <!-- 3.1 Тип периода -->
+          <div>
+            <div class="text-xs text-slate-300 mb-1">Тип периода</div>
+            <div class="grid grid-cols-1 gap-2 text-xs">
+              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <input type="radio" name="gymPeriodType" value="strength" class="accent-emerald-400" checked>
+                <span>
+                  <div class="font-medium">На силу</div>
+                  <div class="opacity-70">Рост рабочих весов и силы</div>
+                </span>
+              </label>
+              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <input type="radio" name="gymPeriodType" value="endurance" class="accent-emerald-400">
+                <span>
+                  <div class="font-medium">На выносливость</div>
+                  <div class="opacity-70">Объём, пульс, работа длиннее</div>
+                </span>
+              </label>
+              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <input type="radio" name="gymPeriodType" value="custom" class="accent-emerald-400">
+                <span class="w-full">
+                  <div class="font-medium mb-1">Своё название</div>
+                  <input
+                    id="gymPeriodCustomName"
+                    class="w-full bg-white/10 rounded-lg px-2 py-1 text-xs text-white"
+                    placeholder="Например, Подтянуть жим и спину"
+                  />
+                </span>
+              </label>
+            </div>
+          </div>
+  
+          <!-- 3.2 Длина цикла -->
+          <div>
+            <div class="text-xs text-slate-300 mb-1">Длина цикла (дней)</div>
+            <input
+              id="gymPeriodCycleLength"
+              type="number"
+              min="3"
+              max="14"
+              value="7"
+              class="w-full bg-white/10 rounded-xl px-3 py-2 text-sm text-white"
+            />
+            <div class="text-[10px] text-slate-300 mt-1">
+              Стандартно 7 дней, но можно сделать, например, 5 или 10.
+            </div>
+          </div>
+  
+          <!-- 3.3 Количество циклов -->
+          <div>
+            <div class="text-xs text-slate-300 mb-1">Сколько циклов в периоде</div>
+            <input
+              id="gymPeriodTotalCycles"
+              type="number"
+              min="1"
+              max="24"
+              value="8"
+              class="w-full bg-white/10 rounded-xl px-3 py-2 text-sm text-white"
+            />
+            <div class="text-[10px] text-slate-300 mt-1">
+              8 циклов = примерно 8 недель, если цикл 7 дней.
+            </div>
+          </div>
+  
+          <!-- 3.4 Тип плана -->
+          <div>
+            <div class="text-xs text-slate-300 mb-1">Формат тренировок</div>
+            <div class="grid grid-cols-1 gap-2 text-xs">
+              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <input type="radio" name="gymPeriodSplit" value="split" class="accent-emerald-400" checked>
+                <span>
+                  <div class="font-medium">Сплит</div>
+                  <div class="opacity-70">Разделение по группам: грудь/спина/ноги...</div>
+                </span>
+              </label>
+              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <input type="radio" name="gymPeriodSplit" value="fullbody" class="accent-emerald-400">
+                <span>
+                  <div class="font-medium">Фулбади</div>
+                  <div class="opacity-70">Все тело за одну тренировку, 2–4 раза в неделю</div>
+                </span>
+              </label>
+              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <input type="radio" name="gymPeriodSplit" value="custom" class="accent-emerald-400">
+                <span>
+                  <div class="font-medium">Своя схема</div>
+                  <div class="opacity-70">Сам определишь, какие дни и мышцы</div>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+  
+        <div class="mt-4 flex gap-2">
+          <button id="gymPeriodCancelBtn" class="flex-1 py-2 rounded-xl bg-white/10 text-sm">
+            Отмена
+          </button>
+          <button id="gymPeriodNextBtn" class="flex-1 py-2 rounded-xl bg-emerald-500 text-sm font-semibold">
+            Дальше: дни и мышцы
+          </button>
+        </div>
+      `;
+  
+      // показать модалку
+      fitnessModalOverlay.classList.remove('hidden');
+  
+      const cancelBtn = document.getElementById('gymPeriodCancelBtn');
+      const nextBtn = document.getElementById('gymPeriodNextBtn');
+  
+      cancelBtn?.addEventListener('click', () => {
+        fitnessModalOverlay.classList.add('hidden');
+      });
+  
+      nextBtn?.addEventListener('click', () => {
+        const typeInput = document.querySelector('input[name="gymPeriodType"]:checked');
+        const splitInput = document.querySelector('input[name="gymPeriodSplit"]:checked');
+        const customNameInput = document.getElementById('gymPeriodCustomName');
+        const cycleLenInput = document.getElementById('gymPeriodCycleLength');
+        const totalCyclesInput = document.getElementById('gymPeriodTotalCycles');
+  
+        const type = typeInput?.value || 'strength';
+        const splitType = splitInput?.value || 'split';
+        const cycleLengthDays = Math.max(1, Number(cycleLenInput?.value || 7));
+        const totalCycles = Math.max(1, Number(totalCyclesInput?.value || 8));
+  
+        let name = 'Период';
+        if (type === 'strength') name = 'На силу';
+        else if (type === 'endurance') name = 'На выносливость';
+        if (type === 'custom') {
+          const v = (customNameInput?.value || '').trim();
+          if (v) name = v;
+        }
+  
+        // создаём период с базовой структурой (шаблон дней потом расширим)
+        const id = gymCreatePeriodId();
+        const period = {
+          id,
+          name,
+          type,
+          splitType,
+          cycleLengthDays,
+          totalCycles,
+          template: {
+            // пока пусто, следующий шаг — настроим дни/мышцы/упражнения
+            days: [],
+          },
+          progress: {
+            currentCycle: 1,
+          },
+        };
+  
+        if (!gymState.periods) gymState.periods = {};
+        if (!gymState.periodOrder) gymState.periodOrder = [];
+  
+        gymState.periods[id] = period;
+        gymState.periodOrder.push(id);
+        gymSetActivePeriod(id);
+  
+        gymSaveState(gymState);
+        fitnessModalOverlay.classList.add('hidden');
+  
+        // после создания показываем пока просто список периодов (позже — настройка дней)
+        gymRenderPeriodsList();
+        gymOpenPeriodsScreen();
+      });
+    }
+  
+
         // Пока используем только список периодов без сложной структуры
     function gymOpenPeriodsScreen() {
       if (!gymEl.periodsScreen) return;
-      // скрываем фитнес
       if (fitnessEl?.screen) fitnessEl.screen.classList.add('hidden');
-
-      // скрываем старый экран зала (если вдруг был открыт)
       if (gymEl.screen) gymEl.screen.classList.add('hidden');
 
-      // показываем список периодов
+      gymRenderPeriodsList();
       gymEl.periodsScreen.classList.remove('hidden');
-
-      // пока периодов нет — показываем стейт "нет периодов"
-      if (gymEl.noPeriodsState) gymEl.noPeriodsState.classList.remove('hidden');
-      if (gymEl.periodsListWrapper) gymEl.periodsListWrapper.classList.add('hidden');
     }
+
+
+    function gymRenderPeriodsList() {
+      if (!gymEl.periodsList || !gymEl.noPeriodsState || !gymEl.periodsListWrapper) return;
+  
+      const hasPeriods = gymState.periodOrder && gymState.periodOrder.length > 0;
+  
+      if (!hasPeriods) {
+        gymEl.noPeriodsState.classList.remove('hidden');
+        gymEl.periodsListWrapper.classList.add('hidden');
+        gymEl.periodsList.innerHTML = '';
+        return;
+      }
+  
+      gymEl.noPeriodsState.classList.add('hidden');
+      gymEl.periodsListWrapper.classList.remove('hidden');
+  
+      gymEl.periodsList.innerHTML = '';
+      gymState.periodOrder.forEach(id => {
+        const p = gymState.periods[id];
+        if (!p) return;
+  
+        const div = document.createElement('button');
+        div.className = 'w-full text-left bg-white/10 hover:bg-white/15 rounded-xl px-3 py-3 flex flex-col gap-1';
+        div.dataset.periodId = id;
+  
+        const cyclesDone = p.progress?.currentCycle || 1;
+        const totalCycles = p.totalCycles || 1;
+        const pct = Math.max(0, Math.min(100, (cyclesDone / totalCycles) * 100));
+  
+        const typeLabel =
+          p.type === 'strength'
+            ? 'На силу'
+            : p.type === 'endurance'
+            ? 'На выносливость'
+            : 'Своя';
+  
+        div.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm font-semibold text-white">${p.name}</div>
+              <div class="text-[11px] text-slate-300">
+                ${typeLabel} · цикл ${p.cycleLengthDays} дн · ${p.totalCycles} циклов
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-200">
+              ${cyclesDone}/${totalCycles}
+            </div>
+          </div>
+          <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
+            <div class="h-full bg-gradient-to-r from-emerald-400 to-blue-500" style="width: ${pct}%;"></div>
+          </div>
+        `;
+  
+        div.addEventListener('click', () => {
+          gymSetActivePeriod(id);
+          // пока просто откроем старый экран с циклами (следующий шаг — привязать туда данные периода)
+          gymOpen();
+        });
+  
+        gymEl.periodsList.appendChild(div);
+      });
+    }
+  
 
     function gymClosePeriodsScreen() {
       if (!gymEl.periodsScreen) return;
@@ -1064,24 +1299,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const GYM_STORAGE_KEY = 'leakfixer_gym_data';
-  
-    // базовые группы, дальше можно вынести в настройки
     const GYM_DEFAULT_GROUPS = ['Грудь + Трицепс', 'Спина + Бицепс', 'Ноги + Икры'];
   
-    // структура: { cycles: [...], currentCycle: 1, totalCycles: 8, periodName, periodDone }
     function gymLoadState() {
       try {
         const raw = localStorage.getItem(GYM_STORAGE_KEY);
-        if (raw) return JSON.parse(raw);
-      } catch {}
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.periods) return parsed;
+        }
+      } catch (e) {}
+  
+      // дефолтное состояние, если ещё нет периодов
       return {
-        currentCycle: 1,
-        totalCycles: 8,
-        periodName: 'Силовой 8 недель',
-        periodDone: 1,
-        cycles: {
-          // key: "cycle_1": { groups: { groupName: [ { ...exercise } ] } }
-        },
+        periods: {},
+        periodOrder: [],
+        activePeriodId: null,
       };
     }
   
@@ -1089,8 +1322,22 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem(GYM_STORAGE_KEY, JSON.stringify(state));
     }
   
-    let gymState = gymLoadState();
+    function gymCreatePeriodId() {
+      const n = (gymState.periodOrder?.length || 0) + 1;
+      return 'period_' + n;
+    }
   
+    function gymGetActivePeriod() {
+      if (!gymState.activePeriodId) return null;
+      return gymState.periods[gymState.activePeriodId] || null;
+    }
+  
+    function gymSetActivePeriod(periodId) {
+      gymState.activePeriodId = periodId;
+      gymSaveState(gymState);
+    }
+  
+
     function gymGetCurrentCycleKey() {
       return 'cycle_' + gymState.currentCycle;
     }
@@ -1306,14 +1553,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (gymEl.createPeriodBtn) {
       gymEl.createPeriodBtn.addEventListener('click', () => {
-        showAlert('Создание периода мы добавим следующим шагом');
+        gymOpenCreatePeriodWizard();
       });
     }
     if (gymEl.createPeriodTopBtn) {
       gymEl.createPeriodTopBtn.addEventListener('click', () => {
-        showAlert('Создание периода мы добавим следующим шагом');
+        gymOpenCreatePeriodWizard();
       });
-    }    
+    }   
     if (gymEl.backBtn) {
       gymEl.backBtn.addEventListener('click', gymClose);
     }
