@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const isDemoUser = !(tgUser && tgUser.id);
   const user = !isDemoUser ? tgUser : { id: 123, username: 'demo_user', first_name: 'Demo User' };
   const supabaseEnabled = Boolean(isTelegram && !isDemoUser && user?.id);
+  const fitnessModalOverlay = document.getElementById('fitnessModalOverlay');
+  const fitnessModalContent = document.getElementById('fitnessModalContent');
 
   const showAlert = (message) => {
     if (isTelegram && typeof tg?.showAlert === 'function') {
@@ -1556,7 +1558,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gymEl.createPeriodTopBtn.addEventListener('click', () => {
       gymOpenCreatePeriodWizard();
     });
-  }
+  }  
   if (gymEl.backBtn) {
     gymEl.backBtn.addEventListener('click', gymClose);
   }
