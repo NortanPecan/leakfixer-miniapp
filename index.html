@@ -583,6 +583,120 @@
 
       </div> 
     </div>
+    
+    <!-- НОВЫЙ ЭКРАН: список периодов -->
+    <div id="gymPeriodsScreen" class="hidden px-4 py-4 space-y-4">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xl font-semibold text-white">Тренировка в зале</h2>
+        <button id="gymPeriodsBackBtn" class="text-sm text-slate-300 underline">
+          Назад
+        </button>
+      </div>
+
+      <!-- если нет периодов — текст + кнопка -->
+      <div id="gymNoPeriodsState" class="text-sm text-slate-200 space-y-3">
+        <p>
+          Пока нет периодов тренировок. Создай первый — выбери тип (сила/выносливость/своё),
+          длину цикла и сколько циклов в периоде.
+        </p>
+        <button
+          id="gymCreatePeriodBtn"
+          class="w-full bg-emerald-500 hover:bg-emerald-600 py-3 rounded-xl font-semibold text-lg"
+        >
+          ➕ Создать период
+        </button>
+      </div>
+
+      <!-- список периодов, по умолчанию скрыт, пока нет данных -->
+      <div id="gymPeriodsListWrapper" class="hidden space-y-3">
+        <button
+          id="gymCreatePeriodTopBtn"
+          class="w-full bg-emerald-500 hover:bg-emerald-600 py-3 rounded-xl font-semibold text-lg"
+        >
+          ➕ Новый период
+        </button>
+
+        <div id="gymPeriodsList" class="space-y-2 text-sm">
+          <!-- сюда JS будет подставлять карточки периодов -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ЭКРАН КОНКРЕТНОГО ПЕРИОДА (КАК БЫЛО: циклы, группы, упражнения) -->
+    <div id="gymScreen" class="hidden px-4 py-4 space-y-4">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xl font-semibold text-white">Тренировка в зале</h2>
+        <button id="gymBackBtn" class="text-sm text-slate-300 underline">
+          Назад
+        </button>
+      </div>
+
+      <!-- Верхняя панель -->
+      <div class="flex flex-col gap-2 text-sm">
+        <div>
+          <label class="block text-slate-300 mb-1">День</label>
+          <select id="gymDay" class="w-full bg-white/10 text-white rounded-xl px-3 py-2">
+            <option>Сегодня</option>
+            <option>Пн</option>
+            <option>Вт</option>
+            <option>Ср</option>
+            <option>Чт</option>
+            <option>Пт</option>
+            <option>Сб</option>
+            <option>Вс</option>
+          </select>
+        </div>
+
+        <div class="flex gap-2">
+          <div class="flex-1 bg-white/5 rounded-xl px-3 py-2 text-xs text-slate-200" id="gymCycleInfo">
+            Цикл 1/8 · 22.02–28.02
+          </div>
+          <div class="flex-1 bg-white/5 rounded-xl px-3 py-2 text-xs text-slate-200" id="gymPeriodInfo">
+            Период: Силовой 8 нед · 1/8
+          </div>
+        </div>
+      </div>
+
+      <!-- Контейнер для групп и упражнений -->
+      <div id="gymGroupsContainer" class="space-y-3 text-sm"></div>
+
+      <!-- Краткая визуализация периода -->
+      <div class="bg-white/5 rounded-xl px-3 py-3 text-xs text-slate-200">
+        <div class="flex justify-between mb-1">
+          <span id="gymProgressLabel">Период: 1/8 циклов</span>
+        </div>
+        <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div
+            id="gymProgressBar"
+            class="h-full bg-gradient-to-r from-emerald-400 to-blue-500"
+            style="width: 12%;"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Кнопки действий -->
+      <div class="flex flex-col gap-2">
+        <button
+          id="gymSaveBtn"
+          class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold text-lg"
+        >
+          Сохранить тренировку
+        </button>
+        <button
+          id="gymHistoryBtn"
+          class="w-full bg-white/10 py-2 rounded-xl text-sm text-slate-200"
+        >
+          История (позже)
+        </button>
+        <button
+          id="gymNewCycleBtn"
+          class="w-full bg-transparent border border-white/20 py-2 rounded-xl text-sm text-slate-200"
+        >
+          Новый цикл
+        </button>
+      </div>
+    </div>
+
     <!-- Отдельный экран зала -->
     <div id="gymScreen" class="hidden px-4 py-4 space-y-4">
       <div class="flex items-center justify-between mb-2">
