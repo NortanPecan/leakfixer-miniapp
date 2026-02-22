@@ -1411,91 +1411,96 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // экран списка периодов
   function gymRenderPeriodsList() {
-    if (!gymEl.periodsList || !gymEl.noPeriodsState || !gymEl.periodsListWrapper) return;
-
-    const hasPeriods = gymState.periodOrder && gymState.periodOrder.length > 0;
-
-    card.innerHTML = `
-      <div class="flex items-center justify-between mb-1">
-        <div>
-          <div class="text-sm font-semibold text-white">${p.name}</div>
-          <div class="text-xs text-slate-300">
-            ${p.cycleLengthDays} дн · ${p.totalCycles} циклов
-          </div>
-        </div>
-        <div class="flex flex-col items-end gap-1">
-          <button
-            class="text-xs px-2 py-1 rounded-full bg-indigo-500 text-white"
-            data-open-period="${p.id}"
-          >
-            Открыть
-          </button>
-          <button
-            class="text-[11px] text-red-300 underline"
-            data-delete-period="${p.id}"
-          >
-            Удалить
-          </button>
-        </div>
-      </div>
-    `;
-
-
-    if (!hasPeriods) {
-      gymEl.noPeriodsState.classList.remove('hidden');
-      gymEl.periodsListWrapper.classList.add('hidden');
-      gymEl.periodsList.innerHTML = '';
+    if (!gymEl.periodsList || !gymState.periods) return;
+  
+    const order = Array.isArray(gymState.periodOrder)
+      ? gymState.periodOrder
+      : Object.keys(gymState.periods);
+  
+    gymEl.periodsList.innerHTML = '';
+  
+    if (!order.length) {
+      // нет периодов — показываем заглушку
+      if (gymEl.noPeriodsState) gymEl.noPeriodsState.classList.remove('hidden');
+      if (gymEl.periodsListWrapper) gymEl.periodsListWrapper.classList.add('hidden');
       return;
     }
-
-    gymEl.noPeriodsState.classList.add('hidden');
-    gymEl.periodsListWrapper.classList.remove('hidden');
-
-    gymEl.periodsList.innerHTML = '';
-    gymState.periodOrder.forEach(id => {
+  
+    if (gymEl.noPeriodsState) gymEl.noPeriodsState.classList.add('hidden');
+    if (gymEl.periodsListWrapper) gymEl.periodsListWrapper.classList.remove('hidden');
+  
+    order.forEach(id => {
       const p = gymState.periods[id];
       if (!p) return;
-
-      const btn = document.createElement('button');
-      btn.className = 'w-full text-left bg-white/10 hover:bg-white/15 rounded-xl px-3 py-3 flex flex-col gap-1';
-      btn.dataset.periodId = id;
-
-      const cyclesDone = p.progress?.currentCycle || 1;
-      const totalCycles = p.totalCycles || 1;
-      const pct = Math.max(0, Math.min(100, (cyclesDone / totalCycles) * 100));
-
-      const typeLabel =
-        p.type === 'strength'
-          ? 'На силу'
-          : p.type === 'endurance'
-          ? 'На выносливость'
-          : 'Своя';
-
-      btn.innerHTML = `
-        <div class="flex items-center justify-between">
+  
+      const card = document.createElement('div');
+      card.className = 'bg-white/10 rounded-xl px-3 py-3 text-sm text-slate-100';
+  
+      card.innerHTML = `
+        <div class="flex items-center justify-between mb-1">
           <div>
             <div class="text-sm font-semibold text-white">${p.name}</div>
-            <div class="text-[11px] text-slate-300">
-              ${typeLabel} · цикл ${p.cycleLengthDays} дн · ${p.totalCycles} циклов
+            <div class="text-xs text-slate-300">
+              ${p.cycleLengthDays} дн · ${p.totalCycles} циклов
             </div>
           </div>
-          <div class="text-[11px] text-slate-200">
-            ${cyclesDone}/${totalCycles}
+          <div class="flex flex-col items-end gap-1">
+            <button
+              class="text-xs px-2 py-1 rounded-full bg-indigo-500 text-white"
+              data-open-period="${p.id}"
+            >
+              Открыть
+            </button>
+            <button
+              class="text-[11px] text-red-300 underline"
+              data-delete-period="${p.id}"
+            >
+              Удалить
+            </button>
           </div>
         </div>
-        <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
-          <div class="h-full bg-gradient-to-r from-emerald-400 to-blue-500" style="width: ${pct}%;"></div>
-        </div>
       `;
-
+  
+      gymEl.periodsList.appendChild(card);
+    });
+  
+    // открыть период
+    gymEl.periodsList.querySelectorAll('button[data-open-period]').forEach(btn => {
       btn.addEventListener('click', () => {
+        const id = btn.dataset.openPeriod;
+        if (!id) return;
         gymSetActivePeriod(id);
-        gymOpen(); // пока старый экран; позже привяжем к данным периода
+        gymOpen(); // показывает экран конкретного периода
       });
-
-      gymEl.periodsList.appendChild(btn);
+    });
+  
+    // удалить период с подтверждением
+    gymEl.periodsList.querySelectorAll('button[data-delete-period]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.deletePeriod;
+        if (!id) return;
+        const p = gymState.periods[id];
+        const name = p?.name || 'период';
+        if (!confirm(`Точно удалить «${name}»? Это действие нельзя отменить.`)) {
+          return;
+        }
+  
+        if (gymState.periods) {
+          delete gymState.periods[id];
+        }
+        if (Array.isArray(gymState.periodOrder)) {
+          gymState.periodOrder = gymState.periodOrder.filter(pid => pid !== id);
+        }
+        if (gymState.activePeriodId === id) {
+          gymState.activePeriodId = gymState.periodOrder[0] || null;
+        }
+  
+        gymSaveState(gymState);
+        gymRenderPeriodsList();
+      });
     });
   }
+  
 
   function gymOpenPeriodsScreen() {
     if (!gymEl.periodsScreen) return;
