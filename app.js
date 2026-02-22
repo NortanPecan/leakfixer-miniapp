@@ -1154,176 +1154,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fitnessEl?.screen) fitnessEl.screen.classList.remove('hidden');
   }
 
-  // модалка создания периода
-  function gymOpenCreatePeriodWizard() {
-    if (!fitnessModalOverlay || !fitnessModalContent) return;
-
-    fitnessModalContent.innerHTML = `
-      <h2 class="text-xl font-semibold mb-3">Новый период тренировок</h2>
-      <p class="text-xs text-slate-200 mb-4">
-        Выбери цель, длину цикла и длительность периода. Потом настроим сплит и упражнения.
-      </p>
-
-      <div class="space-y-3 text-sm">
-        <div>
-          <div class="text-xs text-slate-300 mb-1">Тип периода</div>
-          <div class="grid grid-cols-1 gap-2 text-xs">
-            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              <input type="radio" name="gymPeriodType" value="strength" class="accent-emerald-400" checked>
-              <span>
-                <div class="font-medium">На силу</div>
-                <div class="opacity-70">Рост рабочих весов и силы</div>
-              </span>
-            </label>
-            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              <input type="radio" name="gymPeriodType" value="endurance" class="accent-emerald-400">
-              <span>
-                <div class="font-medium">На выносливость</div>
-                <div class="opacity-70">Объём, пульс, работа длиннее</div>
-              </span>
-            </label>
-            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              <input type="radio" name="gymPeriodType" value="custom" class="accent-emerald-400">
-              <span class="w-full">
-                <div class="font-medium mb-1">Своё название</div>
-                <input
-                  id="gymPeriodCustomName"
-                  class="w-full bg-white/10 rounded-lg px-2 py-1 text-xs text-white"
-                  placeholder="Например, Подтянуть жим и спину"
-                />
-              </span>
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <div class="text-xs text-slate-300 mb-1">Длина цикла (дней)</div>
-          <input
-            id="gymPeriodCycleLength"
-            type="number"
-            min="3"
-            max="14"
-            value="7"
-            class="w-full bg-white/10 rounded-xl px-3 py-2 text-sm text-white"
-          />
-          <div class="text-[10px] text-slate-300 mt-1">
-            Стандартно 7 дней, но можно сделать, например, 5 или 10.
-          </div>
-        </div>
-
-        <div>
-          <div class="text-xs text-slate-300 mb-1">Сколько циклов в периоде</div>
-          <input
-            id="gymPeriodTotalCycles"
-            type="number"
-            min="1"
-            max="24"
-            value="8"
-            class="w-full bg-white/10 rounded-xl px-3 py-2 text-sm text-white"
-          />
-          <div class="text-[10px] text-slate-300 mt-1">
-            8 циклов = примерно 8 недель, если цикл 7 дней.
-          </div>
-        </div>
-
-        <div>
-          <div class="text-xs text-slate-300 mb-1">Формат тренировок</div>
-          <div class="grid grid-cols-1 gap-2 text-xs">
-            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              <input type="radio" name="gymPeriodSplit" value="split" class="accent-emerald-400" checked>
-              <span>
-                <div class="font-medium">Сплит</div>
-                <div class="opacity-70">Разделение по группам: грудь/спина/ноги...</div>
-              </span>
-            </label>
-            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              <input type="radio" name="gymPeriodSplit" value="fullbody" class="accent-emerald-400">
-              <span>
-                <div class="font-medium">Фулбади</div>
-                <div class="opacity-70">Все тело за одну тренировку, 2–4 раза в неделю</div>
-              </span>
-            </label>
-            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              <input type="radio" name="gymPeriodSplit" value="custom" class="accent-emerald-400">
-              <span>
-                <div class="font-medium">Своя схема</div>
-                <div class="opacity-70">Сам определишь, какие дни и мышцы</div>
-              </span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div class="mt-4 flex gap-2">
-        <button id="gymPeriodCancelBtn" class="flex-1 py-2 rounded-xl bg-white/10 text-sm">
-          Отмена
-        </button>
-        <button id="gymPeriodNextBtn" class="flex-1 py-2 rounded-xl bg-emerald-500 text-sm font-semibold">
-          Дальше: дни и мышцы
-        </button>
-      </div>
-    `;
-
-    fitnessModalOverlay.classList.remove('hidden');
-
-    const cancelBtn = document.getElementById('gymPeriodCancelBtn');
-    const nextBtn = document.getElementById('gymPeriodNextBtn');
-
-    cancelBtn?.addEventListener('click', () => {
-      fitnessModalOverlay.classList.add('hidden');
-    });
-
-    nextBtn?.addEventListener('click', () => {
-      const typeInput = document.querySelector('input[name="gymPeriodType"]:checked');
-      const splitInput = document.querySelector('input[name="gymPeriodSplit"]:checked');
-      const customNameInput = document.getElementById('gymPeriodCustomName');
-      const cycleLenInput = document.getElementById('gymPeriodCycleLength');
-      const totalCyclesInput = document.getElementById('gymPeriodTotalCycles');
-
-      const type = typeInput?.value || 'strength';
-      const splitType = splitInput?.value || 'split';
-      const cycleLengthDays = Math.max(1, Number(cycleLenInput?.value || 7));
-      const totalCycles = Math.max(1, Number(totalCyclesInput?.value || 8));
-
-      let name = 'Период';
-      if (type === 'strength') name = 'На силу';
-      else if (type === 'endurance') name = 'На выносливость';
-      if (type === 'custom') {
-        const v = (customNameInput?.value || '').trim();
-        if (v) name = v;
-      }
-
-      const id = gymCreatePeriodId();
-      const period = {
-        id,
-        name,
-        type,
-        splitType,
-        cycleLengthDays,
-        totalCycles,
-        template: {
-          days: [],
-        },
-        progress: {
-          currentCycle: 1,
-        },
-      };
-
-      if (!gymState.periods) gymState.periods = {};
-      if (!gymState.periodOrder) gymState.periodOrder = [];
-
-      gymState.periods[id] = period;
-      gymState.periodOrder.push(id);
-      gymSetActivePeriod(id);
-
-      gymSaveState(gymState);
-      fitnessModalOverlay.classList.add('hidden');
-
-      gymRenderPeriodsList();
-      gymOpenPeriodsScreen();
-    });
-  }
-
   // старый экран (конкретный период) пока оставляем как был — он не привязан к periods
   function gymGetCurrentCycle() {
     // временный упрощённый вариант: одна "виртуальная" неделя с группами
@@ -1547,16 +1377,40 @@ document.addEventListener('DOMContentLoaded', () => {
   if (gymEl.periodsBackBtn) {
     gymEl.periodsBackBtn.addEventListener('click', gymClosePeriodsScreen);
   }
+  function gymQuickCreatePeriod() {
+    const id = gymCreatePeriodId();
+    const period = {
+      id,
+      name: 'На силу',
+      type: 'strength',
+      splitType: 'split',
+      cycleLengthDays: 7,
+      totalCycles: 8,
+      template: { days: [] },
+      progress: { currentCycle: 1 },
+    };
+
+    if (!gymState.periods) gymState.periods = {};
+    if (!gymState.periodOrder) gymState.periodOrder = [];
+
+    gymState.periods[id] = period;
+    gymState.periodOrder.push(id);
+    gymSetActivePeriod(id);
+    gymSaveState(gymState);
+    gymRenderPeriodsList();
+  }
+
   if (gymEl.createPeriodBtn) {
     gymEl.createPeriodBtn.addEventListener('click', () => {
-      gymOpenCreatePeriodWizard();
+      gymQuickCreatePeriod();
     });
   }
   if (gymEl.createPeriodTopBtn) {
     gymEl.createPeriodTopBtn.addEventListener('click', () => {
-      gymOpenCreatePeriodWizard();
+      gymQuickCreatePeriod();
     });
-  }  
+  }
+
   if (gymEl.backBtn) {
     gymEl.backBtn.addEventListener('click', gymClose);
   }
