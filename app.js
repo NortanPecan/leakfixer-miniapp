@@ -423,6 +423,10 @@ document.addEventListener('DOMContentLoaded', () => {
     modalContent: document.getElementById('fitnessModalContent'),
     workDayLabel: document.getElementById('fitnessWorkDayLabel'),
     profileEdit: document.getElementById('fitnessProfileEdit'),
+    weightDate: document.getElementById('fitnessWeightDate'),
+    weightValue: document.getElementById('fitnessWeightValue'),
+    weightSave: document.getElementById('fitnessWeightSave'),
+    weightStatus: document.getElementById('fitnessWeightStatus'),
   };
 
   function isFitnessSetupDone() {
@@ -589,14 +593,24 @@ document.addEventListener('DOMContentLoaded', () => {
   function fitnessRenderDashboard() {
     const photoEl = document.getElementById('profilePhoto');
     if (fitnessEl.avatar && photoEl?.src) fitnessEl.avatar.src = photoEl.src;
+  
+    const profile = FS.getFitnessProfile();
+    if (fitnessEl.weightValue && typeof profile.weight === 'number') {
+      fitnessEl.weightValue.value = String(profile.weight);
+    }
+    if (fitnessEl.weightDate && !fitnessEl.weightDate.value) {
+      fitnessEl.weightDate.value = FS.formatDateKey(new Date());
+    }
+  
     fitnessRenderDate();
     fitnessRenderCalories();
     fitnessRenderActivityList();
     fitnessRenderFoodList();
     fitnessRenderWater();
     fitnessRenderSupplementList();
-    fitnessRenderWorkDay(); // НОВОЕ
+    fitnessRenderWorkDay();
   }
+  
 
   function fitnessCloseModal() {
     if (fitnessEl.modalOverlay) fitnessEl.modalOverlay.classList.add('hidden');
@@ -753,6 +767,55 @@ document.addEventListener('DOMContentLoaded', () => {
       fitnessRenderDashboard();
     }
   });
+
+  // Инициализация даты по умолчанию = сегодня
+  if (fitnessEl.weightDate) {
+    const today = FS.formatDateKey(new Date()); // YYYY-MM-DD
+    fitnessEl.weightDate.value = today;
+  }
+
+  if (fitnessEl.weightSave) {
+    fitnessEl.weightSave.addEventListener('click', async () => {
+      if (!window.FitnessSync || !window.currentAppUserId) {
+        if (fitnessEl.weightStatus) fitnessEl.weightStatus.textContent = 'Нет связи с сервером';
+        return;
+      }
+
+      const dateKey = fitnessEl.weightDate?.value;
+      const raw = fitnessEl.weightValue?.value;
+
+      if (!dateKey) {
+        if (fitnessEl.weightStatus) fitnessEl.weightStatus.textContent = 'Выберите дату';
+        return;
+      }
+      if (!raw) {
+        if (fitnessEl.weightStatus) fitnessEl.weightStatus.textContent = 'Введите вес';
+        return;
+      }
+
+      const weight = parseFloat(raw.replace(',', '.'));
+      if (Number.isNaN(weight) || weight <= 0) {
+        if (fitnessEl.weightStatus) fitnessEl.weightStatus.textContent = 'Некорректный вес';
+        return;
+      }
+
+      try {
+        await window.FitnessSync.saveWeightMeasurement(dateKey, weight);
+
+        // Обновляем локальный профиль (для расчётов калорий и т.п.)
+        const profile = FS.getFitnessProfile();
+        profile.weight = weight;
+        FS.setFitnessProfile(profile);
+
+        if (fitnessEl.weightStatus) {
+          fitnessEl.weightStatus.textContent = `Сохранено для ${dateKey}`;
+        }
+      } catch (e) {
+        console.error(e);
+        if (fitnessEl.weightStatus) fitnessEl.weightStatus.textContent = 'Ошибка сохранения';
+      }
+    });
+  }
 
   fitnessEl.backBtn?.addEventListener('click', () => {
     fitnessEl.screen?.classList.add('hidden');

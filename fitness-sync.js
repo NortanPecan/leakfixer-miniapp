@@ -261,7 +261,82 @@ class FitnessSync {
         console.error('saveMood error', e);
       }
     }
+    /**
+     * Сохранить/исправить вес за конкретную дату.
+     * dateKey: 'YYYY-MM-DD', weight: число.
+     * Пишем измерение с measured_at = выбранная дата + текущее время,
+     * обновляем user_profile.current_weight и daily_state.data.weight для этой даты.
+     */
+    async saveWeightMeasurement(dateKey, weight) {
+        if (!this.appUserId || !dateKey || typeof weight !== 'number') return;
+        try {
+        const now = new Date();
+        const [y, m, d] = dateKey.split('-').map(Number);
+        // measured_at = выбранная дата + текущее время (часы/минуты сейчас)
+        const measuredAt = new Date(y, m - 1, d, now.getHours(), now.getMinutes(), now.getSeconds());
+        const measuredAtIso = measuredAt.toISOString();
+
+        // 1) логируем измерение в measurements (история)
+        await this.request('/rest/v1/measurements', {
+            method: 'POST',
+            body: JSON.stringify([{
+            app_user_id: this.appUserId,
+            measured_at: measuredAtIso,
+            type: 'weight',
+            value: weight,
+            text_value: null,
+            meta: { source: 'daily_input' },
+            }]),
+        });
+
+        // 2) обновляем актуальный вес в user_profile
+        await this.request('/rest/v1/user_profile', {
+            method: 'POST',
+            body: JSON.stringify({
+            app_user_id: this.appUserId,
+            current_weight: weight,
+            updated_at: new Date().toISOString(),
+            }),
+        });
+
+        // 3) обновляем daily_state.data.weight для этой даты (агрегат по дню)
+        const dateOnly = dateKey;
+        const dsRes = await this.request(
+            `/rest/v1/daily_state?app_user_id=eq.${this.appUserId}&date=eq.${dateOnly}`
+        );
+        const existingArr = await dsRes.json();
+        const existing = Array.isArray(existingArr) ? existingArr[0] : null;
+        const baseData = existing?.data || {};
+
+        const nextData = {
+            ...baseData,
+            weight: {
+            ...(baseData.weight || {}),
+            value: weight,
+            measured_at: measuredAtIso,
+            },
+        };
+
+        await this.request('/rest/v1/daily_state', {
+            method: 'POST',
+            body: JSON.stringify({
+            app_user_id: this.appUserId,
+            date: dateOnly,
+            mood: existing?.mood ?? null,
+            streak: existing?.streak ?? null,
+            notes: existing?.notes ?? null,
+            data: nextData,
+            updated_at: new Date().toISOString(),
+            }),
+        });
+        } catch (e) {
+        console.error('saveWeightMeasurement error', e);
+        }
+    }    
   }
+  
+
+  
   
   let FitnessSyncInstance = null;
   
