@@ -61,27 +61,23 @@ document.addEventListener('DOMContentLoaded', () => {
     buddy: document.getElementById('buddyScreen'),
   };
 
-  const fitnessBtn = document.getElementById('fitnessBtn');
-
   function showMain() {
     if (rootScreens.main) rootScreens.main.classList.remove('hidden');
     if (rootScreens.fitness) rootScreens.fitness.classList.add('hidden');
     if (rootScreens.buddy) rootScreens.buddy.classList.add('hidden');
   }
 
+  function showBuddy() {
+    if (rootScreens.main) rootScreens.main.classList.add('hidden');
+    if (rootScreens.fitness) rootScreens.fitness.classList.add('hidden');
+    if (rootScreens.buddy) rootScreens.buddy.classList.remove('hidden');
+  }
+
   function showFitness() {
     if (rootScreens.main) rootScreens.main.classList.add('hidden');
     if (rootScreens.buddy) rootScreens.buddy.classList.add('hidden');
     if (rootScreens.fitness) rootScreens.fitness.classList.remove('hidden');
-
-    // при входе в фитнес — показываем дашборд, а не зал
-    if (fitnessEl?.profileSetup) fitnessEl.profileSetup.classList.add('hidden');
-    if (fitnessEl?.dashboard) fitnessEl.dashboard.classList.remove('hidden');
-
-    // скрываем экраны зала внутри фитнеса
-    if (gymEl?.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
-    if (gymEl?.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
-    if (gymEl?.screen) gymEl.screen.classList.add('hidden');
+    // ВНУТРЕННЮЮ очистку фитнеса добавим позже, когда fitnessEl будет объявлен
   }
 
   function showBuddy() {
@@ -1100,6 +1096,49 @@ document.addEventListener('DOMContentLoaded', () => {
     newCycleBtn: document.getElementById('gymNewCycleBtn'),
   };
 
+  // до GYM-блока, после fitnessEl/gymEl
+  const fitnessBtn = document.getElementById('fitnessBtn');
+
+  // переопределяем showFitness с учётом fitnessEl и gymEl
+  const _showFitnessBase = showFitness;
+  function showFitnessFull() {
+    _showFitnessBase();
+    if (fitnessEl?.profileSetup) fitnessEl.profileSetup.classList.add('hidden');
+    if (fitnessEl?.dashboard) fitnessEl.dashboard.classList.remove('hidden');
+    if (gymEl?.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
+    if (gymEl?.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
+    if (gymEl?.screen) gymEl.screen.classList.add('hidden');
+  }
+
+  // Кнопки на главном экране
+  if (el.habitsBtn) {
+    el.habitsBtn.addEventListener('click', () => {
+      showAlert('Экран привычек будет позже');
+    });
+  }
+
+  if (el.buddyBtn) {
+    el.buddyBtn.addEventListener('click', () => {
+      showBuddy();
+    });
+  }
+
+  if (fitnessBtn) {
+    fitnessBtn.addEventListener('click', () => {
+      showFitnessFull();
+    });
+  }
+
+  if (fitnessEl?.backBtn) {
+    fitnessEl.backBtn.addEventListener('click', () => {
+      showMain();
+    });
+  }
+  if (el.backBtn) {
+    el.backBtn.addEventListener('click', () => {
+      showMain();
+    });
+  }
 
   const GYM_STORAGE_KEY = 'leakfixer_gym_data';
   const GYM_DEFAULT_GROUPS = ['Грудь + Трицепс', 'Спина + Бицепс', 'Ноги + Икры'];
