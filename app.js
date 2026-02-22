@@ -1582,15 +1582,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!gymEl.groupsContainer) return;
     const period = gymGetActivePeriod();
     if (!period) return;
+  
     const runtime = gymGetCurrentCycle();
-    const groupsData = runtime.groups;
-
+    if (!runtime) return;
+    const groupsData = runtime.groups || {};
+  
     gymEl.groupsContainer.innerHTML = '';
-
-    GYM_DEFAULT_GROUPS.forEach(groupName => {
+  
+    // пока всегда День 1 (потом можно привязать к селектору дня)
+    const currentDayIndex = 1;
+  
+    // ищем конфиг дня из мастера
+    const dayConfig = (period.days || []).find(
+      d => d.dayIndex === currentDayIndex && d.enabled
+    );
+  
+    const muscleGroups = dayConfig && dayConfig.muscles && dayConfig.muscles.length
+      ? dayConfig.muscles
+      : GYM_DEFAULT_GROUPS; // fallback, если нет сохранённых данных
+  
+    muscleGroups.forEach(groupName => {
       const wrapper = document.createElement('div');
       wrapper.className = 'bg-white/5 rounded-xl px-3 py-3 space-y-2';
-
+  
       const header = document.createElement('div');
       header.className = 'flex items-center justify-between mb-1';
       header.innerHTML = `
@@ -1600,11 +1614,11 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
       `;
       wrapper.appendChild(header);
-
+  
       const listContainer = document.createElement('div');
       listContainer.className = 'space-y-2';
       listContainer.dataset.group = groupName;
-
+  
       const exercises = groupsData[groupName] || [];
       if (!exercises.length) {
         const empty = document.createElement('div');
@@ -1623,7 +1637,7 @@ document.addEventListener('DOMContentLoaded', () => {
               value="${ex.name || ''}"
               data-field="name"
             />
-
+  
             <div class="flex gap-2 text-xs">
               <div class="flex-1">
                 <div class="text-slate-400 mb-1">Рабочие подходы</div>
@@ -1644,7 +1658,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 />
               </div>
             </div>
-
+  
             <div class="flex items-center justify-between text-xs">
               <div class="flex-1 mr-2">
                 <div class="text-slate-400 mb-1">RPE 1–10</div>
@@ -1655,7 +1669,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               <button class="text-[11px] text-red-300 underline" data-delete="1">Удалить</button>
             </div>
-
+  
             <div class="flex gap-2 text-xs">
               <div class="flex-1">
                 <div class="text-slate-400 mb-1">Прогресс за период</div>
@@ -1680,11 +1694,11 @@ document.addEventListener('DOMContentLoaded', () => {
           listContainer.appendChild(card);
         });
       }
-
+  
       wrapper.appendChild(listContainer);
       gymEl.groupsContainer.appendChild(wrapper);
     });
-
+  
     // добавление
     gymEl.groupsContainer.querySelectorAll('button[data-group]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1703,7 +1717,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gymRenderGroups();
       });
     });
-
+  
     // изменения
     gymEl.groupsContainer.querySelectorAll('[data-field]').forEach(input => {
       input.addEventListener('input', () => {
@@ -1727,7 +1741,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gymSaveState(gymState);
       });
     });
-
+  
     // удаление
     gymEl.groupsContainer.querySelectorAll('button[data-delete]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1745,6 +1759,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+  
 
   function gymOpen() {
     if (!gymEl.screen) return;
