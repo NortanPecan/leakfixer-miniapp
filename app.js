@@ -421,8 +421,6 @@ document.addEventListener('DOMContentLoaded', () => {
     waterTotal: document.getElementById('fitnessWaterTotal'),
     supplementList: document.getElementById('fitnessSupplementList'),
     supplementAdd: document.getElementById('fitnessSupplementAdd'),
-    modalOverlay: document.getElementById('fitnessModalOverlay'),
-    modalContent: document.getElementById('fitnessModalContent'),
     workDayLabel: document.getElementById('fitnessWorkDayLabel'),
     profileEdit: document.getElementById('fitnessProfileEdit'),
     weightDate: document.getElementById('fitnessWeightDate'),
