@@ -1612,6 +1612,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+
   // мастер периода: навигация и действия
   if (gymEl.periodWizardBackBtn) {
     gymEl.periodWizardBackBtn.addEventListener('click', () => {
