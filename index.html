@@ -240,135 +240,136 @@
           <button id="fitnessProfileSave" class="flex-1 py-3 rounded-xl font-semibold bg-green-500 hover:bg-green-600">Сохранить и дальше</button>
         </div>
       </div>
-    <!-- Мастер создания периода тренировок (скрытый экран) -->
-    <div id="gymPeriodWizardScreen" class="hidden px-4 py-4 space-y-4">
-      <div class="flex items-center justify-between mb-2">
-        <h2 class="text-xl font-semibold text-white">Новый период</h2>
-        <button id="gymPeriodWizardBackBtn" class="text-sm text-slate-300 underline">
-          Назад
-        </button>
-      </div>
-
-      <!-- ШАГ 1: базовые настройки периода -->
-      <div id="gymPeriodStep1" class="space-y-4 text-sm">
-        <div>
-          <div class="text-xs text-slate-300 mb-1">Тип периода</div>
-          <div class="grid grid-cols-1 gap-2 text-xs">
-            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              <input type="radio" name="gymPeriodType" value="strength" class="accent-emerald-400" checked>
-              <span>
-                <div class="font-medium">На силу</div>
-                <div class="opacity-70">Рост рабочих весов и силы</div>
-              </span>
-            </label>
-            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              <input type="radio" name="gymPeriodType" value="endurance" class="accent-emerald-400">
-              <span>
-                <div class="font-medium">На выносливость</div>
-                <div class="opacity-70">Больше объём и длительность</div>
-              </span>
-            </label>
-            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              <input type="radio" name="gymPeriodType" value="custom" class="accent-emerald-400">
-              <span class="w-full">
-                <div class="font-medium mb-1">Своё название</div>
-                <input
-                  id="gymPeriodCustomName"
-                  class="w-full bg-white/10 rounded-lg px-2 py-1 text-xs text-white"
-                  placeholder="Например, Подтянуть жим и спину"
-                />
-              </span>
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <div class="text-xs text-slate-300 mb-1">Длина цикла (дней)</div>
-          <input
-            id="gymPeriodCycleLength"
-            type="number"
-            min="3"
-            max="14"
-            value="7"
-            class="w-full bg-white/10 rounded-xl px-3 py-2 text-sm text-white"
-          />
-          <div class="text-[10px] text-slate-300 mt-1">
-            По умолчанию 7 дней, можно изменить под свой график.
-          </div>
-        </div>
-
-        <div>
-          <div class="text-xs text-slate-300 mb-1">Сколько циклов в периоде</div>
-          <input
-            id="gymPeriodTotalCycles"
-            type="number"
-            min="1"
-            max="24"
-            value="8"
-            class="w-full bg-white/10 rounded-xl px-3 py-2 text-sm text-white"
-          />
-          <div class="text-[10px] text-slate-300 mt-1">
-            Например, 8 циклов = 8 недель, если цикл 7 дней.
-          </div>
-        </div>
-
-        <div>
-          <div class="text-xs text-slate-300 mb-1">Формат тренировок</div>
-          <div class="grid grid-cols-1 gap-2 text-xs">
-            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              <input type="radio" name="gymPeriodSplit" value="split" class="accent-emerald-400" checked>
-              <span>
-                <div class="font-medium">Сплит</div>
-                <div class="opacity-70">Разделение по группам: грудь/спина/ноги…</div>
-              </span>
-            </label>
-            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              <input type="radio" name="gymPeriodSplit" value="fullbody" class="accent-emerald-400">
-              <span>
-                <div class="font-medium">Фулбади</div>
-                <div class="opacity-70">Все тело за тренировку, 2–4 раза в неделю</div>
-              </span>
-            </label>
-            <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              <input type="radio" name="gymPeriodSplit" value="custom" class="accent-emerald-400">
-              <span>
-                <div class="font-medium">Своя схема</div>
-                <div class="opacity-70">Сам задашь дни и мышцы</div>
-              </span>
-            </label>
-          </div>
-        </div>
-
-        <div class="flex gap-2">
-          <button id="gymPeriodStep1CancelBtn" class="flex-1 py-2 rounded-xl bg-white/10 text-sm">
-            Отмена
-          </button>
-          <button id="gymPeriodStep1NextBtn" class="flex-1 py-2 rounded-xl bg-emerald-500 text-sm font-semibold">
-            Дальше: дни и мышцы
-          </button>
-        </div>
-      </div>
-
-      <!-- ШАГ 2: дни цикла и группы мышц (заполним из JS) -->
-      <div id="gymPeriodStep2" class="hidden space-y-4 text-sm">
-        <div>
-          <div class="text-xs text-slate-300 mb-1">Дни цикла и мышцы</div>
-          <p class="text-xs text-slate-200 mb-2">
-            Для первого цикла выбери, какие дни тренировать и какие группы мышц. Эти настройки будут шаблоном для следующих циклов.
-          </p>
-        </div>
-
-        <div id="gymPeriodDaysContainer" class="space-y-3">
-          <!-- сюда JS подставит список дней: День 1, День 2... с выбором мышц -->
-        </div>
-
-        <div class="flex gap-2 pt-2 border-t border-white/10">
-          <button id="gymPeriodStep2BackBtn" class="flex-1 py-2 rounded-xl bg-white/10 text-sm">
+      <!-- Мастер создания периода тренировок (скрытый экран) -->
+      <div id="gymPeriodWizardScreen" class="hidden px-4 py-4 space-y-4">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xl font-semibold text-white">Новый период</h2>
+          <button id="gymPeriodWizardBackBtn" class="text-sm text-slate-300 underline">
             Назад
           </button>
-          <button id="gymPeriodStep2CreateBtn" class="flex-1 py-2 rounded-xl bg-emerald-500 text-sm font-semibold">
-            Создать период
-          </button>
+        </div>
+
+        <!-- ШАГ 1: базовые настройки периода -->
+        <div id="gymPeriodStep1" class="space-y-4 text-sm">
+          <div>
+            <div class="text-xs text-slate-300 mb-1">Тип периода</div>
+            <div class="grid grid-cols-1 gap-2 text-xs">
+              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <input type="radio" name="gymPeriodType" value="strength" class="accent-emerald-400" checked>
+                <span>
+                  <div class="font-medium">На силу</div>
+                  <div class="opacity-70">Рост рабочих весов и силы</div>
+                </span>
+              </label>
+              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <input type="radio" name="gymPeriodType" value="endurance" class="accent-emerald-400">
+                <span>
+                  <div class="font-medium">На выносливость</div>
+                  <div class="opacity-70">Больше объём и длительность</div>
+                </span>
+              </label>
+              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <input type="radio" name="gymPeriodType" value="custom" class="accent-emerald-400">
+                <span class="w-full">
+                  <div class="font-medium mb-1">Своё название</div>
+                  <input
+                    id="gymPeriodCustomName"
+                    class="w-full bg-white/10 rounded-lg px-2 py-1 text-xs text-white"
+                    placeholder="Например, Подтянуть жим и спину"
+                  />
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs text-slate-300 mb-1">Длина цикла (дней)</div>
+            <input
+              id="gymPeriodCycleLength"
+              type="number"
+              min="3"
+              max="14"
+              value="7"
+              class="w-full bg-white/10 rounded-xl px-3 py-2 text-sm text-white"
+            />
+            <div class="text-[10px] text-slate-300 mt-1">
+              По умолчанию 7 дней, можно изменить под свой график.
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs text-slate-300 mb-1">Сколько циклов в периоде</div>
+            <input
+              id="gymPeriodTotalCycles"
+              type="number"
+              min="1"
+              max="24"
+              value="8"
+              class="w-full bg-white/10 rounded-xl px-3 py-2 text-sm text-white"
+            />
+            <div class="text-[10px] text-slate-300 mt-1">
+              Например, 8 циклов = 8 недель, если цикл 7 дней.
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs text-slate-300 mb-1">Формат тренировок</div>
+            <div class="grid grid-cols-1 gap-2 text-xs">
+              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <input type="radio" name="gymPeriodSplit" value="split" class="accent-emerald-400" checked>
+                <span>
+                  <div class="font-medium">Сплит</div>
+                  <div class="opacity-70">Разделение по группам: грудь/спина/ноги…</div>
+                </span>
+              </label>
+              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <input type="radio" name="gymPeriodSplit" value="fullbody" class="accent-emerald-400">
+                <span>
+                  <div class="font-medium">Фулбади</div>
+                  <div class="opacity-70">Все тело за тренировку, 2–4 раза в неделю</div>
+                </span>
+              </label>
+              <label class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
+                <input type="radio" name="gymPeriodSplit" value="custom" class="accent-emerald-400">
+                <span>
+                  <div class="font-medium">Своя схема</div>
+                  <div class="opacity-70">Сам задашь дни и мышцы</div>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <button id="gymPeriodStep1CancelBtn" class="flex-1 py-2 rounded-xl bg-white/10 text-sm">
+              Отмена
+            </button>
+            <button id="gymPeriodStep1NextBtn" class="flex-1 py-2 rounded-xl bg-emerald-500 text-sm font-semibold">
+              Дальше: дни и мышцы
+            </button>
+          </div>
+        </div>
+
+        <!-- ШАГ 2: дни цикла и группы мышц (заполним из JS) -->
+        <div id="gymPeriodStep2" class="hidden space-y-4 text-sm">
+          <div>
+            <div class="text-xs text-slate-300 mb-1">Дни цикла и мышцы</div>
+            <p class="text-xs text-slate-200 mb-2">
+              Для первого цикла выбери, какие дни тренировать и какие группы мышц. Эти настройки будут шаблоном для следующих циклов.
+            </p>
+          </div>
+
+          <div id="gymPeriodDaysContainer" class="space-y-3">
+            <!-- сюда JS подставит список дней: День 1, День 2... с выбором мышц -->
+          </div>
+
+          <div class="flex gap-2 pt-2 border-t border-white/10">
+            <button id="gymPeriodStep2BackBtn" class="flex-1 py-2 rounded-xl bg-white/10 text-sm">
+              Назад
+            </button>
+            <button id="gymPeriodStep2CreateBtn" class="flex-1 py-2 rounded-xl bg-emerald-500 text-sm font-semibold">
+              Создать период
+            </button>
+          </div>
         </div>
       </div>
 
