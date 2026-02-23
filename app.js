@@ -1747,6 +1747,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!runtime.groups) runtime.groups = {};
     if (!runtime.days) runtime.days = {};
   
+    // UI-состояние сворачивания
+    if (!gymState.uiCollapse) gymState.uiCollapse = {};
+    const uiKey = `period-${period.id || 'default'}`;
+    if (!gymState.uiCollapse[uiKey]) {
+      gymState.uiCollapse[uiKey] = { days: {}, groups: {} };
+    }
+    const ui = gymState.uiCollapse[uiKey];
+  
     gymEl.groupsContainer.innerHTML = '';
   
     const days = Array.isArray(period.days) && period.days.length
@@ -1890,7 +1898,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dayWrapper.className = 'bg-white/5 rounded-2xl px-3 py-3 space-y-2';
       dayWrapper.dataset.dayIndex = String(dayIndex);
   
-      // ШАПКА ДНЯ: заголовок + текст групп + кнопка "Редактировать"
+      // ШАПКА ДНЯ
       const title = document.createElement('div');
       title.className = 'flex items-center justify-between mb-2';
   
@@ -1922,7 +1930,9 @@ document.addEventListener('DOMContentLoaded', () => {
       dayWrapper.appendChild(title);
   
       const dayBody = document.createElement('div');
-      dayBody.className = 'space-y-2';
+      // по умолчанию свернуто, но если в ui.days[dayIndex] === true — раскрываем
+      const dayExpanded = ui.days[dayIndex] === true;
+      dayBody.className = 'space-y-2' + (dayExpanded ? '' : ' hidden');
       dayBody.dataset.role = 'dayBody';
   
       const muscleGroups =
@@ -1965,7 +1975,10 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.appendChild(header);
   
         const listContainer = document.createElement('div');
-        listContainer.className = 'space-y-2';
+        const groupKey = `${dayIndex}::${groupName}`;
+        const groupExpanded = ui.groups[groupKey] === true;
+  
+        listContainer.className = 'space-y-2' + (groupExpanded ? '' : ' hidden');
         listContainer.dataset.group = groupName;
         listContainer.dataset.groupContainer = groupName;
         listContainer.dataset.role = 'groupBody';
@@ -2000,7 +2013,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </button>
               </div>
   
-              <div class="space-y-2" data-role="exerciseBody">
+              <div class="space-y-2 hidden" data-role="exerciseBody">
                 <input
                   class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
                   placeholder="Название (Жим гантелей)"
@@ -2088,7 +2101,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // --- обработчики ---
   
-    // свернуть/развернуть день
+    // свернуть/развернуть день + сохранение в uiCollapse
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="toggleDay"]')
       .forEach((btn) => {
@@ -2097,7 +2110,11 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!dayWrapper) return;
           const body = dayWrapper.querySelector('[data-role="dayBody"]');
           if (!body) return;
-          body.classList.toggle('hidden');
+          const dayIndex = Number(dayWrapper.dataset.dayIndex || '1');
+  
+          const nowHidden = body.classList.toggle('hidden');
+          ui.days[dayIndex] = !nowHidden;
+          gymSaveState(gymState);
         });
       });
   
@@ -2248,7 +2265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
-    // свернуть/развернуть группу
+    // свернуть/развернуть группу + сохранение
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="toggleGroup"]')
       .forEach((btn) => {
@@ -2261,7 +2278,13 @@ document.addEventListener('DOMContentLoaded', () => {
             `[data-group-container="${groupName}"][data-role="groupBody"]`
           );
           if (!list) return;
-          list.classList.toggle('hidden');
+  
+          const dayIndex = Number(dayWrapper.dataset.dayIndex || '1');
+          const key = `${dayIndex}::${groupName}`;
+  
+          const nowHidden = list.classList.toggle('hidden');
+          ui.groups[key] = !nowHidden;
+          gymSaveState(gymState);
         });
       });
   
@@ -2311,6 +2334,10 @@ document.addEventListener('DOMContentLoaded', () => {
   
           delete dayRuntime.groups[groupName];
   
+          // чистим UI state для группы
+          const key = `${dayIndex}::${groupName}`;
+          delete ui.groups[key];
+  
           gymSaveState(gymState);
           gymRenderGroups();
         });
@@ -2351,7 +2378,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
-    // свернуть/развернуть упражнение
+    // свернуть/развернуть упражнение (без сохранения в UI state, чтобы не усложнять)
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="toggleExercise"]')
       .forEach((btn) => {
@@ -2391,6 +2418,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   }
+  
   
   if (gymEl.daySelect) {
     gymEl.daySelect.addEventListener('change', () => {
