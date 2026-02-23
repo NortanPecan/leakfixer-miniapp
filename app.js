@@ -1753,9 +1753,60 @@ document.addEventListener('DOMContentLoaded', () => {
       ? period.days
       : [];
   
-    const daysToRender = days.length
-      ? days
-      : [{ dayIndex: 1, enabled: true, muscles: GYM_DEFAULT_GROUPS }];
+    const daysToRender = days.length ? days : [];
+
+    // если нет ни одного дня – показываем заглушку с кнопкой "Добавить день"
+    if (!daysToRender.length) {
+      const empty = document.createElement('div');
+      empty.className = 'space-y-2 text-xs text-slate-200';
+
+      empty.innerHTML = `
+        <div class="text-sm text-slate-200">
+          Пока нет дней в этом периоде.
+        </div>
+        <button
+          type="button"
+          class="w-full bg-emerald-500 hover:bg-emerald-600 py-2 rounded-xl font-semibold text-sm"
+          data-role="addDayFromScreen"
+        >
+          + Добавить день
+        </button>
+      `;
+
+      gymEl.groupsContainer.appendChild(empty);
+      // навешиваем обработчик и выходим
+      const btn = empty.querySelector('button[data-role="addDayFromScreen"]');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          const period = gymGetActivePeriod();
+          if (!period) return;
+
+          const nextIndex = 1; // первый день
+          const muscles = Array.isArray(GYM_DEFAULT_GROUPS)
+            ? GYM_DEFAULT_GROUPS.slice()
+            : [];
+
+          period.days = [
+            {
+              dayIndex: nextIndex,
+              enabled: true,
+              muscles,
+            },
+          ];
+
+          const runtime = gymGetCurrentCycle();
+          if (runtime) {
+            if (!runtime.days) runtime.days = {};
+            runtime.days[nextIndex] = { groups: {} };
+          }
+
+          gymSaveState(gymState);
+          gymRenderGroups();
+        });
+      }
+
+      return;
+    }
   
     daysToRender.forEach((day) => {
       if (!day.enabled) return;
