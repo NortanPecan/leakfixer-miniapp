@@ -1592,49 +1592,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (main) main.classList.remove('hidden');
   }
   
-
-  // старый экран (конкретный период) пока оставляем как был — он не привязан к periods
-  function gymGetCurrentCycle() {
-    const period = gymGetActivePeriod();
-    if (!period) return null;
-  
-    if (!gymState.runtime) gymState.runtime = {};
-    if (!gymState.runtime[period.id]) {
-      gymState.runtime[period.id] = {
-        currentCycle: 1,
-        totalCycles: period.totalCycles || 1,
-        periodDone: 1,
-        cycles: [],
-      };
-    }
-    const rt = gymState.runtime[period.id];
-  
-    if (!rt.totalCycles) rt.totalCycles = period.totalCycles || 1;
-    if (!rt.periodDone) rt.periodDone = 1;
-    if (!rt.currentCycle) rt.currentCycle = 1;
-  
-    if (!rt.cycles || !rt.cycles.length) {
-      rt.cycles = [
-        {
-          currentCycle: 1,
-          totalCycles: rt.totalCycles,
-          periodDone: 1,
-          days: {},
-        },
-      ];
-    }
-    const idx = Math.max(1, Math.min(rt.currentCycle, rt.cycles.length));
-    const cycle = rt.cycles[idx - 1];
-  
-    // дублируем удобные поля на уровне цикла
-    if (cycle.currentCycle == null) cycle.currentCycle = rt.currentCycle;
-    if (cycle.totalCycles == null) cycle.totalCycles = rt.totalCycles;
-    if (cycle.periodDone == null) cycle.periodDone = rt.periodDone;
-  
-    gymSaveState(gymState);
-    return cycle;
-  }
-
   function gymGetCurrentCycle() {
     const period = gymGetActivePeriod();
     if (!period) return null;
@@ -1647,11 +1604,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const rt = gymState.runtime[period.id];
     const idx = rt.currentCycle || 1;
   
+    if (!rt.cycles) rt.cycles = {};
     if (!rt.cycles[idx]) {
       rt.cycles[idx] = { days: {} };
     }
   
     return rt.cycles[idx];
+  }
+  
+  function gymSetCurrentCycle(cycleIndex) {
+    const period = gymGetActivePeriod();
+    if (!period) return;
+  
+    if (!gymState.runtime) gymState.runtime = {};
+    if (!gymState.runtime[period.id]) {
+      gymState.runtime[period.id] = { currentCycle: 1, cycles: {} };
+    }
+  
+    const rt = gymState.runtime[period.id];
+  
+    if (!rt.cycles) rt.cycles = {};
+    if (!rt.cycles[cycleIndex]) {
+      rt.cycles[cycleIndex] = { days: {} };
+    }
+  
+    rt.currentCycle = cycleIndex;
+  
+    gymSaveState(gymState);
+    gymRenderHeader();
+    gymRenderGroups();
   }
   
   
@@ -1675,15 +1656,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const periodDone = runtimeCycle.periodDone ?? currentCycle;
   
     if (gymEl.cycleSelect) {
-      gymEl.cycleSelect.innerHTML = '';
-      for (let i = 1; i <= totalCycles; i += 1) {
-        const opt = document.createElement('option');
-        opt.value = String(i);
-        opt.textContent = String(i);
-        if (i === currentCycle) opt.selected = true;
-        gymEl.cycleSelect.appendChild(opt);
-      }
+      gymEl.cycleSelect.addEventListener('change', (e) => {
+        const value = Number(e.target.value || '1');
+        const idx = Number.isNaN(value) ? 1 : value;
+        gymSetCurrentCycle(idx);
+      });
     }
+    
   
     gymEl.cycleInfo.textContent = `${currentCycle}/${totalCycles}`;
     gymEl.periodInfo.textContent = period.name || 'Период';
@@ -2473,15 +2452,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  if (gymEl.cycleSelect) {
-    gymEl.cycleSelect.addEventListener('change', (e) => {
-      const value = Number(e.target.value || '1');
-      const idx = Number.isNaN(value) ? 1 : value;
-      gymSetCurrentCycle(idx);
-    });
-  }
-  
-
   function gymOpen() {
     if (!gymEl.screen) return;
     if (gymEl.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
@@ -2623,27 +2593,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (gymEl.historyBtn) {
     gymEl.historyBtn.addEventListener('click', () => {
       showAlert('История тренировок появится позже');
-    });
-  }
-  if (gymEl.cycleSelect) {
-    gymEl.cycleSelect.addEventListener('change', (e) => {
-      const period = gymGetActivePeriod();
-      if (!period || !period.runtime) return;
-  
-      const value = Number(e.target.value || 1);
-      const runtime = period.runtime;
-      runtime.currentCycle = Math.max(1, Math.min(runtime.totalCycles, value));
-  
-      // при ручном выборе можно не трогать periodDone,
-      // но если хочешь — обнови progress:
-      period.progress = {
-        ...(period.progress || {}),
-        currentCycle: runtime.currentCycle,
-      };
-  
-      gymSaveState(gymState);
-      gymRenderHeader();
-      gymRenderGroups();
     });
   }
   
