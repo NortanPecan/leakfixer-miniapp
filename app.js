@@ -1158,6 +1158,76 @@ document.addEventListener('DOMContentLoaded', () => {
     gymSaveState(gymState);
   }
 
+  function gymCreateNextCycle() {
+    const period = gymGetActivePeriod();
+    if (!period) return;
+  
+    // На будущее здесь можно будет сохранять фактический лог цикла в Supabase
+    // Пока просто дублируем активные дни как новый "набор"
+  
+    // Найдём max номер дня
+    const maxDay = (period.days || []).reduce(
+      (max, d) => Math.max(max, d.dayIndex || 0),
+      0
+    );
+  
+    // Ничего особого не делаем с ID цикла — твоя текущая логика gymRenderGroups
+    // уже работает по period.days, а не по отдельным объектам циклов.
+    // Мы просто сохраняем обновлённый period и перерисовываем.
+  
+    gymSaveCurrentCycleDefinition();
+    gymRenderGroups();
+  }
+
+  function gymSaveCurrentCycleDefinition() {
+    const period = gymGetActivePeriod();
+    if (!period || !gymEl.groupsContainer) return;
+  
+    // Собираем дни по текущему экрану (включая checkbox "День активен" и мышцы)
+    const daysMap = new Map();
+  
+    // Начинаем с уже сохранённых дней
+    (period.days || []).forEach((d) => {
+      daysMap.set(d.dayIndex, {
+        dayIndex: d.dayIndex,
+        enabled: d.enabled !== false,
+        muscles: Array.isArray(d.muscles) ? d.muscles.slice() : [],
+      });
+    });
+  
+    const wrappers = gymEl.groupsContainer.querySelectorAll('[data-day-index]');
+    wrappers.forEach((wrapper) => {
+      const dayIndex = Number(wrapper.dataset.dayIndex || '1');
+      const enabledInput = wrapper.querySelector(
+        'input[data-role="dayEnabled"][data-day-index="' + dayIndex + '"]'
+      );
+      const musclesInput = wrapper.querySelector(
+        'input[data-role="dayMusclesInput"][data-day-index="' + dayIndex + '"]'
+      );
+  
+      const enabled = enabledInput ? !!enabledInput.checked : true;
+      const rawMuscles = musclesInput?.value || '';
+      const muscles = rawMuscles
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+  
+      daysMap.set(dayIndex, {
+        dayIndex,
+        enabled,
+        muscles,
+      });
+    });
+  
+    const updatedDays = Array.from(daysMap.values()).sort(
+      (a, b) => a.dayIndex - b.dayIndex
+    );
+  
+    period.days = updatedDays;
+    gymSaveState(gymState);
+  }
+  
+
   function gymOpenPeriodWizardStep1() {
     if (!gymEl.periodWizardScreen) return;
   
@@ -1178,8 +1248,9 @@ document.addEventListener('DOMContentLoaded', () => {
       splitType: 'split',
       cycleLengthDays: 7,
       totalCycles: 8,
+      workoutsPerCycle: 3,   // НОВОЕ
       days: [],
-    };
+    };    
   
     const cycleLenInput = document.getElementById('gymPeriodCycleLength');
     const totalCyclesInput = document.getElementById('gymPeriodTotalCycles');
@@ -1289,18 +1360,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function gymPeriodWizardStep1Next() {
     if (!gymPeriodWizardDraft) return;
-
+  
     const typeInput = document.querySelector('input[name="gymPeriodType"]:checked');
     const splitInput = document.querySelector('input[name="gymPeriodSplit"]:checked');
     const customNameInput = document.getElementById('gymPeriodCustomName');
     const cycleLenInput = document.getElementById('gymPeriodCycleLength');
     const totalCyclesInput = document.getElementById('gymPeriodTotalCycles');
-
+    const wpcInput = document.getElementById('gymPeriodWorkoutsPerCycle');
+  
     const type = typeInput?.value || 'strength';
     const splitType = splitInput?.value || 'split';
     const cycleLengthDays = Math.max(1, Number(cycleLenInput?.value || 7));
     const totalCycles = Math.max(1, Number(totalCyclesInput?.value || 8));
-
+    const workoutsPerCycle = Math.max(1, Number(wpcInput?.value || 3) || 3);
+  
     let name = 'Период';
     if (type === 'strength') name = 'На силу';
     else if (type === 'endurance') name = 'На выносливость';
@@ -1308,227 +1381,59 @@ document.addEventListener('DOMContentLoaded', () => {
       const v = (customNameInput?.value || '').trim();
       if (v) name = v;
     }
-
+  
     gymPeriodWizardDraft.type = type;
     gymPeriodWizardDraft.splitType = splitType;
     gymPeriodWizardDraft.cycleLengthDays = cycleLengthDays;
     gymPeriodWizardDraft.totalCycles = totalCycles;
+    gymPeriodWizardDraft.workoutsPerCycle = workoutsPerCycle;
     gymPeriodWizardDraft.name = name;
-
-    // генерим дни цикла
+  
     if (!gymEl.periodDaysContainer) return;
-    gymEl.periodDaysContainer.innerHTML = '';
-
-    for (let dayIndex = 1; dayIndex <= cycleLengthDays; dayIndex++) {
-      const dayDiv = document.createElement('div');
-      dayDiv.className = 'bg-white/10 rounded-xl px-3 py-3 space-y-2';
-      dayDiv.dataset.dayIndex = String(dayIndex);
-
-      const label = `День ${dayIndex}`;
-      // внутри цикла for (let dayIndex = 1; dayIndex <= cycleLengthDays; dayIndex++)
-      dayDiv.innerHTML = `
-      <div class="flex items-center justify-between mb-1">
-        <span class="text-sm font-medium text-white">День ${dayIndex}</span>
-        <button type="button"
-          data-role="deleteDay"
-          class="text-11px text-red-300 underline">
-          удалить
-        </button>
-      </div>
-    
-      <label class="flex items-center gap-1 text-11px text-slate-200">
-        <input
-          type="checkbox"
-          data-field="dayEnabled"
-          class="accent-emerald-400"
-          checked
-        >
-        <span>День активен</span>
-      </label>
-    
-      <div class="text-11px text-slate-300 mb-1">Группы мышц</div>
-      <div data-role="muscleList" class="space-y-1"></div>
-    
-      <button
-        type="button"
-        data-role="addMuscleGroup"
-        class="mt-1 text-11px text-emerald-300 underline"
-      >
-        Добавить группу мышц
-      </button>
-    `;
-    
-
-
-      // добавим одну дефолтную группу
-      const muscleList = dayDiv.querySelector('[data-role="muscleList"]');
-      if (muscleList) {
-        const g = document.createElement('div');
-        g.className = 'flex items-center gap-1';
-        g.innerHTML = `
-          <input
-            type="text"
-            class="flex-1 bg-white/15 rounded-lg px-2 py-1 text-xs text-white"
-            placeholder="Например, Грудь + Трицепс"
-            value="${GYM_DEFAULT_GROUPS[0]}"
-            data-field="muscleGroupName"
-          />
-        `;
-        muscleList.appendChild(g);
-      }
-
-      gymEl.periodDaysContainer.appendChild(dayDiv);
-    }
-
-    // включаем шаг 2
+  
+    // переключаем шаги мастера
     if (gymEl.periodStep1) gymEl.periodStep1.classList.add('hidden');
     if (gymEl.periodStep2) gymEl.periodStep2.classList.remove('hidden');
-
-    // обработчик "удалить день"
+  
+    // генерим N тренировочных дней по workoutsPerCycle
+    gymEl.periodDaysContainer.innerHTML = '';
+    const wpc = gymPeriodWizardDraft.workoutsPerCycle || 3;
+  
+    for (let i = 1; i <= wpc; i += 1) {
+      const dayDiv = document.createElement('div');
+      dayDiv.className = 'bg-white/10 rounded-xl px-3 py-3 space-y-2';
+      dayDiv.dataset.dayIndex = String(i);
+      dayDiv.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="font-semibold text-white text-sm">День ${i}</div>
+          <button type="button" data-role="removeDay" class="text-[11px] text-red-300 underline">
+            удалить
+          </button>
+        </div>
+        <label class="flex items-center gap-2 text-xs text-slate-200">
+          <input type="checkbox" data-field="dayEnabled" class="accent-emerald-400" checked>
+          <span>День активен (основная тренировка)</span>
+        </label>
+        <input
+          type="text"
+          data-field="muscles"
+          class="w-full bg-white/10 rounded-lg px-2 py-1 text-xs text-white"
+          placeholder="Грудь, спина..."
+        />
+      `;
+      gymEl.periodDaysContainer.appendChild(dayDiv);
+    }
+  
+    // обработчик удаления дня
     gymEl.periodDaysContainer
-      .querySelectorAll('button[data-role="deleteDay"]')
+      .querySelectorAll('button[data-role="removeDay"]')
       .forEach((btn) => {
         btn.addEventListener('click', () => {
           const dayDiv = btn.closest('[data-day-index]');
           dayDiv?.remove();
         });
       });
-
-    // логика добавления групп на шаге 2
-    gymEl.periodDaysContainer.querySelectorAll('button[data-role="addMuscleGroup"]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const container = btn.closest('[data-day-index]');
-        if (!container) return;
-        const muscleList = container.querySelector('[data-role="muscleList"]');
-        if (!muscleList) return;
-        const g = document.createElement('div');
-        g.className = 'flex items-center gap-1';
-        g.innerHTML = `
-          <input
-            type="text"
-            class="flex-1 bg-white/15 rounded-lg px-2 py-1 text-xs text-white"
-            placeholder="Например, Спина + Бицепс"
-            data-field="muscleGroupName"
-          />
-        `;
-        muscleList.appendChild(g);
-      });
-    });
-  }
-
-  function gymPeriodWizardStep2Create() {
-    if (!gymPeriodWizardDraft) return;
-  
-    // читаем дни из DOM
-    const days = [];
-    if (gymEl.periodDaysContainer) {
-      const dayBlocks = gymEl.periodDaysContainer.querySelectorAll('[data-day-index]');
-      dayBlocks.forEach(block => {
-        const dayIndex = Number(block.dataset.dayIndex || '0') || 0;
-  
-        const enabledInput = block.querySelector('input[data-field="dayEnabled"]');
-        const enabled = enabledInput ? enabledInput.checked : true;
-  
-        const muscles = [];
-        const muscleInputs = block.querySelectorAll('input[data-field="muscleGroupName"]');
-        muscleInputs.forEach(inp => {
-          const name = (inp.value || '').trim();
-          if (name) muscles.push(name);
-        });
-  
-        days.push({
-          dayIndex,
-          enabled,
-          muscles,
-        });
-      });
-    }
-  
-    // собираем объект периода
-    const id = gymCreatePeriodId();
-    const period = {
-      id,
-      type: gymPeriodWizardDraft.type,
-      name: gymPeriodWizardDraft.name,
-      splitType: gymPeriodWizardDraft.splitType,
-      cycleLengthDays: gymPeriodWizardDraft.cycleLengthDays,
-      totalCycles: gymPeriodWizardDraft.totalCycles,
-      days,           // <- сохраняем структуру дней
-      createdAt: Date.now(),
-    };
-  
-    if (!gymState.periods) gymState.periods = {};
-    if (!gymState.periodOrder) gymState.periodOrder = [];
-  
-    gymState.periods[id] = period;
-    gymState.periodOrder.push(id);
-    gymSetActivePeriod(id);
-  
-    gymSaveState(gymState);
-    gymClosePeriodWizard(); // вернёт к списку периодов
-  }
-  
-  
-  function gymPeriodWizardCreatePeriod() {
-    if (!gymPeriodWizardDraft) return;
-    if (!gymEl.periodDaysContainer) return;
-
-    const days = [];
-    gymEl.periodDaysContainer.querySelectorAll('[data-day-index]').forEach(dayDiv => {
-      const dayIndex = Number(dayDiv.dataset.dayIndex || '0') || 0;
-      const enabledInput = dayDiv.querySelector('input[data-field="dayEnabled"]');
-      const enabled = enabledInput ? enabledInput.checked : true;
-
-      const muscles = [];
-      dayDiv.querySelectorAll('input[data-field="muscleGroupName"]').forEach(inp => {
-        const name = (inp.value || '').trim();
-        if (name) {
-          muscles.push({
-            group: name,
-            exercises: [], // потом добавим шаблоны упражнений
-          });
-        }
-      });
-
-      days.push({
-        dayIndex,
-        enabled,
-        muscles,
-      });
-    });
-
-    gymPeriodWizardDraft.days = days;
-
-    const id = gymCreatePeriodId();
-    const period = {
-      id,
-      name: gymPeriodWizardDraft.name,
-      type: gymPeriodWizardDraft.type,
-      splitType: gymPeriodWizardDraft.splitType,
-      cycleLengthDays: gymPeriodWizardDraft.cycleLengthDays,
-      totalCycles: gymPeriodWizardDraft.totalCycles,
-      template: {
-        days: gymPeriodWizardDraft.days,
-      },
-      progress: {
-        currentCycle: 1,
-      },
-    };
-
-    if (!gymState.periods) gymState.periods = {};
-    if (!gymState.periodOrder) gymState.periodOrder = [];
-
-    gymState.periods[id] = period;
-    gymState.periodOrder.push(id);
-    gymSetActivePeriod(id);
-    gymSaveState(gymState);
-
-    // очищаем драфт и возвращаемся к списку периодов
-    gymPeriodWizardDraft = null;
-    if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
-    gymRenderPeriodsList();
-    gymOpenPeriodsScreen();
-  }
+  }  
 
   // экран списка периодов
   function gymRenderPeriodsList() {
@@ -2575,9 +2480,61 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   if (gymEl.periodStep2CreateBtn) {
     gymEl.periodStep2CreateBtn.addEventListener('click', () => {
-      gymPeriodWizardStep2Create();
+      if (!gymPeriodWizardDraft) return;
+      if (!gymEl.periodDaysContainer) return;
+  
+      // Собираем дни из UI
+      const dayDivs = gymEl.periodDaysContainer.querySelectorAll('[data-day-index]');
+      const days = [];
+  
+      dayDivs.forEach((div) => {
+        const dayIndex = Number(div.dataset.dayIndex || '1');
+        const enabledInput = div.querySelector('input[data-field="dayEnabled"]');
+        const musclesInput = div.querySelector('input[data-field="muscles"]');
+  
+        const enabled = enabledInput ? !!enabledInput.checked : true;
+        const rawMuscles = musclesInput?.value || '';
+        const muscles = rawMuscles
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+  
+        days.push({
+          dayIndex,
+          enabled,
+          muscles,
+        });
+      });
+  
+      gymPeriodWizardDraft.days = days;
+  
+      // Создаём период в gymState
+      const periodId = gymCreatePeriodId();
+      const period = {
+        id: periodId,
+        name: gymPeriodWizardDraft.name || 'Период',
+        type: gymPeriodWizardDraft.type,
+        splitType: gymPeriodWizardDraft.splitType,
+        cycleLengthDays: gymPeriodWizardDraft.cycleLengthDays,
+        totalCycles: gymPeriodWizardDraft.totalCycles,
+        workoutsPerCycle: gymPeriodWizardDraft.workoutsPerCycle || days.length, // НОВОЕ
+        days,
+        cycles: {}, // пока циклы храним тут, дальше расширим
+        runtime: {}, // можно использовать для per-cycle данных, если нужно
+      };
+  
+      gymState.periods[periodId] = period;
+      gymState.periodOrder.push(periodId);
+      gymSetActivePeriod(periodId);
+  
+      gymSaveState(gymState);
+  
+      // закрываем мастер и открываем экран периода
+      if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
+      gymOpenGymScreenForPeriod(periodId);
     });
   }
+  
 
   // экран конкретного периода
   if (gymEl.backBtn) {
@@ -2598,11 +2555,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   if (gymEl.saveBtn) {
+    gymEl.saveBtn.textContent = 'Сохранить цикл';
     gymEl.saveBtn.addEventListener('click', () => {
-      gymSaveState(gymState);
-      showAlert('Тренировка в зале сохранена');
+      gymSaveCurrentCycleDefinition();
+      gymRenderGroups();
     });
   }
+  
   if (gymEl.historyBtn) {
     gymEl.historyBtn.addEventListener('click', () => {
       showAlert('История тренировок появится позже');
