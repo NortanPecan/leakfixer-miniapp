@@ -2501,7 +2501,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!gymEl.periodDaysContainer) return;
   
       // Собираем дни из UI
-      // const dayDivs = gymEl.periodDaysContainer.querySelectorAll('[data-day-index]');
+      const dayDivs = gymEl.periodDaysContainer.querySelectorAll('[data-day-index]');
       const rawDays = [];
       dayDivs.forEach((div) => {
         const dayIndex = Number(div.dataset.dayIndex || '1');
