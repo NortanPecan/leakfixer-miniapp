@@ -1684,12 +1684,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // --- РЕНДЕР ДНЕЙ ---
     daysToRender.forEach((day) => {
-      if (!day.enabled && !ui.editDays[day.dayIndex]) {
-        return; // просто не рендерим день
-        // если день выключен, но не в режиме редактирования — можно скрыть
-        // если хочешь показывать выключенный день — убери это условие
-      }
-  
       const dayIndex = day.dayIndex;
       if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
       const dayRuntime = runtime.days[dayIndex];
@@ -1718,7 +1712,9 @@ document.addEventListener('DOMContentLoaded', () => {
         checkbox.className = 'accent-emerald-400';
         checkbox.dataset.role = 'dayEnabled';
         checkbox.dataset.dayIndex = String(dayIndex);
-        if (day.enabled !== false) checkbox.checked = true;
+        const runtimeDay = runtime.days[dayIndex] || {};
+        if (runtimeDay.enabled !== false) checkbox.checked = true;
+
   
         const span = document.createElement('span');
         span.textContent = 'Активен';
@@ -2164,21 +2160,27 @@ document.addEventListener('DOMContentLoaded', () => {
           const dayIndex = Number(btn.dataset.dayIndex || '1');
           const period = gymGetActivePeriod();
           if (!period) return;
-  
+
           const days = Array.isArray(period.days) ? period.days : [];
           let day = days.find((d) => d.dayIndex === dayIndex);
           if (!day) {
-            day = { dayIndex, enabled: true, muscles: [] };
+            day = { dayIndex, muscles: [] };
             days.push(day);
           }
-  
-          // enabled
+
+          // 1) enabled пишем в runtime текущего цикла
+          const runtime = gymGetCurrentCycle();
+          if (!runtime) return;
+          if (!runtime.days) runtime.days = {};
+          if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
+          const dayRuntime = runtime.days[dayIndex];
+
           const checkbox = gymEl.groupsContainer.querySelector(
             `input[data-role="dayEnabled"][data-day-index="${dayIndex}"]`
           );
-          day.enabled = checkbox ? !!checkbox.checked : true;
-  
-          // мышцы
+          dayRuntime.enabled = checkbox ? !!checkbox.checked : true;
+
+          // 2) мышцы остаются в шаблоне периода (общие для всех циклов)
           const musclesInput = gymEl.groupsContainer.querySelector(
             `input[data-role="dayMusclesInput"][data-day-index="${dayIndex}"]`
           );
@@ -2187,29 +2189,28 @@ document.addEventListener('DOMContentLoaded', () => {
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean);
+
           day.muscles = muscles.length
             ? muscles
             : (Array.isArray(GYM_DEFAULT_GROUPS) ? GYM_DEFAULT_GROUPS.slice() : []);
-  
+
           period.days = days;
-  
-          const runtime = gymGetCurrentCycle();
-          if (runtime && runtime.days && runtime.days[dayIndex]) {
-            const dayRuntime = runtime.days[dayIndex];
-            if (!dayRuntime.groups) dayRuntime.groups = {};
-            const allowed = new Set(day.muscles);
-            Object.keys(dayRuntime.groups).forEach((groupName) => {
-              if (!allowed.has(groupName)) {
-                delete dayRuntime.groups[groupName];
-              }
-            });
-          }
-  
+
+          // 3) чистим группы упражнений, которых больше нет в списке мышц
+          if (!dayRuntime.groups) dayRuntime.groups = {};
+          const allowed = new Set(day.muscles);
+          Object.keys(dayRuntime.groups).forEach((groupName) => {
+            if (!allowed.has(groupName)) {
+              delete dayRuntime.groups[groupName];
+            }
+          });
+
           ui.editDays[dayIndex] = false;
           gymSaveState(gymState);
           gymRenderGroups();
         });
       });
+
   
     // ---- УДАЛИТЬ ДЕНЬ ----
     gymEl.groupsContainer
@@ -2561,16 +2562,45 @@ document.addEventListener('DOMContentLoaded', () => {
     gymEl.newCycleBtn.addEventListener('click', () => {
       const period = gymGetActivePeriod();
       if (!period) return;
-      const runtime = gymGetCurrentCycle();
-      if (runtime.currentCycle < runtime.totalCycles) {
-        runtime.currentCycle += 1;
-        runtime.periodDone = Math.max(runtime.periodDone, runtime.currentCycle);
+  
+      const rt = gymState.runtime || (gymState.runtime = {});
+      if (!rt[period.id]) {
+        // форс-инициализация
+        gymGetCurrentCycle();
+      }
+      const pr = rt[period.id];
+      if (!pr) return;
+  
+      if (pr.currentCycle < pr.totalCycles) {
+        const prevIndex = pr.currentCycle;
+        pr.currentCycle += 1;
+        pr.periodDone = Math.max(pr.periodDone || 1, pr.currentCycle);
+  
+        // создаём days для нового цикла на основе предыдущего
+        if (!pr.cycles) pr.cycles = [];
+        const prevCycle = pr.cycles[prevIndex - 1] || { days: {} };
+        const nextCycle = pr.cycles[pr.currentCycle - 1] || { days: {} };
+  
+        if (!nextCycle.days) nextCycle.days = {};
+  
+        // копируем только включённые дни
+        Object.keys(prevCycle.days || {}).forEach((key) => {
+          const d = prevCycle.days[key];
+          if (d && d.enabled !== false) {
+            nextCycle.days[key] = { ...d };
+          }
+        });
+  
+        // записываем назад
+        pr.cycles[pr.currentCycle - 1] = nextCycle;
+  
         gymSaveState(gymState);
         gymRenderHeader();
         gymRenderGroups();
       }
     });
   }
+  
   if (gymEl.saveBtn) {
     gymEl.saveBtn.textContent = 'Сохранить цикл';
     gymEl.saveBtn.addEventListener('click', () => {
