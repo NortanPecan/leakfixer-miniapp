@@ -1824,7 +1824,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dayBody.dataset.dayIndex = String(dayIndex);
   
       const muscleGroups =
-        day.muscles && day.muscles.length ? day.muscles : GYM_DEFAULT_GROUPS;
+        day.muscles && day.muscles.length ? day.muscles : [];
   
       muscleGroups.forEach((groupName) => {
         const wrapper = document.createElement('div');
@@ -2104,17 +2104,8 @@ document.addEventListener('DOMContentLoaded', () => {
             .map((s) => s.trim())
             .filter(Boolean);
         
-          const musclesFinal = muscles.length
-            ? muscles
-            : (Array.isArray(GYM_DEFAULT_GROUPS) ? GYM_DEFAULT_GROUPS.slice() : []);
-        
-          const existingDays = Array.isArray(period.days) ? period.days : [];
-          const nextIndex =
-            existingDays.length > 0
-              ? Math.max(...existingDays.map((d) => d.dayIndex || 0)) + 1
-              : 1;
-        
-          // 1) в шаблон периода сохраняем только сам факт дня и его мышцы
+          const musclesFinal = muscles.length ? muscles : [];
+
           period.days = [
             ...existingDays,
             {
@@ -2195,9 +2186,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean);
-          day.muscles = muscles.length
-            ? muscles
-            : (Array.isArray(GYM_DEFAULT_GROUPS) ? GYM_DEFAULT_GROUPS.slice() : []);
+          day.muscles = muscles.length ? muscles : [];
 
           period.days = days;
 
