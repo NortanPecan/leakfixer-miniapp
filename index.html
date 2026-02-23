@@ -31,6 +31,20 @@
       background: linear-gradient(90deg, #22c55e, #ef4444);
       transform-origin: left center;
     }
+    input[type="date"] {
+      background-color: rgba(15, 23, 42, 0.7); /* темный фон (slate-900/70) */
+      color: #e5e7eb; /* text-gray-200 */
+      border-radius: 0.75rem; /* совпадает с rounded-xl */
+      border: 1px solid rgba(148, 163, 184, 0.5); /* slate-400/50 */
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem; /* 12px, как text-xs */
+    }
+
+    /* чтобы и иконка календаря была светлой в dark */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+    }
+
   </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-500 to-purple-600 min-h-screen p-4 text-white">
