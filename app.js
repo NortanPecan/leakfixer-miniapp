@@ -2087,45 +2087,47 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.addEventListener('click', () => {
           const period = gymGetActivePeriod();
           if (!period) return;
-  
+        
           const enabledInput = form.querySelector('[data-role="newDayEnabled"]');
           const musclesInput = form.querySelector('[data-role="newDayMuscles"]');
-  
+        
           const enabled = enabledInput ? !!enabledInput.checked : true;
           const rawMuscles = musclesInput?.value || '';
           const muscles = rawMuscles
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean);
-  
+        
           const musclesFinal = muscles.length
             ? muscles
             : (Array.isArray(GYM_DEFAULT_GROUPS) ? GYM_DEFAULT_GROUPS.slice() : []);
-  
+        
           const existingDays = Array.isArray(period.days) ? period.days : [];
           const nextIndex =
             existingDays.length > 0
               ? Math.max(...existingDays.map((d) => d.dayIndex || 0)) + 1
               : 1;
-  
+        
+          // 1) в шаблон периода сохраняем только сам факт дня и его мышцы
           period.days = [
             ...existingDays,
             {
               dayIndex: nextIndex,
-              enabled,
               muscles: musclesFinal,
             },
           ];
-  
+        
+          // 2) enabled записываем в runtime текущего цикла
           const runtime = gymGetCurrentCycle();
           if (runtime) {
             if (!runtime.days) runtime.days = {};
-            runtime.days[nextIndex] = { groups: {} };
+            if (!runtime.days[nextIndex]) runtime.days[nextIndex] = { groups: {} };
+            runtime.days[nextIndex].enabled = enabled;
           }
-  
+        
           gymSaveState(gymState);
           gymRenderGroups();
-        });
+        });        
       }
     }
   
