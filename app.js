@@ -2039,9 +2039,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     gymEl.groupsContainer.appendChild(addDayContainer);
   
-    // --- ОБРАБОТЧИКИ ---
-  
-    // добавить день
+    // ---- ОБРАБОТЧИКИ "НОВЫЙ ДЕНЬ" ----
     {
       const addBtn = addDayContainer.querySelector('[data-role="addDayFromScreen"]');
       const form = addDayContainer.querySelector('[data-role="newDayForm"]');
@@ -2102,7 +2100,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   
-    // свернуть/развернуть день
+    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ ДЕНЬ ----
     gymEl.groupsContainer
       .querySelectorAll('[data-role="toggleDay"]')
       .forEach((btn) => {
@@ -2119,8 +2117,306 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
-    // дальше можно оставить твой существующий код обработчиков (editDay, toggleGroup и т.п.)
+    // ---- ОТКРЫТЬ МОДАЛКУ "РЕДАКТИРОВАТЬ ДЕНЬ" ----
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-role="editDay"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dayIndex = Number(btn.dataset.dayIndex || '1');
+          const period = gymGetActivePeriod();
+          if (!period) return;
+  
+          const days = Array.isArray(period.days) ? period.days : [];
+          const existing = days.find((d) => d.dayIndex === dayIndex) || {
+            dayIndex,
+            enabled: true,
+            muscles: [],
+          };
+  
+          const musclesText = existing.muscles && existing.muscles.length
+            ? existing.muscles.join(', ')
+            : '';
+  
+          const html = `
+            <h3 class="font-semibold mb-3 text-sm">День ${dayIndex}</h3>
+            <div class="space-y-3 text-xs">
+              <label class="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  class="accent-emerald-400"
+                  id="gmDayEnabled"
+                  ${existing.enabled ? 'checked' : ''}
+                />
+                <span class="text-slate-200">День активен</span>
+              </label>
+  
+              <div>
+                <div class="text-[11px] text-slate-300 mb-1">
+                  Группы мышц через запятую
+                </div>
+                <input
+                  id="gmDayMuscles"
+                  class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
+                  placeholder="Грудь, плечи, спина"
+                  value="${musclesText}"
+                />
+              </div>
+  
+              <div class="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  class="flex-1 bg-red-500/80 py-2 rounded-xl text-xs font-semibold"
+                  id="gmDayDelete"
+                >
+                  Удалить день
+                </button>
+                <button
+                  type="button"
+                  class="flex-1 bg-emerald-500 hover:bg-emerald-600 py-2 rounded-xl text-xs font-semibold"
+                  id="gmDaySave"
+                >
+                  Сохранить
+                </button>
+              </div>
+            </div>
+          `;
+  
+          if (!fitnessEl.modalOverlay || !fitnessEl.modalContent) return;
+          fitnessEl.modalContent.innerHTML = html;
+          fitnessEl.modalOverlay.classList.remove('hidden');
+  
+          const close = () => {
+            fitnessEl.modalOverlay.classList.add('hidden');
+          };
+  
+          fitnessEl.modalOverlay.addEventListener('click', (e) => {
+            if (e.target === fitnessEl.modalOverlay) close();
+          }, { once: true });
+  
+          const saveBtn = fitnessEl.modalContent.querySelector('#gmDaySave');
+          const deleteBtn = fitnessEl.modalContent.querySelector('#gmDayDelete');
+  
+          if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+              const enabledEl = document.getElementById('gmDayEnabled');
+              const musclesEl = document.getElementById('gmDayMuscles');
+  
+              const enabled = enabledEl ? !!enabledEl.checked : true;
+              const raw = musclesEl?.value || '';
+              const muscles = raw
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean);
+  
+              const musclesFinal = muscles.length
+                ? muscles
+                : (Array.isArray(GYM_DEFAULT_GROUPS) ? GYM_DEFAULT_GROUPS.slice() : []);
+  
+              const period = gymGetActivePeriod();
+              if (!period) return;
+  
+              const days = Array.isArray(period.days) ? period.days : [];
+              const idx = days.findIndex((d) => d.dayIndex === dayIndex);
+              if (idx >= 0) {
+                days[idx].enabled = enabled;
+                days[idx].muscles = musclesFinal;
+              } else {
+                days.push({ dayIndex, enabled, muscles: musclesFinal });
+              }
+              period.days = days;
+  
+              const runtime = gymGetCurrentCycle();
+              if (runtime && runtime.days && runtime.days[dayIndex]) {
+                const dayRuntime = runtime.days[dayIndex];
+                if (!dayRuntime.groups) dayRuntime.groups = {};
+                const allowed = new Set(musclesFinal);
+                Object.keys(dayRuntime.groups).forEach((groupName) => {
+                  if (!allowed.has(groupName)) {
+                    delete dayRuntime.groups[groupName];
+                  }
+                });
+              }
+  
+              gymSaveState(gymState);
+              close();
+              gymRenderGroups();
+            });
+          }
+  
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+              const period = gymGetActivePeriod();
+              if (!period) return;
+  
+              const days = Array.isArray(period.days) ? period.days : [];
+              period.days = days.filter((d) => d.dayIndex !== dayIndex);
+  
+              const runtime = gymGetCurrentCycle();
+              if (runtime && runtime.days && runtime.days[dayIndex]) {
+                delete runtime.days[dayIndex];
+              }
+  
+              gymSaveState(gymState);
+              close();
+              gymRenderGroups();
+            });
+          }
+        });
+      });
+  
+    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ ГРУППУ ----
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-role="toggleGroup"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const groupName = btn.dataset.group;
+          if (!groupName) return;
+          const dayWrapper = btn.closest('[data-day-index]');
+          if (!dayWrapper) return;
+          const list = dayWrapper.querySelector(
+            `[data-group-container="${groupName}"][data-role="groupBody"]`
+          );
+          if (!list) return;
+  
+          const dayIndex = Number(dayWrapper.dataset.dayIndex || '1');
+          const key = `${dayIndex}::${groupName}`;
+  
+          const nowHidden = list.classList.toggle('hidden');
+          ui.groups[key] = !nowHidden;
+          gymSaveState(gymState);
+        });
+      });
+  
+    // ---- ДОБАВИТЬ УПРАЖНЕНИЕ ----
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-role="addExercise"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const groupName = btn.dataset.group;
+          const dayWrapper = btn.closest('[data-day-index]');
+          const dayIndexAttr = dayWrapper?.dataset.dayIndex;
+          const dayIndex = Number(dayIndexAttr || '1');
+  
+          const runtime = gymGetCurrentCycle();
+          if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
+          const dayRuntime = runtime.days[dayIndex];
+          if (!dayRuntime.groups[groupName]) dayRuntime.groups[groupName] = [];
+  
+          dayRuntime.groups[groupName].push({
+            name: '',
+            sets: '',
+            warmup: '',
+            rpe: 7,
+            progressNote: '',
+            nextCyclePlan: '',
+          });
+  
+          gymSaveState(gymState);
+          gymRenderGroups();
+        });
+      });
+  
+    // ---- УДАЛИТЬ ГРУППУ ----
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-role="deleteGroup"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const groupName = btn.dataset.group;
+          if (!groupName) return;
+          const dayWrapper = btn.closest('[data-day-index]');
+          const dayIndex = Number(dayWrapper?.dataset.dayIndex || '1');
+  
+          const runtime = gymGetCurrentCycle();
+          if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
+          const dayRuntime = runtime.days[dayIndex];
+          if (!dayRuntime.groups[groupName]) return;
+  
+          delete dayRuntime.groups[groupName];
+  
+          const key = `${dayIndex}::${groupName}`;
+          delete ui.groups[key];
+  
+          gymSaveState(gymState);
+          gymRenderGroups();
+        });
+      });
+  
+    // ---- ИЗМЕНЕНИЯ В ПОЛЯХ УПРАЖНЕНИЙ ----
+    gymEl.groupsContainer
+      .querySelectorAll('[data-field]')
+      .forEach((input) => {
+        input.addEventListener('input', () => {
+          const card = input.closest('[data-index]');
+          const list = input.closest('[data-group]');
+          const dayWrapper = input.closest('[data-day-index]');
+          if (!card || !list || !dayWrapper) return;
+  
+          const idx = Number(card.dataset.index || '0');
+          const groupName = list.dataset.group;
+          const dayIndex = Number(dayWrapper.dataset.dayIndex || '1');
+  
+          const runtime = gymGetCurrentCycle();
+          if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
+          const dayRuntime = runtime.days[dayIndex];
+          if (!dayRuntime.groups[groupName]) dayRuntime.groups[groupName] = [];
+          const arr = dayRuntime.groups[groupName];
+  
+          if (!arr[idx]) return;
+          const field = input.dataset.field;
+          if (field === 'rpe') {
+            const val = Number(input.value) || 1;
+            arr[idx][field] = val;
+            const label = card.querySelector('[data-rpe-label]');
+            if (label) label.textContent = `${val}/10`;
+          } else {
+            arr[idx][field] = input.value;
+          }
+  
+          gymSaveState(gymState);
+        });
+      });
+  
+    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ УПРАЖНЕНИЕ ----
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-role="toggleExercise"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const card = btn.closest('[data-index]');
+          if (!card) return;
+          const body = card.querySelector('[data-role="exerciseBody"]');
+          if (!body) return;
+          body.classList.toggle('hidden');
+        });
+      });
+  
+    // ---- УДАЛЕНИЕ УПРАЖНЕНИЯ ----
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-delete]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const card = btn.closest('[data-index]');
+          const list = btn.closest('[data-group]');
+          const dayWrapper = btn.closest('[data-day-index]');
+          if (!card || !list || !dayWrapper) return;
+  
+          const idx = Number(card.dataset.index || '0');
+          const groupName = list.dataset.group;
+          const dayIndex = Number(dayWrapper.dataset.dayIndex || '1');
+  
+          const runtime = gymGetCurrentCycle();
+          if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
+          const dayRuntime = runtime.days[dayIndex];
+          const arr = dayRuntime.groups[groupName] || [];
+  
+          arr.splice(idx, 1);
+          dayRuntime.groups[groupName] = arr;
+  
+          gymSaveState(gymState);
+          gymRenderGroups();
+        });
+      });
   }
+  
   
   
   
