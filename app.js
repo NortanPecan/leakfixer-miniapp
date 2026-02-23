@@ -1566,7 +1566,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!rt.cycles || !rt.cycles.length) {
       rt.cycles = [{
         index: 1,
-        days: {}, // сюда будем писать упражнения по дням
+        days: {},        // важно
       }];
     }
   
@@ -1574,11 +1574,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const idx = Math.max(1, Math.min(rt.currentCycleIndex, rt.cycles.length));
   
     const cycle = rt.cycles[idx - 1];
-    if (!cycle.days) cycle.days = {};
+    if (!cycle.days) cycle.days = {};   // важно
   
     gymSaveState(gymState);
     return cycle;
   }
+  
   
 
   function gymRenderHeader() {
