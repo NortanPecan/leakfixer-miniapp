@@ -1798,15 +1798,28 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
   
-      const right = document.createElement('button');
-      right.type = 'button';
-      right.className = 'text-[11px] text-emerald-300 underline ml-2';
-      right.dataset.role = 'editDay';
-      right.dataset.dayIndex = String(dayIndex);
-      right.textContent = 'Редактировать день';
+      const rightWrapper = document.createElement('div');
+      rightWrapper.className = 'flex items-center gap-2 ml-2';
+  
+      const openBtn = document.createElement('button');
+      openBtn.type = 'button';
+      openBtn.className = 'text-[11px] text-sky-300 underline';
+      openBtn.dataset.role = 'openDayDebug';
+      openBtn.dataset.dayIndex = String(dayIndex);
+      openBtn.textContent = 'Открыть';
+  
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'text-[11px] text-emerald-300 underline';
+      editBtn.dataset.role = 'editDay';
+      editBtn.dataset.dayIndex = String(dayIndex);
+      editBtn.textContent = 'Редактировать день';
+  
+      rightWrapper.appendChild(openBtn);
+      rightWrapper.appendChild(editBtn);
   
       title.appendChild(left);
-      title.appendChild(right);
+      title.appendChild(rightWrapper);
       dayWrapper.appendChild(title);
   
       // тело дня
@@ -2100,7 +2113,28 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   
-    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ ДЕНЬ ----
+    // ---- ДИАГНОСТИЧЕСКАЯ КНОПКА "ОТКРЫТЬ" ----
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-role="openDayDebug"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dayWrapper = btn.closest('[data-day-index]');
+          if (!dayWrapper) {
+            alert('dayWrapper не найден');
+            return;
+          }
+          const body = dayWrapper.querySelector('[data-role="dayBody"]');
+          if (!body) {
+            alert('dayBody не найден');
+            return;
+          }
+          body.classList.remove('hidden');
+          const dayIndex = dayWrapper.dataset.dayIndex || '?';
+          alert('Открыт день ' + dayIndex);
+        });
+      });
+  
+    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ ДЕНЬ КЛИКОМ ПО ЛЕВОЙ ЧАСТИ ----
     gymEl.groupsContainer
       .querySelectorAll('[data-role="toggleDay"]')
       .forEach((btn) => {
@@ -2417,6 +2451,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
   
+
   
   
   
