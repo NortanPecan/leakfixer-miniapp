@@ -1685,6 +1685,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- РЕНДЕР ДНЕЙ ---
     daysToRender.forEach((day) => {
       if (!day.enabled && !ui.editDays[day.dayIndex]) {
+        return; // просто не рендерим день
         // если день выключен, но не в режиме редактирования — можно скрыть
         // если хочешь показывать выключенный день — убери это условие
       }
@@ -2500,27 +2501,26 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!gymEl.periodDaysContainer) return;
   
       // Собираем дни из UI
-      const dayDivs = gymEl.periodDaysContainer.querySelectorAll('[data-day-index]');
-      const days = [];
-  
+      // const dayDivs = gymEl.periodDaysContainer.querySelectorAll('[data-day-index]');
+      const rawDays = [];
       dayDivs.forEach((div) => {
         const dayIndex = Number(div.dataset.dayIndex || '1');
         const enabledInput = div.querySelector('input[data-field="dayEnabled"]');
         const musclesInput = div.querySelector('input[data-field="muscles"]');
-  
+      
         const enabled = enabledInput ? !!enabledInput.checked : true;
         const rawMuscles = musclesInput?.value || '';
         const muscles = rawMuscles
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean);
-  
-        days.push({
-          dayIndex,
-          enabled,
-          muscles,
-        });
+      
+        rawDays.push({ dayIndex, enabled, muscles });
       });
+      
+      // в модель периода сохраняем только включённые дни
+      const days = rawDays.filter((d) => d.enabled);
+      gymPeriodWizardDraft.days = days;
   
       gymPeriodWizardDraft.days = days;
   
