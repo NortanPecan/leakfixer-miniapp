@@ -1956,6 +1956,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const titleWrap = document.createElement('div');
             titleWrap.className = 'flex-1';
 
+            // метка цикла
+            const cycleBadge = document.createElement('span');
+            cycleBadge.className = 'ml-2 px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-slate-300';
+            cycleBadge.textContent = `Цикл ${gymState.runtime?.[period.id]?.currentCycle || 1}`;
+            exHeader.appendChild(cycleBadge);
+
+
             if (isEditing) {
               // Редактируемое название
               const nameInput = document.createElement('input');
