@@ -1904,7 +1904,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
       const left = document.createElement('button');
       left.type = 'button';
-      left.className = 'text-left';
+      left.className = 'text-left w-full'; // вся левая часть кликабельна
       left.dataset.role = 'toggleDay';
       left.dataset.dayIndex = String(dayIndex);
       left.innerHTML = `
@@ -1920,7 +1920,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
       const right = document.createElement('button');
       right.type = 'button';
-      right.className = 'text-[11px] text-emerald-300 underline';
+      right.className = 'text-[11px] text-emerald-300 underline ml-2';
       right.dataset.role = 'editDay';
       right.dataset.dayIndex = String(dayIndex);
       right.textContent = 'Редактировать день';
@@ -1930,9 +1930,8 @@ document.addEventListener('DOMContentLoaded', () => {
       dayWrapper.appendChild(title);
   
       const dayBody = document.createElement('div');
-      // по умолчанию свернуто, но если в ui.days[dayIndex] === true — раскрываем
       const dayExpanded = ui.days[dayIndex] === true;
-      dayBody.className = 'space-y-2' + (dayExpanded ? '' : ' hidden');
+      dayBody.className = 'space-y-2' + (dayExpanded ? '' : ' hidden'); // по умолчанию скрыто
       dayBody.dataset.role = 'dayBody';
   
       const muscleGroups =
@@ -2103,7 +2102,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // свернуть/развернуть день + сохранение в uiCollapse
     gymEl.groupsContainer
-      .querySelectorAll('button[data-role="toggleDay"]')
+      .querySelectorAll('[data-role="toggleDay"]')
       .forEach((btn) => {
         btn.addEventListener('click', () => {
           const dayWrapper = btn.closest('[data-day-index]');
@@ -2334,7 +2333,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
           delete dayRuntime.groups[groupName];
   
-          // чистим UI state для группы
           const key = `${dayIndex}::${groupName}`;
           delete ui.groups[key];
   
@@ -2378,7 +2376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
-    // свернуть/развернуть упражнение (без сохранения в UI state, чтобы не усложнять)
+    // свернуть/развернуть упражнение (без сохранения в UI state)
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="toggleExercise"]')
       .forEach((btn) => {
@@ -2418,6 +2416,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   }
+  
   
   
   if (gymEl.daySelect) {
