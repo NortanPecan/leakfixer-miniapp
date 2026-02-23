@@ -1750,143 +1750,131 @@ document.addEventListener('DOMContentLoaded', () => {
     gymEl.groupsContainer.innerHTML = '';
   
     const days = Array.isArray(period.days) && period.days.length
-      ? period.days
-      : [];
+    ? period.days
+    : [];
   
     const daysToRender = days.length ? days : [];
-
-    // если нет ни одного дня – показываем форму создания первого дня
-    if (!daysToRender.length) {
-      const container = document.createElement('div');
-      container.className = 'space-y-3 text-xs text-slate-200';
-
-      container.innerHTML = `
-        <div class="text-sm text-slate-200">
-          Пока нет дней в этом периоде. Создай первый день.
-        </div>
-
-        <div
-          class="bg-white/5 rounded-2xl px-3 py-3 space-y-2"
-          data-role="newDayForm"
-        >
-          <div class="flex items-center justify-between mb-2">
-            <div class="text-sm font-semibold text-white">
-              Новый день
-            </div>
-            <label class="flex items-center gap-1 text-[11px] text-slate-200">
-              <input
-                type="checkbox"
-                class="accent-emerald-400"
-                data-role="newDayEnabled"
-                checked
-              />
-              <span>День активен</span>
-            </label>
+    
+    // --- КНОПКА/ФОРМА "ДОБАВИТЬ ДЕНЬ" ВСЕГДА СНИЗУ ---
+    // контейнер для кнопки и формы
+    const addDayContainer = document.createElement('div');
+    addDayContainer.className = 'mt-3 space-y-2 text-xs text-slate-200';
+    
+    addDayContainer.innerHTML = `
+      <div
+        class="bg-white/5 rounded-2xl px-3 py-3 space-y-2 hidden"
+        data-role="newDayForm"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-sm font-semibold text-white">
+            Новый день
           </div>
-
-          <div class="space-y-1">
-            <div class="text-[11px] text-slate-300">Группы мышц через запятую</div>
+          <label class="flex items-center gap-1 text-[11px] text-slate-200">
             <input
-              class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
-              placeholder="Грудь, плечи, спина"
-              data-role="newDayMuscles"
+              type="checkbox"
+              class="accent-emerald-400"
+              data-role="newDayEnabled"
+              checked
             />
-          </div>
-
-          <div class="flex gap-2 mt-3">
-            <button
-              type="button"
-              class="flex-1 bg-emerald-500 hover:bg-emerald-600 py-2 rounded-xl font-semibold text-sm"
-              data-role="createDaySubmit"
-            >
-              Сохранить день
-            </button>
-            <button
-              type="button"
-              class="flex-1 bg-white/10 py-2 rounded-xl text-sm"
-              data-role="createDayCancel"
-            >
-              Отмена
-            </button>
-          </div>
+            <span>День активен</span>
+          </label>
         </div>
+    
+        <div class="space-y-1">
+          <div class="text-[11px] text-slate-300">Группы мышц через запятую</div>
+          <input
+            class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
+            placeholder="Грудь, плечи, спина"
+            data-role="newDayMuscles"
+          />
+        </div>
+    
+        <div class="flex gap-2 mt-3">
+          <button
+            type="button"
+            class="flex-1 bg-emerald-500 hover:bg-emerald-600 py-2 rounded-xl font-semibold text-sm"
+            data-role="createDaySubmit"
+          >
+            Сохранить день
+          </button>
+          <button
+            type="button"
+            class="flex-1 bg-white/10 py-2 rounded-xl text-sm"
+            data-role="createDayCancel"
+          >
+            Отмена
+          </button>
+        </div>
+      </div>
+    
+      <button
+        type="button"
+        class="w-full bg-transparent border border-emerald-500/60 py-2 rounded-xl font-semibold text-sm"
+        data-role="addDayFromScreen"
+      >
+        + Добавить день
+      </button>
+    `;
+    gymEl.groupsContainer.appendChild(addDayContainer);
 
-        <button
-          type="button"
-          class="w-full bg-transparent border border-emerald-500/60 py-2 rounded-xl font-semibold text-sm"
-          data-role="addDayFromScreen"
-        >
-          + Добавить день
-        </button>
-      `;
-
-      gymEl.groupsContainer.appendChild(container);
-
-      // обработчик: показать форму по клику "+ Добавить день"
-      const addBtn = container.querySelector('button[data-role="addDayFromScreen"]');
-      const form = container.querySelector('[data-role="newDayForm"]');
-      const cancelBtn = container.querySelector('button[data-role="createDayCancel"]');
-      const submitBtn = container.querySelector('button[data-role="createDaySubmit"]');
-
-      if (form && addBtn && cancelBtn && submitBtn) {
-        // по умолчанию форма скрыта
+    const addBtn = addDayContainer.querySelector('button[data-role="addDayFromScreen"]');
+    const form = addDayContainer.querySelector('[data-role="newDayForm"]');
+    const cancelBtn = addDayContainer.querySelector('button[data-role="createDayCancel"]');
+    const submitBtn = addDayContainer.querySelector('button[data-role="createDaySubmit"]');
+    
+    if (form && addBtn && cancelBtn && submitBtn) {
+      addBtn.addEventListener('click', () => {
+        form.classList.remove('hidden');
+      });
+    
+      cancelBtn.addEventListener('click', () => {
         form.classList.add('hidden');
-
-        addBtn.addEventListener('click', () => {
-          form.classList.remove('hidden');
-        });
-
-        cancelBtn.addEventListener('click', () => {
-          form.classList.add('hidden');
-        });
-
-        submitBtn.addEventListener('click', () => {
-          const period = gymGetActivePeriod();
-          if (!period) return;
-
-          const enabledInput = form.querySelector('[data-role="newDayEnabled"]');
-          const musclesInput = form.querySelector('[data-role="newDayMuscles"]');
-
-          const enabled = enabledInput ? !!enabledInput.checked : true;
-          const rawMuscles = musclesInput?.value || '';
-          const muscles = rawMuscles
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean);
-
-          // если ничего не ввели – можно подставить дефолт
-          const musclesFinal = muscles.length
-            ? muscles
-            : (Array.isArray(GYM_DEFAULT_GROUPS) ? GYM_DEFAULT_GROUPS.slice() : []);
-
-          const existingDays = Array.isArray(period.days) ? period.days : [];
-          const nextIndex =
-            existingDays.length > 0
-              ? Math.max(...existingDays.map((d) => d.dayIndex || 0)) + 1
-              : 1;
-
-          period.days = [
-            ...existingDays,
-            {
-              dayIndex: nextIndex,
-              enabled,
-              muscles: musclesFinal,
-            },
-          ];
-
-          const runtime = gymGetCurrentCycle();
-          if (runtime) {
-            if (!runtime.days) runtime.days = {};
-            runtime.days[nextIndex] = { groups: {} };
-          }
-
-          gymSaveState(gymState);
-          gymRenderGroups();
-        });
-      }
-
-      return;
+      });
+    
+      submitBtn.addEventListener('click', () => {
+        const period = gymGetActivePeriod();
+        if (!period) return;
+    
+        const enabledInput = form.querySelector('[data-role="newDayEnabled"]');
+        const musclesInput = form.querySelector('[data-role="newDayMuscles"]');
+    
+        const enabled = enabledInput ? !!enabledInput.checked : true;
+        const rawMuscles = musclesInput?.value || '';
+        const muscles = rawMuscles
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+    
+        const musclesFinal = muscles.length
+          ? muscles
+          : (Array.isArray(GYM_DEFAULT_GROUPS) ? GYM_DEFAULT_GROUPS.slice() : []);
+    
+        const existingDays = Array.isArray(period.days) ? period.days : [];
+        const nextIndex =
+          existingDays.length > 0
+            ? Math.max(...existingDays.map((d) => d.dayIndex || 0)) + 1
+            : 1;
+    
+        period.days = [
+          ...existingDays,
+          {
+            dayIndex: nextIndex,
+            enabled,
+            muscles: musclesFinal,
+          },
+        ];
+    
+        const runtime = gymGetCurrentCycle();
+        if (runtime) {
+          if (!runtime.days) runtime.days = {};
+          runtime.days[nextIndex] = { groups: {} };
+        }
+    
+        gymSaveState(gymState);
+        gymRenderGroups();
+      });
     }
+    
   
     daysToRender.forEach((day) => {
       if (!day.enabled) return;
