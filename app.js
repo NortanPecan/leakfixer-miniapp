@@ -2531,7 +2531,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
       // закрываем мастер и открываем экран периода
       if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
-      gymOpenGymScreenForPeriod(periodId);
+      gymOpen();
+
     });
   }
   
