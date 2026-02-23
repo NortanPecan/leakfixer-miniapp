@@ -1162,22 +1162,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const period = gymGetActivePeriod();
     if (!period) return;
   
-    // На будущее здесь можно будет сохранять фактический лог цикла в Supabase
-    // Пока просто дублируем активные дни как новый "набор"
+    if (!gymState.runtime) gymState.runtime = {};
+    if (!gymState.runtime[period.id]) {
+      gymState.runtime[period.id] = { currentCycle: 1, cycles: {} };
+    }
   
-    // Найдём max номер дня
-    const maxDay = (period.days || []).reduce(
-      (max, d) => Math.max(max, d.dayIndex || 0),
-      0
-    );
+    const rt = gymState.runtime[period.id];
+    const currentCycle = rt.currentCycle || 1;
+    const currentRuntime = rt.cycles[currentCycle] || { days: {} };
   
-    // Ничего особого не делаем с ID цикла — твоя текущая логика gymRenderGroups
-    // уже работает по period.days, а не по отдельным объектам циклов.
-    // Мы просто сохраняем обновлённый period и перерисовываем.
+    // создаём следующий цикл
+    const nextCycle = currentCycle + 1;
+    const nextRuntimeDays = {};
   
-    gymSaveCurrentCycleDefinition();
+    const baseDays = Array.isArray(period.days) ? period.days : [];
+  
+    baseDays.forEach((d) => {
+      const dayIndex = d.dayIndex;
+      const prevDayRuntime = currentRuntime.days?.[dayIndex];
+  
+      // читаем enabled из предыдущего цикла, по умолчанию true
+      const enabled = prevDayRuntime ? prevDayRuntime.enabled !== false : true;
+  
+      if (!enabled) return; // этот день не переносим в новый цикл
+  
+      nextRuntimeDays[dayIndex] = {
+        enabled: true,
+        groups: prevDayRuntime && prevDayRuntime.groups
+          ? JSON.parse(JSON.stringify(prevDayRuntime.groups))
+          : {},
+      };
+    });
+  
+    rt.currentCycle = nextCycle;
+    rt.cycles[nextCycle] = { days: nextRuntimeDays };
+  
+    gymSaveState(gymState);
+    gymRenderHeader();
     gymRenderGroups();
   }
+  
+  if (gymEl.newCycleBtn) {
+    gymEl.newCycleBtn.addEventListener('click', gymCreateNextCycle);
+  }
+
 
   function gymSaveCurrentCycleDefinition() {
     const period = gymGetActivePeriod();
@@ -1686,7 +1714,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const enabled = runtimeDayRaw ? runtimeDayRaw.enabled !== false : true;
     
       // если день выключен и не в режиме редактирования — пропускаем
-      if (!enabled && !ui.editDays[dayIndex]) return;
+      // if (!enabled && !ui.editDays[dayIndex]) return;
     
       if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
       const dayRuntime = runtime.days[dayIndex];
@@ -1697,7 +1725,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const dayWrapper = document.createElement('div');
       dayWrapper.className = 'bg-white/5 rounded-2xl px-3 py-3 space-y-2';
       dayWrapper.dataset.dayIndex = String(dayIndex);
-      
+
       // --- ШАПКА ДНЯ ---
       const title = document.createElement('div');
       title.className = 'flex items-center justify-between mb-2';
