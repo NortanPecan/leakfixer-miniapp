@@ -1234,17 +1234,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentRuntime = rt.cycles[currentCycle];
   
     const nextCycle = currentCycle + 1;
+    // determine maximum allowed cycles for this period
+    const maxCycles = (period && Number(period.totalCycles)) || (rt && Number(rt.totalCycles)) || 8;
+
+    // do not create a next cycle beyond the period's configured totalCycles
+    if (nextCycle > maxCycles) {
+      return;
+    }
+
     const nextRuntimeDays = {};
-  
     const baseDays = Array.isArray(period.days) ? period.days : [];
-  
+
     baseDays.forEach((d) => {
       const dayIndex = d.dayIndex;
       const prevDayRuntime = currentRuntime.days?.[dayIndex];
-  
+
       const enabled = prevDayRuntime ? prevDayRuntime.enabled !== false : true;
       if (!enabled) return;
-  
+
       nextRuntimeDays[dayIndex] = {
         enabled: true,
         groups: prevDayRuntime && prevDayRuntime.groups
@@ -1252,15 +1259,16 @@ document.addEventListener('DOMContentLoaded', () => {
           : {},
       };
     });
-  
+
     rt.currentCycle = nextCycle;
     if (!rt.cycles[nextCycle]) {
       rt.cycles[nextCycle] = { days: {}, groups: {} };
     }
     rt.cycles[nextCycle].days = nextRuntimeDays;
-  
-    if (rt.totalCycles < nextCycle) rt.totalCycles = nextCycle;
-    if (rt.periodDone < nextCycle) rt.periodDone = nextCycle;
+
+    // keep runtime.totalCycles in sync but never exceed period.totalCycles
+    rt.totalCycles = Math.min(maxCycles, Math.max(Number(rt.totalCycles) || 1, nextCycle));
+    rt.periodDone = Math.min(maxCycles, Math.max(Number(rt.periodDone) || 1, nextCycle));
   
     gymSaveState(gymState);
     gymRenderHeader();
@@ -1713,23 +1721,19 @@ document.addEventListener('DOMContentLoaded', () => {
   
     if (!gymState.runtime) gymState.runtime = {};
     if (!gymState.runtime[period.id]) {
-      gymState.runtime[period.id] = { currentCycle: 1, cycles: {} };
+      gymState.runtime[period.id] = { currentCycle: 1, totalCycles: period.totalCycles || 1, cycles: {} };
     }
-  
+
     const rt = gymState.runtime[period.id];
     const current = rt.currentCycle || 1;
-  
-    const cycleNumbers = Object.keys(rt.cycles || {})
-      .map((k) => Number(k))
-      .filter((n) => !Number.isNaN(n) && n > 0);
-  
-    const maxCycle = Math.max(current, cycleNumbers.length ? Math.max(...cycleNumbers) : 1);
-  
+
+    const maxCycle = Number(period.totalCycles) || Number(rt.totalCycles) || 1;
+
     let options = '';
     for (let i = 1; i <= maxCycle; i += 1) {
       options += `<option value="${i}">Цикл ${i}</option>`;
     }
-  
+
     gymEl.cycleSelect.innerHTML = options;
     gymEl.cycleSelect.value = String(current);
   }
@@ -1739,21 +1743,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const period = gymGetActivePeriod();
     if (!period) return;
   
-    // берём текущий цикл из глобального runtime
-    const runtimeCycle = gymGetCurrentCycle();
-    if (!runtimeCycle) {
-      gymEl.cycleInfo.textContent = '1/1';
-      gymEl.periodInfo.textContent = period.name || 'Период';
-      gymEl.progressBar.style.width = '0%';
-      gymEl.progressLabel.textContent = '0/1';
-      
-      return;
-      
-    }
-  
-    const currentCycle = runtimeCycle.currentCycle ?? 1;
-    const totalCycles = runtimeCycle.totalCycles ?? period.totalCycles ?? 1;
-    const periodDone = runtimeCycle.periodDone ?? currentCycle;
+    // read runtime object for the period (not the per-cycle data)
+    if (!gymState.runtime) gymState.runtime = {};
+    if (!gymState.runtime[period.id]) gymState.runtime[period.id] = { currentCycle: 1, totalCycles: period.totalCycles || 1, periodDone: 1, cycles: {} };
+
+    const rt = gymState.runtime[period.id];
+    const currentCycle = Number(rt.currentCycle) || 1;
+    const totalCycles = Number(period.totalCycles) || Number(rt.totalCycles) || 1;
+    const periodDone = Number(rt.periodDone) || currentCycle;
   
     
   
@@ -2695,7 +2692,19 @@ document.addEventListener('DOMContentLoaded', () => {
       };
   
       gymState.periods[periodId] = period;
+      if (!gymState.periodOrder || !Array.isArray(gymState.periodOrder)) gymState.periodOrder = [];
       gymState.periodOrder.push(periodId);
+      // Initialize runtime fresh for the new period — do NOT reuse old runtime data
+      if (!gymState.runtime) gymState.runtime = {};
+      gymState.runtime[periodId] = {
+        currentCycle: 1,
+        totalCycles: Number(period.totalCycles) || 1,
+        periodDone: 1,
+        cycles: {
+          1: { days: {}, groups: {} },
+        },
+      };
+
       gymSetActivePeriod(periodId);
   
       gymSaveState(gymState);
