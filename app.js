@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const supabaseEnabled = Boolean(isTelegram && !isDemoUser && user?.id);
   const fitnessModalOverlay = document.getElementById('fitnessModalOverlay');
   const fitnessModalContent = document.getElementById('fitnessModalContent');
+  const cycleSelect = document.getElementById('gymCycleSelect');
+
 
   const showAlert = (message) => {
     if (isTelegram && typeof tg?.showAlert === 'function') {
@@ -1067,6 +1069,7 @@ document.addEventListener('DOMContentLoaded', () => {
     saveBtn: document.getElementById('gymSaveBtn'),
     historyBtn: document.getElementById('gymHistoryBtn'),
     newCycleBtn: document.getElementById('gymNewCycleBtn'),
+    cycleSelect: document.getElementById('gymCycleSelect'),
   };
 
   // до GYM-блока, после fitnessEl/gymEl
@@ -1195,6 +1198,95 @@ document.addEventListener('DOMContentLoaded', () => {
     gymOpenPeriodsScreen();
   }  
 
+  // Кнопка "Добавить день в цикл" на шаге 2 мастера периода
+  const addDayBtn = document.getElementById('gymPeriodAddDayBtn');
+
+  if (addDayBtn && gymEl.periodDaysContainer) {
+    addDayBtn.addEventListener('click', () => {
+      const existing = gymEl.periodDaysContainer
+        .querySelectorAll('[data-day-index]');
+      const nextIndex = existing.length + 1;
+
+      const dayDiv = document.createElement('div');
+      dayDiv.className = 'bg-white/10 rounded-xl px-3 py-3 space-y-2';
+      dayDiv.dataset.dayIndex = String(nextIndex);
+
+      dayDiv.innerHTML = `
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-sm font-medium text-white">День ${nextIndex}</span>
+          <button type="button"
+            data-role="deleteDay"
+            class="text-11px text-red-300 underline">
+            удалить
+          </button>
+        </div>
+
+        <label class="flex items-center gap-1 text-11px text-slate-200">
+          <input
+            type="checkbox"
+            data-field="dayEnabled"
+            class="accent-emerald-400"
+            checked
+          >
+          <span>День активен</span>
+        </label>
+
+        <div class="text-11px text-slate-300 mb-1">Группы мышц</div>
+        <div data-role="muscleList" class="space-y-1"></div>
+
+        <button
+          type="button"
+          data-role="addMuscleGroup"
+          class="mt-1 text-11px text-emerald-300 underline"
+        >
+          Добавить группу мышц
+        </button>
+      `;
+
+      const muscleList = dayDiv.querySelector('[data-role="muscleList"]');
+      if (muscleList) {
+        const g = document.createElement('div');
+        g.className = 'flex items-center gap-1';
+        g.innerHTML = `
+          <input
+            type="text"
+            class="flex-1 bg-white/15 rounded-lg px-2 py-1 text-xs text-white"
+            placeholder="Грудь, спина…"
+            data-field="muscleGroupName"
+          >
+        `;
+        muscleList.appendChild(g);
+      }
+
+      dayDiv
+        .querySelector('button[data-role="deleteDay"]')
+        ?.addEventListener('click', () => dayDiv.remove());
+
+      dayDiv
+        .querySelector('button[data-role="addMuscleGroup"]')
+        ?.addEventListener('click', (e) => {
+          const container = (e.target).closest('[data-day-index]');
+          if (!container) return;
+          const list = container.querySelector('[data-role="muscleList"]');
+          if (!list) return;
+          const g2 = document.createElement('div');
+          g2.className = 'flex items-center gap-1';
+          g2.innerHTML = `
+            <input
+              type="text"
+              class="flex-1 bg-white/15 rounded-lg px-2 py-1 text-xs text-white"
+              placeholder="Группа мышц"
+              data-field="muscleGroupName"
+            >
+          `;
+          list.appendChild(g2);
+        });
+
+      gymEl.periodDaysContainer.appendChild(dayDiv);
+    });
+  }
+
+
   function gymPeriodWizardStep1Next() {
     if (!gymPeriodWizardDraft) return;
 
@@ -1235,25 +1327,37 @@ document.addEventListener('DOMContentLoaded', () => {
       const label = `День ${dayIndex}`;
       // внутри цикла for (let dayIndex = 1; dayIndex <= cycleLengthDays; dayIndex++)
       dayDiv.innerHTML = `
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-sm font-medium text-white">День ${dayIndex}</span>
-          <label class="flex items-center gap-1 text-[11px] text-slate-200">
-            <input type="checkbox" data-field="dayEnabled" class="accent-emerald-400" checked>
-            <span>Тренировочный день</span>
-          </label>
-        </div>
-        <div class="text-[11px] text-slate-300 mb-1">
-          Группы мышц в этот день
-        </div>
-        <div data-role="muscleList" class="space-y-1"></div>
-        <button
-          type="button"
-          data-role="addMuscleGroup"
-          class="mt-1 text-[11px] text-emerald-300 underline"
-        >
-          + Добавить группу мышц
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-sm font-medium text-white">День ${dayIndex}</span>
+        <button type="button"
+          data-role="deleteDay"
+          class="text-11px text-red-300 underline">
+          удалить
         </button>
-      `;
+      </div>
+    
+      <label class="flex items-center gap-1 text-11px text-slate-200">
+        <input
+          type="checkbox"
+          data-field="dayEnabled"
+          class="accent-emerald-400"
+          checked
+        >
+        <span>День активен</span>
+      </label>
+    
+      <div class="text-11px text-slate-300 mb-1">Группы мышц</div>
+      <div data-role="muscleList" class="space-y-1"></div>
+    
+      <button
+        type="button"
+        data-role="addMuscleGroup"
+        class="mt-1 text-11px text-emerald-300 underline"
+      >
+        Добавить группу мышц
+      </button>
+    `;
+    
 
 
       // добавим одну дефолтную группу
@@ -1279,6 +1383,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // включаем шаг 2
     if (gymEl.periodStep1) gymEl.periodStep1.classList.add('hidden');
     if (gymEl.periodStep2) gymEl.periodStep2.classList.remove('hidden');
+
+    // обработчик "удалить день"
+    gymEl.periodDaysContainer
+      .querySelectorAll('button[data-role="deleteDay"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dayDiv = btn.closest('[data-day-index]');
+          dayDiv?.remove();
+        });
+      });
 
     // логика добавления групп на шаге 2
     gymEl.periodDaysContainer.querySelectorAll('button[data-role="addMuscleGroup"]').forEach(btn => {
@@ -1587,22 +1701,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function gymRenderHeader() {
     if (!gymEl.cycleInfo || !gymEl.periodInfo || !gymEl.progressBar || !gymEl.progressLabel) return;
+  
     const period = gymGetActivePeriod();
     if (!period) return;
-    const runtime = period.__runtime || {
-      currentCycle: 1,
-      totalCycles: period.totalCycles || 8,
-      periodDone: 1,
+  
+    const runtime = period.runtime || {
+      currentCycle: period.progress?.currentCycle || 1,
+      totalCycles: period.totalCycles ?? 8,
+      periodDone: period.progress?.currentCycle || 1,
+      groups: {},
     };
-
-    const cycleText = `Цикл ${runtime.currentCycle}/${runtime.totalCycles}`;
-    gymEl.cycleInfo.textContent = `${cycleText} · неделя`;
-    gymEl.periodInfo.textContent = `${period.name} · ${runtime.periodDone}/${runtime.totalCycles}`;
-
+    period.runtime = runtime; // гарантируем, что runtime сохранён
+  
+    // заполняем селект циклов
+    if (gymEl.cycleSelect) {
+      gymEl.cycleSelect.innerHTML = '';
+      for (let i = 1; i <= runtime.totalCycles; i++) {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = `Цикл ${i}`;
+        if (i === runtime.currentCycle) opt.selected = true;
+        gymEl.cycleSelect.appendChild(opt);
+      }
+    }
+  
+    const cycleText = `${runtime.currentCycle}/${runtime.totalCycles}`;
+    gymEl.cycleInfo.textContent = cycleText;
+    gymEl.periodInfo.textContent = period.name;
+  
     const pct = Math.max(0, Math.min(100, (runtime.periodDone / runtime.totalCycles) * 100));
     gymEl.progressBar.style.width = `${pct}%`;
-    gymEl.progressLabel.textContent = `Период: ${runtime.periodDone}/${runtime.totalCycles} циклов`;
+    gymEl.progressLabel.textContent = `${runtime.periodDone}/${runtime.totalCycles}`;
   }
+  
 
   function gymRenderGroups() {
     if (!gymEl.groupsContainer) return;
@@ -1974,5 +2105,27 @@ document.addEventListener('DOMContentLoaded', () => {
       showAlert('История тренировок появится позже');
     });
   }
+  if (gymEl.cycleSelect) {
+    gymEl.cycleSelect.addEventListener('change', (e) => {
+      const period = gymGetActivePeriod();
+      if (!period || !period.runtime) return;
+  
+      const value = Number(e.target.value || 1);
+      const runtime = period.runtime;
+      runtime.currentCycle = Math.max(1, Math.min(runtime.totalCycles, value));
+  
+      // при ручном выборе можно не трогать periodDone,
+      // но если хочешь — обнови progress:
+      period.progress = {
+        ...(period.progress || {}),
+        currentCycle: runtime.currentCycle,
+      };
+  
+      gymSaveState(gymState);
+      gymRenderHeader();
+      gymRenderGroups();
+    });
+  }
+  
 
 }); // конец DOMContentLoaded

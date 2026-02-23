@@ -358,6 +358,17 @@
             <!-- сюда JS подставит список дней: День 1, День 2... с выбором мышц -->
           </div>
 
+          <div class="mt-3">
+            <button
+              type="button"
+              id="gymPeriodAddDayBtn"
+              class="text-11px text-emerald-300 underline"
+            >
+              Добавить день в цикл
+            </button>
+          </div>
+          
+
           <div class="flex gap-2 pt-2 border-t border-white/10">
             <button id="gymPeriodStep2BackBtn" class="flex-1 py-2 rounded-xl bg-white/10 text-sm">
               Назад
@@ -725,8 +736,6 @@
           <!-- сюда JS будет подставлять форму -->
         </div>
       </div>
-
-
     </div>
 
     <!-- НОВЫЙ ЭКРАН: список периодов -->
@@ -778,28 +787,29 @@
 
       <!-- Верхняя панель -->
       <div class="flex flex-col gap-2 text-sm">
-        <div>
-          <label class="block text-slate-300 mb-1">День</label>
-          <select id="gymDay" class="w-full bg-white/10 text-white rounded-xl px-3 py-2">
-            <option>Сегодня</option>
-            <option>Пн</option>
-            <option>Вт</option>
-            <option>Ср</option>
-            <option>Чт</option>
-            <option>Пт</option>
-            <option>Сб</option>
-            <option>Вс</option>
-          </select>
-        </div>
 
-        <div class="flex gap-2">
-          <div class="flex-1 bg-white/5 rounded-xl px-3 py-2 text-xs text-slate-200" id="gymCycleInfo">
-            Цикл 1/8 · 22.02–28.02
+        <div class="flex gap-2 items-center">
+          <div
+            class="flex-1 bg-white/5 rounded-xl px-3 py-2 text-xs text-slate-200"
+            id="gymCycleInfo"
+          >
+            Цикл 1/8
           </div>
-          <div class="flex-1 bg-white/5 rounded-xl px-3 py-2 text-xs text-slate-200" id="gymPeriodInfo">
+        
+          <select
+            id="gymCycleSelect"
+            class="bg-white/10 text-xs text-white rounded-lg px-2 py-1"
+          >
+            <!-- заполним из JS -->
+          </select>
+        
+          <div
+            class="flex-1 bg-white/5 rounded-xl px-3 py-2 text-xs text-slate-200"
+            id="gymPeriodInfo"
+          >
             Период: Силовой 8 нед · 1/8
           </div>
-        </div>
+        </div>        
       </div>
 
       <!-- Контейнер для групп и упражнений -->
