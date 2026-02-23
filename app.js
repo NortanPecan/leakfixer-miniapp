@@ -1771,10 +1771,14 @@ document.addEventListener('DOMContentLoaded', () => {
       dayWrapper.className = 'bg-white/5 rounded-2xl px-3 py-3 space-y-2';
       dayWrapper.dataset.dayIndex = String(dayIndex);
   
-      // ШАПКА ДНЯ + кнопка свернуть
+      // ШАПКА ДНЯ: заголовок + инпут групп + кнопки
       const title = document.createElement('div');
-      title.className = 'flex items-center justify-between mb-2';
-      title.innerHTML = `
+      title.className = 'space-y-2 mb-2';
+  
+      const dayHeaderRow = document.createElement('div');
+      dayHeaderRow.className = 'flex items-center justify-between';
+  
+      dayHeaderRow.innerHTML = `
         <button
           type="button"
           class="text-left"
@@ -1782,15 +1786,46 @@ document.addEventListener('DOMContentLoaded', () => {
           data-day-index="${dayIndex}"
         >
           <div class="text-sm font-semibold text-white">День ${day.dayIndex}</div>
-          <div class="text-xs text-slate-300">
-            ${
-              day.muscles && day.muscles.length
-                ? day.muscles.join(', ')
-                : 'Добавь группы мышц в мастере периода'
-            }
-          </div>
         </button>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="text-[11px] text-slate-200 underline"
+            data-role="saveDay"
+            data-day-index="${dayIndex}"
+          >
+            Сохранить
+          </button>
+          <button
+            type="button"
+            class="text-[11px] text-red-300 underline"
+            data-role="deleteDay"
+            data-day-index="${dayIndex}"
+          >
+            Удалить день
+          </button>
+        </div>
       `;
+      title.appendChild(dayHeaderRow);
+  
+      const musclesRow = document.createElement('div');
+      musclesRow.className = 'space-y-1';
+      musclesRow.innerHTML = `
+        <div class="text-[11px] text-slate-300">Группы мышц через запятую</div>
+        <input
+          class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
+          placeholder="Грудь, плечи, спина"
+          value="${
+            day.muscles && day.muscles.length
+              ? day.muscles.join(', ')
+              : ''
+          }"
+          data-role="dayMusclesInput"
+          data-day-index="${dayIndex}"
+        />
+      `;
+      title.appendChild(musclesRow);
+  
       dayWrapper.appendChild(title);
   
       const dayBody = document.createElement('div');
@@ -1973,6 +2008,82 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
+    // сохранить изменения дня (группы мышц)
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-role="saveDay"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dayIndex = Number(btn.dataset.dayIndex || '1');
+          const dayWrapper = btn.closest('[data-day-index]');
+          if (!dayWrapper) return;
+  
+          const input = dayWrapper.querySelector(
+            'input[data-role="dayMusclesInput"]'
+          );
+          if (!input) return;
+  
+          const raw = input.value || '';
+          const muscles = raw
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+  
+          const period = gymGetActivePeriod();
+          if (!period) return;
+  
+          const days = Array.isArray(period.days) ? period.days : [];
+          const idx = days.findIndex((d) => d.dayIndex === dayIndex);
+          if (idx >= 0) {
+            days[idx].muscles = muscles;
+          } else {
+            days.push({
+              dayIndex,
+              enabled: true,
+              muscles,
+            });
+          }
+          period.days = days;
+  
+          const runtime = gymGetCurrentCycle();
+          if (runtime && runtime.days && runtime.days[dayIndex]) {
+            const dayRuntime = runtime.days[dayIndex];
+            if (!dayRuntime.groups) dayRuntime.groups = {};
+            const allowed = new Set(muscles);
+            Object.keys(dayRuntime.groups).forEach((groupName) => {
+              if (!allowed.has(groupName)) {
+                delete dayRuntime.groups[groupName];
+              }
+            });
+          }
+  
+          gymSaveState(gymState);
+          gymRenderGroups();
+        });
+      });
+  
+    // удалить день целиком
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-role="deleteDay"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dayIndex = Number(btn.dataset.dayIndex || '1');
+  
+          const period = gymGetActivePeriod();
+          if (!period) return;
+  
+          const days = Array.isArray(period.days) ? period.days : [];
+          period.days = days.filter((d) => d.dayIndex !== dayIndex);
+  
+          const runtime = gymGetCurrentCycle();
+          if (runtime && runtime.days && runtime.days[dayIndex]) {
+            delete runtime.days[dayIndex];
+          }
+  
+          gymSaveState(gymState);
+          gymRenderGroups();
+        });
+      });
+  
     // свернуть/развернуть группу
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="toggleGroup"]')
@@ -2116,6 +2227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   }
+  
   
   
 
