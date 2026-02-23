@@ -1755,13 +1755,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const ui = gymState.uiCollapse[uiKey];
   
-    // Очищаем контейнер
+    // очищаем контейнер
     gymEl.groupsContainer.innerHTML = '';
   
     const days = Array.isArray(period.days) && period.days.length
       ? period.days
       : [];
-  
     const daysToRender = days.length ? days : [];
   
     // --- РЕНДЕР СУЩЕСТВУЮЩИХ ДНЕЙ ---
@@ -1779,7 +1778,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dayWrapper.className = 'bg-white/5 rounded-2xl px-3 py-3 space-y-2';
       dayWrapper.dataset.dayIndex = String(dayIndex);
   
-      // ШАПКА ДНЯ
+      // шапка дня
       const title = document.createElement('div');
       title.className = 'flex items-center justify-between mb-2';
   
@@ -1810,7 +1809,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title.appendChild(right);
       dayWrapper.appendChild(title);
   
-      // ТЕЛО ДНЯ
+      // тело дня
       const dayBody = document.createElement('div');
       const dayExpanded = ui.days[dayIndex] === true;
       dayBody.className = 'space-y-2' + (dayExpanded ? '' : ' hidden');
@@ -1980,7 +1979,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gymEl.groupsContainer.appendChild(dayWrapper);
     });
   
-    // --- КНОПКА/ФОРМА "ДОБАВИТЬ ДЕНЬ" ВСЕГДА СНИЗУ ---
+    // --- КНОПКА/ФОРМА "ДОБАВИТЬ ДЕНЬ" ---
     const addDayContainer = document.createElement('div');
     addDayContainer.className = 'mt-3 space-y-2 text-xs text-slate-200';
     addDayContainer.innerHTML = `
@@ -2042,12 +2041,12 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // --- ОБРАБОТЧИКИ ---
   
-    // Добавить день
+    // добавить день
     {
-      const addBtn = addDayContainer.querySelector('button[data-role="addDayFromScreen"]');
+      const addBtn = addDayContainer.querySelector('[data-role="addDayFromScreen"]');
       const form = addDayContainer.querySelector('[data-role="newDayForm"]');
-      const cancelBtn = addDayContainer.querySelector('button[data-role="createDayCancel"]');
-      const submitBtn = addDayContainer.querySelector('button[data-role="createDaySubmit"]');
+      const cancelBtn = addDayContainer.querySelector('[data-role="createDayCancel"]');
+      const submitBtn = addDayContainer.querySelector('[data-role="createDaySubmit"]');
   
       if (form && addBtn && cancelBtn && submitBtn) {
         addBtn.addEventListener('click', () => {
@@ -2103,7 +2102,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   
-    // Свернуть/развернуть день
+    // свернуть/развернуть день
     gymEl.groupsContainer
       .querySelectorAll('[data-role="toggleDay"]')
       .forEach((btn) => {
@@ -2113,19 +2112,16 @@ document.addEventListener('DOMContentLoaded', () => {
           const body = dayWrapper.querySelector('[data-role="dayBody"]');
           if (!body) return;
   
-          // Тогглим только класс hidden, остальные стили не трогаем
           const nowHidden = body.classList.toggle('hidden');
-  
           const dayIndex = Number(dayWrapper.dataset.dayIndex || '1');
           ui.days[dayIndex] = !nowHidden;
           gymSaveState(gymState);
         });
       });
   
-    // Остальные обработчики (editDay, toggleGroup, addExercise, deleteGroup, поля упражнений, toggleExercise, удаление упражнения)
-    // можно оставить без изменений — они у тебя уже корректно работают, важно только,
-    // чтобы они искали элементы внутри dayWrapper (как сделано там через closest/querySelector).
+    // дальше можно оставить твой существующий код обработчиков (editDay, toggleGroup и т.п.)
   }
+  
   
   
   
