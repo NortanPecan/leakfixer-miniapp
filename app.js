@@ -1142,6 +1142,11 @@ document.addEventListener('DOMContentLoaded', () => {
    // временный буфер для мастера периода
   let gymPeriodWizardDraft = null;
 
+  window.gymDebug = {
+    getState: () => gymState,
+  };
+  
+
 
   function gymCreatePeriodId() {
     const n = (gymState.periodOrder?.length || 0) + 1;
