@@ -1706,24 +1706,30 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isEditing) {
         const checkboxLabel = document.createElement('label');
         checkboxLabel.className = 'flex items-center gap-1 text-xs text-slate-200';
-  
+      
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.className = 'accent-emerald-400';
         checkbox.dataset.role = 'dayEnabled';
         checkbox.dataset.dayIndex = String(dayIndex);
+      
+        // читаем состояние из runtime текущего цикла
         const runtimeDay = runtime.days[dayIndex] || {};
-        if (runtimeDay.enabled !== false) checkbox.checked = true;
-
-  
+        if (runtimeDay.enabled !== false) {
+          checkbox.checked = true;
+        } else {
+          checkbox.checked = false;
+        }
+      
         const span = document.createElement('span');
         span.textContent = 'Активен';
-  
+      
         checkboxLabel.appendChild(checkbox);
         checkboxLabel.appendChild(span);
-  
+      
         left.appendChild(checkboxLabel);
       }
+      
   
       const titleBtn = document.createElement('button');
       titleBtn.type = 'button';
@@ -2170,7 +2176,6 @@ document.addEventListener('DOMContentLoaded', () => {
             days.push(day);
           }
 
-          // 1) enabled пишем в runtime текущего цикла
           const runtime = gymGetCurrentCycle();
           if (!runtime) return;
           if (!runtime.days) runtime.days = {};
@@ -2182,7 +2187,6 @@ document.addEventListener('DOMContentLoaded', () => {
           );
           dayRuntime.enabled = checkbox ? !!checkbox.checked : true;
 
-          // 2) мышцы остаются в шаблоне периода (общие для всех циклов)
           const musclesInput = gymEl.groupsContainer.querySelector(
             `input[data-role="dayMusclesInput"][data-day-index="${dayIndex}"]`
           );
@@ -2191,14 +2195,12 @@ document.addEventListener('DOMContentLoaded', () => {
             .split(',')
             .map((s) => s.trim())
             .filter(Boolean);
-
           day.muscles = muscles.length
             ? muscles
             : (Array.isArray(GYM_DEFAULT_GROUPS) ? GYM_DEFAULT_GROUPS.slice() : []);
 
           period.days = days;
 
-          // 3) чистим группы упражнений, которых больше нет в списке мышц
           if (!dayRuntime.groups) dayRuntime.groups = {};
           const allowed = new Set(day.muscles);
           Object.keys(dayRuntime.groups).forEach((groupName) => {
