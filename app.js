@@ -1197,6 +1197,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
     rt.currentCycle = nextCycle;
     rt.cycles[nextCycle] = { days: nextRuntimeDays };
+
+    // обновляем селект, если он есть
+    if (gymEl.cycleSelect) {
+      gymEl.cycleSelect.value = String(nextCycle);
+    }
   
     gymSaveState(gymState);
     gymRenderHeader();
