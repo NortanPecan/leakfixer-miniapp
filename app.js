@@ -1798,28 +1798,15 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
   
-      const rightWrapper = document.createElement('div');
-      rightWrapper.className = 'flex items-center gap-2 ml-2';
-  
-      const openBtn = document.createElement('button');
-      openBtn.type = 'button';
-      openBtn.className = 'text-[11px] text-sky-300 underline';
-      openBtn.dataset.role = 'openDayDebug';
-      openBtn.dataset.dayIndex = String(dayIndex);
-      openBtn.textContent = 'Открыть';
-  
       const editBtn = document.createElement('button');
       editBtn.type = 'button';
-      editBtn.className = 'text-[11px] text-emerald-300 underline';
+      editBtn.className = 'text-[11px] text-emerald-300 underline ml-2';
       editBtn.dataset.role = 'editDay';
       editBtn.dataset.dayIndex = String(dayIndex);
       editBtn.textContent = 'Редактировать день';
   
-      rightWrapper.appendChild(openBtn);
-      rightWrapper.appendChild(editBtn);
-  
       title.appendChild(left);
-      title.appendChild(rightWrapper);
+      title.appendChild(editBtn);
       dayWrapper.appendChild(title);
   
       // тело дня
@@ -1827,8 +1814,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const dayExpanded = ui.days[dayIndex] === true;
       dayBody.className = 'space-y-2' + (dayExpanded ? '' : ' hidden');
       dayBody.dataset.role = 'dayBody';
-      dayBody.dataset.dayIndex = String(dayIndex); // <- КЛЮЧ
-      dayWrapper.appendChild(dayBody);
+      dayBody.dataset.dayIndex = String(dayIndex); // КЛЮЧЕВОЙ ФИКС
   
       const muscleGroups =
         day.muscles && day.muscles.length ? day.muscles : GYM_DEFAULT_GROUPS;
@@ -2115,49 +2101,24 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   
-    // ---- ДИАГНОСТИЧЕСКАЯ КНОПКА "ОТКРЫТЬ" ----
+    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ ДЕНЬ ----
     gymEl.groupsContainer
-      .querySelectorAll('button[data-role="openDayDebug"]')
+      .querySelectorAll('[data-role="toggleDay"]')
       .forEach((btn) => {
         btn.addEventListener('click', () => {
-          const dayWrapper = btn.closest('[data-day-index]');
-          if (!dayWrapper) {
-            alert('dayWrapper не найден');
-            return;
-          }
-          const body = dayWrapper.querySelector('[data-role="dayBody"]');
-          if (!body) {
-            alert('dayBody не найден');
-            return;
-          }
-          body.classList.remove('hidden');
-          const dayIndex = dayWrapper.dataset.dayIndex || '?';
-          alert('Открыт день ' + dayIndex);
+          const dayIndex = btn.dataset.dayIndex;
+          if (!dayIndex) return;
+  
+          const body = gymEl.groupsContainer.querySelector(
+            `[data-role="dayBody"][data-day-index="${dayIndex}"]`
+          );
+          if (!body) return;
+  
+          const nowHidden = body.classList.toggle('hidden');
+          ui.days[Number(dayIndex)] = !nowHidden;
+          gymSaveState(gymState);
         });
       });
-  
-    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ ДЕНЬ КЛИКОМ ПО ЛЕВОЙ ЧАСТИ ----
-    gymEl.groupsContainer
-    .querySelectorAll('[data-role="toggleDay"]')
-    .forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const dayIndex = btn.dataset.dayIndex; // берем индекс прямо с кнопки
-        if (!dayIndex) return;
-  
-        const body = gymEl.groupsContainer.querySelector(
-          `[data-role="dayBody"][data-day-index="${dayIndex}"]`
-        );
-        if (!body) {
-          alert('dayBody не найден для dayIndex=' + dayIndex);
-          return;
-        }
-  
-        const nowHidden = body.classList.toggle('hidden');
-        ui.days[Number(dayIndex)] = !nowHidden;
-        gymSaveState(gymState);
-      });
-    });
-  
   
     // ---- ОТКРЫТЬ МОДАЛКУ "РЕДАКТИРОВАТЬ ДЕНЬ" ----
     gymEl.groupsContainer
@@ -2458,11 +2419,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   }
-  
-
-  
-  
-  
   
   
   if (gymEl.daySelect) {
