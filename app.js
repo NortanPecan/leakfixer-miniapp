@@ -1635,10 +1635,26 @@ document.addEventListener('DOMContentLoaded', () => {
     gymSaveState(gymState);
     return cycle;
   }
-  
-  
-  
 
+  function gymGetCurrentCycle() {
+    const period = gymGetActivePeriod();
+    if (!period) return null;
+  
+    if (!gymState.runtime) gymState.runtime = {};
+    if (!gymState.runtime[period.id]) {
+      gymState.runtime[period.id] = { currentCycle: 1, cycles: {} };
+    }
+  
+    const rt = gymState.runtime[period.id];
+    const idx = rt.currentCycle || 1;
+  
+    if (!rt.cycles[idx]) {
+      rt.cycles[idx] = { days: {} };
+    }
+  
+    return rt.cycles[idx];
+  }
+  
   function gymRenderHeader() {
     if (!gymEl.cycleInfo || !gymEl.periodInfo || !gymEl.progressBar || !gymEl.progressLabel) return;
     const period = gymGetActivePeriod();
@@ -2449,6 +2465,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   
       gymRenderGroups();
+    });
+  }
+  
+  if (gymEl.cycleSelect) {
+    gymEl.cycleSelect.addEventListener('change', (e) => {
+      const value = Number(e.target.value || '1');
+      const idx = Number.isNaN(value) ? 1 : value;
+      gymSetCurrentCycle(idx);
     });
   }
   
