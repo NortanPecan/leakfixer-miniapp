@@ -1640,6 +1640,38 @@ document.addEventListener('DOMContentLoaded', () => {
     gymRenderGroups();
   }
   
+  function gymRenderCycleSelect() {
+    if (!gymEl.cycleSelect) return;
+  
+    const period = gymGetActivePeriod();
+    if (!period) {
+      gymEl.cycleSelect.innerHTML = '<option value="1">Цикл 1</option>';
+      gymEl.cycleSelect.value = '1';
+      return;
+    }
+  
+    if (!gymState.runtime) gymState.runtime = {};
+    if (!gymState.runtime[period.id]) {
+      gymState.runtime[period.id] = { currentCycle: 1, cycles: {} };
+    }
+  
+    const rt = gymState.runtime[period.id];
+    const current = rt.currentCycle || 1;
+  
+    const cycleNumbers = Object.keys(rt.cycles || {})
+      .map((k) => Number(k))
+      .filter((n) => !Number.isNaN(n) && n > 0);
+  
+    const maxCycle = Math.max(current, cycleNumbers.length ? Math.max(...cycleNumbers) : 1);
+  
+    let options = '';
+    for (let i = 1; i <= maxCycle; i += 1) {
+      options += `<option value="${i}">Цикл ${i}</option>`;
+    }
+  
+    gymEl.cycleSelect.innerHTML = options;
+    gymEl.cycleSelect.value = String(current);
+  }
   
   function gymRenderHeader() {
     if (!gymEl.cycleInfo || !gymEl.periodInfo || !gymEl.progressBar || !gymEl.progressLabel) return;
@@ -1653,7 +1685,9 @@ document.addEventListener('DOMContentLoaded', () => {
       gymEl.periodInfo.textContent = period.name || 'Период';
       gymEl.progressBar.style.width = '0%';
       gymEl.progressLabel.textContent = '0/1';
+      
       return;
+      
     }
   
     const currentCycle = runtimeCycle.currentCycle ?? 1;
@@ -1668,6 +1702,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const pct = Math.max(0, Math.min(100, (periodDone / totalCycles) * 100));
     gymEl.progressBar.style.width = `${pct}%`;
     gymEl.progressLabel.textContent = `${periodDone}/${totalCycles}`;
+
+    gymRenderCycleSelect();
   }
   
   
@@ -2428,6 +2464,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   }
+
+
+  
   
   if (gymEl.cycleSelect) {
     gymEl.cycleSelect.addEventListener('change', (e) => {
