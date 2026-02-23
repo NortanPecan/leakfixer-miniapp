@@ -1655,13 +1655,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalCycles = runtimeCycle.totalCycles ?? period.totalCycles ?? 1;
     const periodDone = runtimeCycle.periodDone ?? currentCycle;
   
-    if (gymEl.cycleSelect) {
-      gymEl.cycleSelect.addEventListener('change', (e) => {
-        const value = Number(e.target.value || '1');
-        const idx = Number.isNaN(value) ? 1 : value;
-        gymSetCurrentCycle(idx);
-      });
-    }
     
   
     gymEl.cycleInfo.textContent = `${currentCycle}/${totalCycles}`;
@@ -2431,7 +2424,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
   
-  
+  if (gymEl.cycleSelect) {
+    gymEl.cycleSelect.addEventListener('change', (e) => {
+      const value = Number(e.target.value || '1');
+      const idx = Number.isNaN(value) ? 1 : value;
+      gymSetCurrentCycle(idx);
+    });
+  }
   
   if (gymEl.daySelect) {
     gymEl.daySelect.addEventListener('change', () => {
