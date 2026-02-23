@@ -1827,6 +1827,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const dayExpanded = ui.days[dayIndex] === true;
       dayBody.className = 'space-y-2' + (dayExpanded ? '' : ' hidden');
       dayBody.dataset.role = 'dayBody';
+      dayBody.dataset.dayIndex = String(dayIndex); // <- КЛЮЧ
+      dayWrapper.appendChild(dayBody);
   
       const muscleGroups =
         day.muscles && day.muscles.length ? day.muscles : GYM_DEFAULT_GROUPS;
@@ -2136,20 +2138,26 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ ДЕНЬ КЛИКОМ ПО ЛЕВОЙ ЧАСТИ ----
     gymEl.groupsContainer
-      .querySelectorAll('[data-role="toggleDay"]')
-      .forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const dayWrapper = btn.closest('[data-day-index]');
-          if (!dayWrapper) return;
-          const body = dayWrapper.querySelector('[data-role="dayBody"]');
-          if (!body) return;
+    .querySelectorAll('[data-role="toggleDay"]')
+    .forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const dayIndex = btn.dataset.dayIndex; // берем индекс прямо с кнопки
+        if (!dayIndex) return;
   
-          const nowHidden = body.classList.toggle('hidden');
-          const dayIndex = Number(dayWrapper.dataset.dayIndex || '1');
-          ui.days[dayIndex] = !nowHidden;
-          gymSaveState(gymState);
-        });
+        const body = gymEl.groupsContainer.querySelector(
+          `[data-role="dayBody"][data-day-index="${dayIndex}"]`
+        );
+        if (!body) {
+          alert('dayBody не найден для dayIndex=' + dayIndex);
+          return;
+        }
+  
+        const nowHidden = body.classList.toggle('hidden');
+        ui.days[Number(dayIndex)] = !nowHidden;
+        gymSaveState(gymState);
       });
+    });
+  
   
     // ---- ОТКРЫТЬ МОДАЛКУ "РЕДАКТИРОВАТЬ ДЕНЬ" ----
     gymEl.groupsContainer
