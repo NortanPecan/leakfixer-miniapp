@@ -1801,8 +1801,27 @@ document.addEventListener('DOMContentLoaded', () => {
       titleBtn.className = 'text-left flex-1';
       titleBtn.dataset.role = 'toggleDay';
       titleBtn.dataset.dayIndex = String(dayIndex);
+      // titleBtn.innerHTML = `
+      //   <div class="text-sm font-semibold text-white">День ${day.dayIndex}</div>
+      //   <div class="text-xs text-slate-300" data-role="dayMusclesView">
+      //     ${
+      //       day.muscles && day.muscles.length
+      //         ? day.muscles.join(', ')
+      //         : 'Нажми "Редактировать", чтобы выбрать группы'
+      //     }
+      //   </div>
+      // `;
+      const periodId = period.id || 'default';
+      const rt = gymState.runtime?.[periodId];
+      const currentCycle = rt?.currentCycle || 1;
+
       titleBtn.innerHTML = `
-        <div class="text-sm font-semibold text-white">День ${day.dayIndex}</div>
+        <div class="flex items-center justify-between">
+          <div class="text-sm font-semibold text-white">День ${day.dayIndex}</div>
+          <span class="ml-2 px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-slate-300">
+            Цикл ${currentCycle}
+          </span>
+        </div>
         <div class="text-xs text-slate-300" data-role="dayMusclesView">
           ${
             day.muscles && day.muscles.length
@@ -1811,6 +1830,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         </div>
       `;
+
       left.appendChild(titleBtn);
   
       const right = document.createElement('div');
