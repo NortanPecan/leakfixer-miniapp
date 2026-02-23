@@ -1578,66 +1578,82 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!gymState.runtime) gymState.runtime = {};
     if (!gymState.runtime[period.id]) {
       gymState.runtime[period.id] = {
-        currentCycleIndex: 1,
+        currentCycle: 1,
+        totalCycles: period.totalCycles || 1,
+        periodDone: 1,
         cycles: [],
       };
     }
-  
     const rt = gymState.runtime[period.id];
   
+    if (!rt.totalCycles) rt.totalCycles = period.totalCycles || 1;
+    if (!rt.periodDone) rt.periodDone = 1;
+    if (!rt.currentCycle) rt.currentCycle = 1;
+  
     if (!rt.cycles || !rt.cycles.length) {
-      rt.cycles = [{
-        index: 1,
-        days: {},        // важно
-      }];
+      rt.cycles = [
+        {
+          currentCycle: 1,
+          totalCycles: rt.totalCycles,
+          periodDone: 1,
+          days: {},
+        },
+      ];
     }
   
-    if (!rt.currentCycleIndex) rt.currentCycleIndex = 1;
-    const idx = Math.max(1, Math.min(rt.currentCycleIndex, rt.cycles.length));
-  
+    const idx = Math.max(1, Math.min(rt.currentCycle, rt.cycles.length));
     const cycle = rt.cycles[idx - 1];
-    if (!cycle.days) cycle.days = {};   // важно
+  
+    // дублируем удобные поля на уровне цикла
+    if (cycle.currentCycle == null) cycle.currentCycle = rt.currentCycle;
+    if (cycle.totalCycles == null) cycle.totalCycles = rt.totalCycles;
+    if (cycle.periodDone == null) cycle.periodDone = rt.periodDone;
   
     gymSaveState(gymState);
     return cycle;
   }
   
   
+  
 
   function gymRenderHeader() {
     if (!gymEl.cycleInfo || !gymEl.periodInfo || !gymEl.progressBar || !gymEl.progressLabel) return;
-  
     const period = gymGetActivePeriod();
     if (!period) return;
   
-    const runtime = period.runtime || {
-      currentCycle: period.progress?.currentCycle || 1,
-      totalCycles: period.totalCycles ?? 8,
-      periodDone: period.progress?.currentCycle || 1,
-      groups: {},
-    };
-    period.runtime = runtime; // гарантируем, что runtime сохранён
+    // берём текущий цикл из глобального runtime
+    const runtimeCycle = gymGetCurrentCycle();
+    if (!runtimeCycle) {
+      gymEl.cycleInfo.textContent = '1/1';
+      gymEl.periodInfo.textContent = period.name || 'Период';
+      gymEl.progressBar.style.width = '0%';
+      gymEl.progressLabel.textContent = '0/1';
+      return;
+    }
   
-    // заполняем селект циклов
+    const currentCycle = runtimeCycle.currentCycle ?? 1;
+    const totalCycles = runtimeCycle.totalCycles ?? period.totalCycles ?? 1;
+    const periodDone = runtimeCycle.periodDone ?? currentCycle;
+  
     if (gymEl.cycleSelect) {
       gymEl.cycleSelect.innerHTML = '';
-      for (let i = 1; i <= runtime.totalCycles; i++) {
+      for (let i = 1; i <= totalCycles; i += 1) {
         const opt = document.createElement('option');
         opt.value = String(i);
-        opt.textContent = `Цикл ${i}`;
-        if (i === runtime.currentCycle) opt.selected = true;
+        opt.textContent = String(i);
+        if (i === currentCycle) opt.selected = true;
         gymEl.cycleSelect.appendChild(opt);
       }
     }
   
-    const cycleText = `${runtime.currentCycle}/${runtime.totalCycles}`;
-    gymEl.cycleInfo.textContent = cycleText;
-    gymEl.periodInfo.textContent = period.name;
+    gymEl.cycleInfo.textContent = `${currentCycle}/${totalCycles}`;
+    gymEl.periodInfo.textContent = period.name || 'Период';
   
-    const pct = Math.max(0, Math.min(100, (runtime.periodDone / runtime.totalCycles) * 100));
+    const pct = Math.max(0, Math.min(100, (periodDone / totalCycles) * 100));
     gymEl.progressBar.style.width = `${pct}%`;
-    gymEl.progressLabel.textContent = `${runtime.periodDone}/${runtime.totalCycles}`;
+    gymEl.progressLabel.textContent = `${periodDone}/${totalCycles}`;
   }
+  
   
 
   function gymRenderGroups() {
