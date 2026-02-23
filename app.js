@@ -1183,30 +1183,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const period = gymGetActivePeriod();
     if (!period || !gymEl.groupsContainer) return;
   
-    // Собираем дни по текущему экрану (включая checkbox "День активен" и мышцы)
+    // базовая карта только с dayIndex + muscles
     const daysMap = new Map();
-  
-    // Начинаем с уже сохранённых дней
-    (period.days || []).forEach((d) => {
+    const baseDays = Array.isArray(period.days) ? period.days : [];
+    baseDays.forEach((d) => {
       daysMap.set(d.dayIndex, {
         dayIndex: d.dayIndex,
-        enabled: d.enabled !== false,
         muscles: Array.isArray(d.muscles) ? d.muscles.slice() : [],
       });
     });
   
+    // поверх накатываем то, что сейчас в DOM
     const wrappers = gymEl.groupsContainer.querySelectorAll('[data-day-index]');
     wrappers.forEach((wrapper) => {
       const dayIndex = Number(wrapper.dataset.dayIndex || '1');
-      const enabledInput = wrapper.querySelector(
-        'input[data-role="dayEnabled"][data-day-index="' + dayIndex + '"]'
-      );
       const musclesInput = wrapper.querySelector(
-        'input[data-role="dayMusclesInput"][data-day-index="' + dayIndex + '"]'
+        `input[data-role="dayMusclesInput"][data-day-index="${dayIndex}"]`
       );
   
-      const enabled = enabledInput ? !!enabledInput.checked : true;
-      const rawMuscles = musclesInput?.value || '';
+      if (!musclesInput) return;
+  
+      const rawMuscles = musclesInput.value || '';
       const muscles = rawMuscles
         .split(',')
         .map((s) => s.trim())
@@ -1214,18 +1211,16 @@ document.addEventListener('DOMContentLoaded', () => {
   
       daysMap.set(dayIndex, {
         dayIndex,
-        enabled,
         muscles,
       });
     });
   
-    const updatedDays = Array.from(daysMap.values()).sort(
-      (a, b) => a.dayIndex - b.dayIndex
-    );
-  
+    const updatedDays = Array.from(daysMap.values()).sort((a, b) => a.dayIndex - b.dayIndex);
     period.days = updatedDays;
+  
     gymSaveState(gymState);
   }
+  
   
 
   function gymOpenPeriodWizardStep1() {
@@ -1681,20 +1676,28 @@ document.addEventListener('DOMContentLoaded', () => {
   
     const days = Array.isArray(period.days) && period.days.length ? period.days : [];
     const daysToRender = days.length ? days : [];
-  
+    
     // --- РЕНДЕР ДНЕЙ ---
     daysToRender.forEach((day) => {
       const dayIndex = day.dayIndex;
+    
+      // читаем enabled из runtime, по умолчанию true
+      const runtimeDayRaw = runtime && runtime.days ? runtime.days[dayIndex] : null;
+      const enabled = runtimeDayRaw ? runtimeDayRaw.enabled !== false : true;
+    
+      // если день выключен и не в режиме редактирования — пропускаем
+      if (!enabled && !ui.editDays[dayIndex]) return;
+    
       if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
       const dayRuntime = runtime.days[dayIndex];
       if (!dayRuntime.groups) dayRuntime.groups = {};
-  
+    
       const isEditing = ui.editDays[dayIndex] === true;
-  
+    
       const dayWrapper = document.createElement('div');
       dayWrapper.className = 'bg-white/5 rounded-2xl px-3 py-3 space-y-2';
       dayWrapper.dataset.dayIndex = String(dayIndex);
-  
+      
       // --- ШАПКА ДНЯ ---
       const title = document.createElement('div');
       title.className = 'flex items-center justify-between mb-2';
