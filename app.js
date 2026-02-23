@@ -1234,6 +1234,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentRuntime = rt.cycles[currentCycle];
   
     const nextCycle = currentCycle + 1;
+    // snapshot current cycle into completedCycles storage
+    if (!gymState.completedCycles) gymState.completedCycles = {};
+    if (!gymState.completedCycles[period.id]) gymState.completedCycles[period.id] = {};
+    try {
+      gymState.completedCycles[period.id][currentCycle] = {
+        savedAt: new Date().toISOString(),
+        data: JSON.parse(JSON.stringify(currentRuntime || { days: {}, groups: {} })),
+      };
+    } catch (e) {
+      // ignore clone errors
+    }
     // determine maximum allowed cycles for this period
     const maxCycles = (period && Number(period.totalCycles)) || (rt && Number(rt.totalCycles)) || 8;
 
@@ -1319,7 +1330,59 @@ document.addEventListener('DOMContentLoaded', () => {
     const updatedDays = Array.from(daysMap.values()).sort((a, b) => a.dayIndex - b.dayIndex);
     period.days = updatedDays;
   
+    // Persist template update
     gymSaveState(gymState);
+
+    // Now treat this action as 'Save cycle' behavior: propagate current cycle's active days to future cycles
+    if (!gymState.runtime) gymState.runtime = {};
+    if (!gymState.runtime[period.id]) gymState.runtime[period.id] = { currentCycle: 1, totalCycles: period.totalCycles || 1, periodDone: 1, cycles: {} };
+    const rtFull = gymState.runtime[period.id];
+    const currentCycleIndex = Number(rtFull.currentCycle) || 1;
+    if (!rtFull.cycles) rtFull.cycles = {};
+    const currentCycleRuntime = rtFull.cycles[currentCycleIndex] || { days: {}, groups: {} };
+
+    // collect active days from current cycle runtime (enabled !== false) or from template
+    const activeDayIndexes = new Set();
+    Object.keys(currentCycleRuntime.days || {}).forEach(k => {
+      const d = currentCycleRuntime.days[k] || {};
+      if (d.enabled !== false) activeDayIndexes.add(Number(k));
+    });
+    // also include template days (they are by definition active in template)
+    (period.days || []).forEach(d => { if (d && d.dayIndex) activeDayIndexes.add(Number(d.dayIndex)); });
+
+    const maxCycles = Number(period.totalCycles) || Number(rtFull.totalCycles) || 1;
+
+    // Ensure period.days includes any newly active runtime-only days
+    const templateMap = new Map((period.days || []).map(d => [Number(d.dayIndex), d]));
+    activeDayIndexes.forEach((idx) => {
+      if (!templateMap.has(idx)) {
+        // try to get muscles from runtime if present
+        const runtimeDay = currentCycleRuntime.days && currentCycleRuntime.days[idx] ? currentCycleRuntime.days[idx] : {};
+        templateMap.set(idx, { dayIndex: idx, muscles: Array.isArray(runtimeDay.muscles) ? runtimeDay.muscles.slice() : [] });
+      }
+    });
+
+    period.days = Array.from(templateMap.values()).sort((a,b)=>a.dayIndex-b.dayIndex);
+
+    // Propagate the active days structure (muscles + groups/exercises) forward to all future cycles
+    for (let c = currentCycleIndex + 1; c <= maxCycles; c += 1) {
+      if (!rtFull.cycles[c]) rtFull.cycles[c] = { days: {}, groups: {} };
+      const dest = rtFull.cycles[c];
+      activeDayIndexes.forEach((idx) => {
+        const srcDay = currentCycleRuntime.days && currentCycleRuntime.days[idx] ? currentCycleRuntime.days[idx] : {};
+        // deep clone groups/exercises if present
+        dest.days[idx] = {
+          enabled: true,
+          groups: srcDay.groups ? JSON.parse(JSON.stringify(srcDay.groups)) : {},
+          muscles: Array.isArray(srcDay.muscles) ? srcDay.muscles.slice() : (templateMap.get(idx)?.muscles || []),
+        };
+      });
+    }
+
+    // keep runtime totals in sync
+    rtFull.totalCycles = Math.min(maxCycles, Math.max(Number(rtFull.totalCycles) || 1, rtFull.totalCycles || maxCycles));
+    gymSaveState(gymState);
+    gymRenderGroups();
   }
   
   
@@ -1351,10 +1414,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const cycleLenInput = document.getElementById('gymPeriodCycleLength');
     const totalCyclesInput = document.getElementById('gymPeriodTotalCycles');
     const customNameInput = document.getElementById('gymPeriodCustomName');
+    const wpcInput = document.getElementById('gymPeriodWorkoutsPerCycle');
   
     if (cycleLenInput) cycleLenInput.value = '7';
     if (totalCyclesInput) totalCyclesInput.value = '8';
     if (customNameInput) customNameInput.value = '';
+    if (wpcInput) wpcInput.value = String(gymPeriodWizardDraft.workoutsPerCycle || 3);
   }
   
 
@@ -1789,8 +1854,21 @@ document.addEventListener('DOMContentLoaded', () => {
   
     gymEl.groupsContainer.innerHTML = '';
   
-    const days = Array.isArray(period.days) && period.days.length ? period.days : [];
-    const daysToRender = days.length ? days : [];
+    // Build days to render: merge period template days with any runtime-only days for current cycle
+    const templateDays = Array.isArray(period.days) ? period.days.slice() : [];
+    const runtimeDays = runtime && runtime.days ? runtime.days : {};
+
+    const daysMap = new Map();
+    templateDays.forEach(d => daysMap.set(Number(d.dayIndex), { dayIndex: Number(d.dayIndex), muscles: Array.isArray(d.muscles) ? d.muscles.slice() : [] }));
+    Object.keys(runtimeDays).forEach(k => {
+      const idx = Number(k);
+      if (!daysMap.has(idx)) {
+        const r = runtimeDays[k] || {};
+        daysMap.set(idx, { dayIndex: idx, muscles: Array.isArray(r.muscles) ? r.muscles.slice() : [] });
+      }
+    });
+
+    const daysToRender = Array.from(daysMap.values()).sort((a,b)=>a.dayIndex-b.dayIndex);
     
     // --- РЕНДЕР ДНЕЙ ---
     daysToRender.forEach((day) => {
@@ -1885,6 +1963,55 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       left.appendChild(titleBtn);
+      // --- COMPLETION CONTROLS ---
+      const rtFullForCompletion = gymState.runtime?.[period.id] || { currentCycle: 1 };
+      const currentCycleIndexForCompletion = Number(rtFullForCompletion.currentCycle) || 1;
+
+      if (!gymState.completedWorkouts) gymState.completedWorkouts = [];
+      const existingCompletion = (gymState.completedWorkouts || []).find(e => e.periodId === period.id && Number(e.cycleIndex) === Number(currentCycleIndexForCompletion) && Number(e.dayIndex) === Number(dayIndex));
+
+      const completionWrap = document.createElement('div');
+      completionWrap.className = 'flex items-center gap-2 text-xs ml-2';
+
+      const completedCheckbox = document.createElement('input');
+      completedCheckbox.type = 'checkbox';
+      completedCheckbox.dataset.role = 'dayCompleted';
+      completedCheckbox.dataset.dayIndex = String(dayIndex);
+      completedCheckbox.checked = !!existingCompletion;
+
+      const completedDate = document.createElement('input');
+      completedDate.type = 'date';
+      completedDate.dataset.role = 'dayCompletedDate';
+      completedDate.dataset.dayIndex = String(dayIndex);
+      const todayStr = new Date().toISOString().slice(0,10);
+      completedDate.value = existingCompletion ? (existingCompletion.dateCompleted || todayStr) : todayStr;
+
+      completionWrap.appendChild(completedCheckbox);
+      completionWrap.appendChild(completedDate);
+
+      left.appendChild(completionWrap);
+
+      // handlers
+      completedCheckbox.addEventListener('change', () => {
+        const checked = completedCheckbox.checked;
+        const dateVal = completedDate.value || todayStr;
+        if (checked) {
+          gymState.completedWorkouts.push({ periodId: period.id, cycleIndex: currentCycleIndexForCompletion, dayIndex: dayIndex, dateCompleted: dateVal });
+        } else {
+          gymState.completedWorkouts = (gymState.completedWorkouts || []).filter(e => !(e.periodId === period.id && Number(e.cycleIndex) === Number(currentCycleIndexForCompletion) && Number(e.dayIndex) === Number(dayIndex)));
+        }
+        gymSaveState(gymState);
+        gymRenderGroups();
+      });
+
+      completedDate.addEventListener('change', () => {
+        const dateVal = completedDate.value || todayStr;
+        const idx = (gymState.completedWorkouts || []).findIndex(e => e.periodId === period.id && Number(e.cycleIndex) === Number(currentCycleIndexForCompletion) && Number(e.dayIndex) === Number(dayIndex));
+        if (idx >= 0) {
+          gymState.completedWorkouts[idx].dateCompleted = dateVal;
+          gymSaveState(gymState);
+        }
+      });
   
       const right = document.createElement('div');
       right.className = 'flex items-center gap-2 ml-2';
@@ -2251,27 +2378,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
           const musclesFinal = muscles.length ? muscles : [];
         
-          const existingDays = Array.isArray(period.days) ? period.days : [];
-          const nextIndex =
-            existingDays.length > 0
-              ? Math.max(...existingDays.map((d) => d.dayIndex || 0)) + 1
-              : 1;
-        
-          period.days = [
-            ...existingDays,
-            {
-              dayIndex: nextIndex,
-              muscles: musclesFinal,
-            },
-          ];
-        
-          const runtime = gymGetCurrentCycle();
-          if (runtime) {
-            if (!runtime.days) runtime.days = {};
-            if (!runtime.days[nextIndex]) runtime.days[nextIndex] = { groups: {} };
-            runtime.days[nextIndex].enabled = enabled;
-          }
-        
+          // Create a runtime-only day for the current cycle. Do NOT modify period.days here.
+          const rt = gymGetCurrentCycle();
+          if (!rt) return;
+
+          // compute next available dayIndex across template and current runtime
+          const templateDays = Array.isArray(period.days) ? period.days.map(d => Number(d.dayIndex || 0)) : [];
+          const runtimeDayIndexes = rt.days ? Object.keys(rt.days).map(k => Number(k)) : [];
+          const used = templateDays.concat(runtimeDayIndexes).filter(n => !Number.isNaN(n) && n > 0);
+          const nextIndex = used.length ? Math.max(...used) + 1 : 1;
+
+          if (!rt.days) rt.days = {};
+          rt.days[nextIndex] = { groups: {}, enabled: enabled, muscles: musclesFinal };
+
           gymSaveState(gymState);
           gymRenderGroups();
         });            
@@ -2606,6 +2725,95 @@ document.addEventListener('DOMContentLoaded', () => {
     gymEl.fromFitnessBtn.addEventListener('click', gymOpenPeriodsScreen);
   }
 
+  // --- Calendar skeleton handlers ---
+  const gymCalendarScreen = document.getElementById('gymCalendarScreen');
+  const gymCalendarOpenBtn = document.getElementById('gymCalendarOpenBtn');
+  const gymCalendarCloseBtn = document.getElementById('gymCalendarCloseBtn');
+  const gymCalendarPeriodSelect = document.getElementById('gymCalendarPeriodSelect');
+  const gymCalendarPeriodStart = document.getElementById('gymCalendarPeriodStart');
+  const gymCalendarSetStartBtn = document.getElementById('gymCalendarSetStartBtn');
+  const gymCalendarMapDateBtn = document.getElementById('gymCalendarMapDateBtn');
+  const gymCalendarDate = document.getElementById('gymCalendarDate');
+  const gymCalendarOutput = document.getElementById('gymCalendarOutput');
+
+  function populateCalendarPeriodSelect() {
+    if (!gymCalendarPeriodSelect) return;
+    gymCalendarPeriodSelect.innerHTML = '';
+    const order = Array.isArray(gymState.periodOrder) ? gymState.periodOrder : Object.keys(gymState.periods || {});
+    order.forEach(id => {
+      const p = gymState.periods[id];
+      if (!p) return;
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = `${p.name} (${p.cycleLengthDays}d · ${p.totalCycles} cyc)`;
+      gymCalendarPeriodSelect.appendChild(opt);
+    });
+  }
+
+  function gymOpenCalendar() {
+    if (!gymCalendarScreen) return;
+    populateCalendarPeriodSelect();
+    gymCalendarScreen.classList.remove('hidden');
+  }
+
+  function gymCloseCalendar() {
+    if (!gymCalendarScreen) return;
+    gymCalendarScreen.classList.add('hidden');
+  }
+
+  if (gymCalendarOpenBtn) gymCalendarOpenBtn.addEventListener('click', gymOpenCalendar);
+  if (gymCalendarCloseBtn) gymCalendarCloseBtn.addEventListener('click', gymCloseCalendar);
+
+  function mapDateToPeriodCycleDay(periodId, dateStr) {
+    if (!periodId || !dateStr) return null;
+    if (!gymState.periodStartDates) gymState.periodStartDates = {};
+    const start = gymState.periodStartDates[periodId];
+    if (!start) return { error: 'No start date set for this period. Set a start date first.' };
+    const p = gymState.periods[periodId];
+    if (!p) return { error: 'Period not found' };
+    const startDate = new Date(start + 'T00:00:00');
+    const d = new Date(dateStr + 'T00:00:00');
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const daysSince = Math.floor((d - startDate) / msPerDay);
+    if (daysSince < 0) return { error: 'Date is before period start' };
+    const cycleIndex = Math.floor(daysSince / (p.cycleLengthDays || 1)) + 1;
+    const dayOfCycle = (daysSince % (p.cycleLengthDays || 1)) + 1;
+    return { cycleIndex, dayOfCycle, daysSince };
+  }
+
+  if (gymCalendarSetStartBtn) {
+    gymCalendarSetStartBtn.addEventListener('click', () => {
+      const pid = gymCalendarPeriodSelect?.value;
+      const v = gymCalendarPeriodStart?.value;
+      if (!pid || !v) return;
+      if (!gymState.periodStartDates) gymState.periodStartDates = {};
+      gymState.periodStartDates[pid] = v;
+      gymSaveState(gymState);
+      if (gymCalendarOutput) gymCalendarOutput.textContent = 'Start date saved.';
+    });
+  }
+
+  if (gymCalendarMapDateBtn) {
+    gymCalendarMapDateBtn.addEventListener('click', () => {
+      const pid = gymCalendarPeriodSelect?.value;
+      const dateVal = gymCalendarDate?.value;
+      if (!pid || !dateVal) {
+        if (gymCalendarOutput) gymCalendarOutput.textContent = 'Choose period and date.';
+        return;
+      }
+      const res = mapDateToPeriodCycleDay(pid, dateVal);
+      if (!res) {
+        gymCalendarOutput.textContent = 'No mapping available.';
+        return;
+      }
+      if (res.error) {
+        gymCalendarOutput.textContent = res.error;
+        return;
+      }
+      gymCalendarOutput.textContent = `Дата ${dateVal} → Цикл ${res.cycleIndex}, День ${res.dayOfCycle} (дней с начала: ${res.daysSince})`;
+    });
+  }
+
   // список периодов: назад
   if (gymEl.periodsBackBtn) {
     gymEl.periodsBackBtn.addEventListener('click', gymClosePeriodsScreen);
@@ -2696,12 +2904,21 @@ document.addEventListener('DOMContentLoaded', () => {
       gymState.periodOrder.push(periodId);
       // Initialize runtime fresh for the new period — do NOT reuse old runtime data
       if (!gymState.runtime) gymState.runtime = {};
+      // initialize runtime cycles[1] with template days enabled
+      const initialDays = {};
+      (period.days || []).forEach(d => {
+        const idx = Number(d.dayIndex);
+        if (!Number.isNaN(idx) && idx > 0) {
+          initialDays[idx] = { enabled: true, groups: {}, muscles: Array.isArray(d.muscles) ? d.muscles.slice() : [] };
+        }
+      });
+
       gymState.runtime[periodId] = {
         currentCycle: 1,
         totalCycles: Number(period.totalCycles) || 1,
         periodDone: 1,
         cycles: {
-          1: { days: {}, groups: {} },
+          1: { days: initialDays, groups: {} },
         },
       };
 
