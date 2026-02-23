@@ -1603,13 +1603,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function gymRenderGroups() {
     if (!gymEl.groupsContainer) return;
+
     const period = gymGetActivePeriod();
     if (!period) return;
   
     const runtime = gymGetCurrentCycle();
     if (!runtime) return;
+
     if (!runtime.groups) runtime.groups = {};
     const groupsData = runtime.groups;
+
+    if (!runtime.days) runtime.days = {}; // ← добавь эту строку
   
     gymEl.groupsContainer.innerHTML = '';
   
@@ -1759,10 +1763,10 @@ document.addEventListener('DOMContentLoaded', () => {
       gymEl.groupsContainer.querySelectorAll('button[data-group]').forEach(btn => {
         btn.addEventListener('click', () => {
           const groupName = btn.dataset.group;
-          const dayWrapper = btn.closest('[data-day-index], [data-dayindex]');
-          const dayIndexAttr = dayWrapper?.querySelector('[data-group]').dataset.dayIndex
-            || dayWrapper?.dataset.dayIndex;
+          const dayWrapper = btn.closest('[data-day-index]');
+          const dayIndexAttr = dayWrapper?.dataset.dayIndex;
           const dayIndex = Number(dayIndexAttr || '1');
+
       
           const runtime = gymGetCurrentCycle();
           if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
