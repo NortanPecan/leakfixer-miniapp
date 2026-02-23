@@ -434,6 +434,8 @@ document.addEventListener('DOMContentLoaded', () => {
     waterTotal: document.getElementById('fitnessWaterTotal'),
     supplementList: document.getElementById('fitnessSupplementList'),
     supplementAdd: document.getElementById('fitnessSupplementAdd'),
+    modalOverlay: document.getElementById('fitnessModalOverlay'),
+    modalContent: document.getElementById('fitnessModalContent'),
     workDayLabel: document.getElementById('fitnessWorkDayLabel'),
     profileEdit: document.getElementById('fitnessProfileEdit'),
     weightDate: document.getElementById('fitnessWeightDate'),
@@ -441,6 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
     weightSave: document.getElementById('fitnessWeightSave'),
     weightStatus: document.getElementById('fitnessWeightStatus'),
   };
+  
 
   function isFitnessSetupDone() {
     return localStorage.getItem(FITNESS_SETUP_DONE_KEY) === '1';
