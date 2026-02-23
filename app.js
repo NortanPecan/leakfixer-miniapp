@@ -1147,6 +1147,58 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   
 
+  function gymMigrateRuntime(oldRuntime) {
+    if (!oldRuntime || typeof oldRuntime !== 'object') return {};
+  
+    const migrated = {};
+  
+    Object.entries(oldRuntime).forEach(([periodId, data]) => {
+      const cur = {
+        currentCycle: data.currentCycle || data.currentCycleIndex || 1,
+        totalCycles: data.totalCycles || 8,
+        periodDone: data.periodDone || 1,
+        cycles: {},
+      };
+  
+      // старый формат: cycles как массив
+      if (Array.isArray(data.cycles)) {
+        data.cycles.forEach((c, idx) => {
+          if (!c || typeof c !== 'object') return;
+          const key = c.currentCycle || c.index || (idx + 1);
+          cur.cycles[key] = {
+            days: c.days || {},
+            groups: c.groups || {},
+          };
+        });
+      }
+  
+      // новый формат: cycles как объект
+      if (data.cycles && !Array.isArray(data.cycles)) {
+        Object.entries(data.cycles).forEach(([k, c]) => {
+          if (!c || typeof c !== 'object') return;
+          cur.cycles[k] = {
+            days: c.days || {},
+            groups: c.groups || {},
+          };
+        });
+      }
+  
+      // гарантируем хотя бы цикл 1
+      if (!Object.keys(cur.cycles).length) {
+        cur.cycles[cur.currentCycle] = { days: {}, groups: {} };
+      }
+  
+      migrated[periodId] = cur;
+    });
+  
+    return migrated;
+  }
+  
+  // применяем миграцию
+  if (!gymState.runtime) gymState.runtime = {};
+  gymState.runtime = gymMigrateRuntime(gymState.runtime);
+  
+
 
   function gymCreatePeriodId() {
     const n = (gymState.periodOrder?.length || 0) + 1;
@@ -1169,14 +1221,15 @@ document.addEventListener('DOMContentLoaded', () => {
   
     if (!gymState.runtime) gymState.runtime = {};
     if (!gymState.runtime[period.id]) {
-      gymState.runtime[period.id] = { currentCycle: 1, cycles: {} };
+      gymState.runtime[period.id] = { currentCycle: 1, totalCycles: 8, periodDone: 1, cycles: {} };
     }
   
     const rt = gymState.runtime[period.id];
     const currentCycle = rt.currentCycle || 1;
   
+    if (!rt.cycles) rt.cycles = {};
     if (!rt.cycles[currentCycle]) {
-      rt.cycles[currentCycle] = { days: {} };
+      rt.cycles[currentCycle] = { days: {}, groups: {} };
     }
     const currentRuntime = rt.cycles[currentCycle];
   
@@ -1201,17 +1254,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   
     rt.currentCycle = nextCycle;
-    rt.cycles[nextCycle] = { days: nextRuntimeDays };
-
-    // обновляем селект, если он есть
-    if (gymEl.cycleSelect) {
-      gymEl.cycleSelect.value = String(nextCycle);
+    if (!rt.cycles[nextCycle]) {
+      rt.cycles[nextCycle] = { days: {}, groups: {} };
     }
+    rt.cycles[nextCycle].days = nextRuntimeDays;
+  
+    if (rt.totalCycles < nextCycle) rt.totalCycles = nextCycle;
+    if (rt.periodDone < nextCycle) rt.periodDone = nextCycle;
   
     gymSaveState(gymState);
     gymRenderHeader();
     gymRenderGroups();
   }
+  
   
   if (gymEl.newCycleBtn) {
     gymEl.newCycleBtn.addEventListener('click', gymCreateNextCycle);
@@ -1608,7 +1663,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     if (!gymState.runtime) gymState.runtime = {};
     if (!gymState.runtime[period.id]) {
-      gymState.runtime[period.id] = { currentCycle: 1, cycles: {} };
+      gymState.runtime[period.id] = { currentCycle: 1, totalCycles: 8, periodDone: 1, cycles: {} };
     }
   
     const rt = gymState.runtime[period.id];
@@ -1616,7 +1671,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     if (!rt.cycles) rt.cycles = {};
     if (!rt.cycles[idx]) {
-      rt.cycles[idx] = { days: {} };
+      rt.cycles[idx] = { days: {}, groups: {} };
     }
   
     return rt.cycles[idx];
@@ -1628,14 +1683,14 @@ document.addEventListener('DOMContentLoaded', () => {
   
     if (!gymState.runtime) gymState.runtime = {};
     if (!gymState.runtime[period.id]) {
-      gymState.runtime[period.id] = { currentCycle: 1, cycles: {} };
+      gymState.runtime[period.id] = { currentCycle: 1, totalCycles: 8, periodDone: 1, cycles: {} };
     }
   
     const rt = gymState.runtime[period.id];
   
     if (!rt.cycles) rt.cycles = {};
     if (!rt.cycles[cycleIndex]) {
-      rt.cycles[cycleIndex] = { days: {} };
+      rt.cycles[cycleIndex] = { days: {}, groups: {} };
     }
   
     rt.currentCycle = cycleIndex;
@@ -1644,6 +1699,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gymRenderHeader();
     gymRenderGroups();
   }
+  
   
   function gymRenderCycleSelect() {
     if (!gymEl.cycleSelect) return;
