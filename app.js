@@ -1968,10 +1968,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- ШАПКА УПРАЖНЕНИЯ ---
             const exHeader = document.createElement('div');
             exHeader.className = 'flex items-center justify-between text-xs mb-1';
-  
+
             const titleWrap = document.createElement('div');
             titleWrap.className = 'flex-1';
-  
+
             if (isEditing) {
               // Редактируемое название
               const nameInput = document.createElement('input');
@@ -1980,7 +1980,6 @@ document.addEventListener('DOMContentLoaded', () => {
               nameInput.placeholder = 'Название (Жим гантелей)';
               nameInput.value = ex.name || '';
               nameInput.dataset.field = 'name';
-  
               titleWrap.appendChild(nameInput);
             } else {
               // Только текст (кнопка сворачивания)
@@ -1989,21 +1988,23 @@ document.addEventListener('DOMContentLoaded', () => {
               nameBtn.className = 'text-left flex-1 text-slate-100';
               nameBtn.dataset.role = 'toggleExercise';
               nameBtn.textContent = ex.name || 'Упражнение ' + (idx + 1);
-  
               titleWrap.appendChild(nameBtn);
             }
-  
+
             exHeader.appendChild(titleWrap);
-  
-            // Кнопка удаления упражнения доступна всегда
-            const delBtn = document.createElement('button');
-            delBtn.type = 'button';
-            delBtn.className = 'text-[11px] text-red-300 underline';
-            delBtn.dataset.delete = '1';
-            delBtn.textContent = 'Удалить';
-  
-            exHeader.appendChild(delBtn);
+
+            // Кнопка удаления упражнения — ТОЛЬКО в режиме редактирования дня
+            if (isEditing) {
+              const delBtn = document.createElement('button');
+              delBtn.type = 'button';
+              delBtn.className = 'text-[11px] text-red-300 underline';
+              delBtn.dataset.delete = '1';
+              delBtn.textContent = 'Удалить';
+              exHeader.appendChild(delBtn);
+            }
+
             card.appendChild(exHeader);
+
   
             // --- ТЕЛО УПРАЖНЕНИЯ ---
             const body = document.createElement('div');
