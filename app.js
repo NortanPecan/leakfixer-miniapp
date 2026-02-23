@@ -2101,21 +2101,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- обработчики ---
   
     // свернуть/развернуть день + сохранение в uiCollapse
-    gymEl.groupsContainer
-      .querySelectorAll('[data-role="toggleDay"]')
+    document
+      .querySelectorAll('#gymGroupsContainer [data-role="toggleDay"]')
       .forEach((btn) => {
         btn.addEventListener('click', () => {
           const dayWrapper = btn.closest('[data-day-index]');
           if (!dayWrapper) return;
           const body = dayWrapper.querySelector('[data-role="dayBody"]');
           if (!body) return;
+
           const dayIndex = Number(dayWrapper.dataset.dayIndex || '1');
-  
           const nowHidden = body.classList.toggle('hidden');
+
           ui.days[dayIndex] = !nowHidden;
           gymSaveState(gymState);
         });
       });
+
   
     // открыть модалку "Редактировать день"
     gymEl.groupsContainer
