@@ -1747,74 +1747,157 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!runtime.groups) runtime.groups = {};
     if (!runtime.days) runtime.days = {};
   
-    // UI-состояние сворачивания
+    // UI-состояние сворачивания и редактирования
     if (!gymState.uiCollapse) gymState.uiCollapse = {};
     const uiKey = `period-${period.id || 'default'}`;
     if (!gymState.uiCollapse[uiKey]) {
-      gymState.uiCollapse[uiKey] = { days: {}, groups: {} };
+      gymState.uiCollapse[uiKey] = { days: {}, groups: {}, editDays: {} };
     }
     const ui = gymState.uiCollapse[uiKey];
+    if (!ui.editDays) ui.editDays = {};
   
-    // очищаем контейнер
     gymEl.groupsContainer.innerHTML = '';
   
-    const days = Array.isArray(period.days) && period.days.length
-      ? period.days
-      : [];
+    const days = Array.isArray(period.days) && period.days.length ? period.days : [];
     const daysToRender = days.length ? days : [];
   
-    // --- РЕНДЕР СУЩЕСТВУЮЩИХ ДНЕЙ ---
+    // --- РЕНДЕР ДНЕЙ ---
     daysToRender.forEach((day) => {
-      if (!day.enabled) return;
+      if (!day.enabled && !ui.editDays[day.dayIndex]) {
+        // если день выключен, но не в режиме редактирования — можно скрыть
+        // если хочешь показывать выключенный день — убери это условие
+      }
   
       const dayIndex = day.dayIndex;
-      if (!runtime.days[dayIndex]) {
-        runtime.days[dayIndex] = { groups: {} };
-      }
+      if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
       const dayRuntime = runtime.days[dayIndex];
       if (!dayRuntime.groups) dayRuntime.groups = {};
+  
+      const isEditing = ui.editDays[dayIndex] === true;
   
       const dayWrapper = document.createElement('div');
       dayWrapper.className = 'bg-white/5 rounded-2xl px-3 py-3 space-y-2';
       dayWrapper.dataset.dayIndex = String(dayIndex);
   
-      // шапка дня
+      // --- ШАПКА ДНЯ ---
       const title = document.createElement('div');
       title.className = 'flex items-center justify-between mb-2';
   
-      const left = document.createElement('button');
-      left.type = 'button';
-      left.className = 'text-left w-full';
-      left.dataset.role = 'toggleDay';
-      left.dataset.dayIndex = String(dayIndex);
-      left.innerHTML = `
+      const left = document.createElement('div');
+      left.className = 'flex items-center gap-2 flex-1';
+  
+      // чекбокс только в режиме редактирования
+      if (isEditing) {
+        const checkboxLabel = document.createElement('label');
+        checkboxLabel.className = 'flex items-center gap-1 text-xs text-slate-200';
+  
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'accent-emerald-400';
+        checkbox.dataset.role = 'dayEnabled';
+        checkbox.dataset.dayIndex = String(dayIndex);
+        if (day.enabled !== false) checkbox.checked = true;
+  
+        const span = document.createElement('span');
+        span.textContent = 'Активен';
+  
+        checkboxLabel.appendChild(checkbox);
+        checkboxLabel.appendChild(span);
+  
+        left.appendChild(checkboxLabel);
+      }
+  
+      const titleBtn = document.createElement('button');
+      titleBtn.type = 'button';
+      titleBtn.className = 'text-left flex-1';
+      titleBtn.dataset.role = 'toggleDay';
+      titleBtn.dataset.dayIndex = String(dayIndex);
+      titleBtn.innerHTML = `
         <div class="text-sm font-semibold text-white">День ${day.dayIndex}</div>
-        <div class="text-xs text-slate-300">
+        <div class="text-xs text-slate-300" data-role="dayMusclesView">
           ${
             day.muscles && day.muscles.length
               ? day.muscles.join(', ')
-              : 'Нажми "Редактировать день", чтобы выбрать группы'
+              : 'Нажми "Редактировать", чтобы выбрать группы'
           }
         </div>
       `;
+      left.appendChild(titleBtn);
   
-      const editBtn = document.createElement('button');
-      editBtn.type = 'button';
-      editBtn.className = 'text-[11px] text-emerald-300 underline ml-2';
-      editBtn.dataset.role = 'editDay';
-      editBtn.dataset.dayIndex = String(dayIndex);
-      editBtn.textContent = 'Редактировать день';
+      const right = document.createElement('div');
+      right.className = 'flex items-center gap-2 ml-2';
+  
+      if (isEditing) {
+        const saveBtn = document.createElement('button');
+        saveBtn.type = 'button';
+        saveBtn.className = 'text-[11px] text-emerald-300 underline';
+        saveBtn.dataset.role = 'daySave';
+        saveBtn.dataset.dayIndex = String(dayIndex);
+        saveBtn.textContent = 'Сохранить';
+  
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'text-[11px] text-red-300 underline';
+        deleteBtn.dataset.role = 'dayDelete';
+        deleteBtn.dataset.dayIndex = String(dayIndex);
+        deleteBtn.textContent = 'Удалить день';
+  
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'text-[11px] text-slate-300 underline';
+        cancelBtn.dataset.role = 'dayCancel';
+        cancelBtn.dataset.dayIndex = String(dayIndex);
+        cancelBtn.textContent = 'Назад';
+  
+        right.appendChild(saveBtn);
+        right.appendChild(deleteBtn);
+        right.appendChild(cancelBtn);
+      } else {
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'text-[11px] text-emerald-300 underline';
+        editBtn.dataset.role = 'dayEdit';
+        editBtn.dataset.dayIndex = String(dayIndex);
+        editBtn.textContent = 'Редактировать';
+  
+        right.appendChild(editBtn);
+      }
   
       title.appendChild(left);
-      title.appendChild(editBtn);
+      title.appendChild(right);
       dayWrapper.appendChild(title);
   
-      // тело дня
+      // --- СТРОКА РЕДАКТИРОВАНИЯ ГРУПП МЫШЦ (ТОЛЬКО В РЕЖИМЕ РЕДАКТИРОВАНИЯ) ---
+      if (isEditing) {
+        const musclesRow = document.createElement('div');
+        musclesRow.className = 'mb-2';
+  
+        musclesRow.innerHTML = `
+          <div class="text-[11px] text-slate-300 mb-1">
+            Группы мышц через запятую
+          </div>
+          <input
+            class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
+            placeholder="Грудь, плечи, спина"
+            data-role="dayMusclesInput"
+            data-day-index="${dayIndex}"
+            value="${
+              day.muscles && day.muscles.length
+                ? day.muscles.join(', ')
+                : ''
+            }"
+          />
+        `;
+  
+        dayWrapper.appendChild(musclesRow);
+      }
+  
+      // --- ТЕЛО ДНЯ ---
       const dayBody = document.createElement('div');
       const dayExpanded = ui.days[dayIndex] === true;
       dayBody.className = 'space-y-2' + (dayExpanded ? '' : ' hidden');
       dayBody.dataset.role = 'dayBody';
-      dayBody.dataset.dayIndex = String(dayIndex); // КЛЮЧЕВОЙ ФИКС
+      dayBody.dataset.dayIndex = String(dayIndex);
   
       const muscleGroups =
         day.muscles && day.muscles.length ? day.muscles : GYM_DEFAULT_GROUPS;
@@ -1825,40 +1908,46 @@ document.addEventListener('DOMContentLoaded', () => {
   
         const header = document.createElement('div');
         header.className = 'flex items-center justify-between mb-1';
-        header.innerHTML = `
-          <button
-            type="button"
-            class="flex-1 text-left text-sm text-slate-100 font-medium"
-            data-role="toggleGroup"
-            data-group="${groupName}"
-          >
-            ${groupName}
-          </button>
-          <div class="flex items-center gap-2">
-            <button
-              type="button"
-              class="text-xs px-2 py-1 rounded-full bg-emerald-500 text-white"
-              data-group="${groupName}"
-              data-role="addExercise"
-            >
-              + Упражнение
-            </button>
-            <button
-              type="button"
-              class="text-[11px] text-red-300 underline"
-              data-group="${groupName}"
-              data-role="deleteGroup"
-            >
-              удалить
-            </button>
-          </div>
-        `;
+  
+        // название группы
+        const groupBtn = document.createElement('button');
+        groupBtn.type = 'button';
+        groupBtn.className = 'flex-1 text-left text-sm text-slate-100 font-medium';
+        groupBtn.dataset.role = 'toggleGroup';
+        groupBtn.dataset.group = groupName;
+        groupBtn.textContent = groupName;
+  
+        header.appendChild(groupBtn);
+  
+        // кнопки для групп — только в режиме редактирования
+        if (isEditing) {
+          const groupActions = document.createElement('div');
+          groupActions.className = 'flex items-center gap-2';
+  
+          const addExBtn = document.createElement('button');
+          addExBtn.type = 'button';
+          addExBtn.className = 'text-xs px-2 py-1 rounded-full bg-emerald-500 text-white';
+          addExBtn.dataset.role = 'addExercise';
+          addExBtn.dataset.group = groupName;
+          addExBtn.textContent = '+ Упражнение';
+  
+          const delGroupBtn = document.createElement('button');
+          delGroupBtn.type = 'button';
+          delGroupBtn.className = 'text-[11px] text-red-300 underline';
+          delGroupBtn.dataset.role = 'deleteGroup';
+          delGroupBtn.dataset.group = groupName;
+          delGroupBtn.textContent = 'удалить';
+  
+          groupActions.appendChild(addExBtn);
+          groupActions.appendChild(delGroupBtn);
+          header.appendChild(groupActions);
+        }
+  
         wrapper.appendChild(header);
   
         const listContainer = document.createElement('div');
         const groupKey = `${dayIndex}::${groupName}`;
         const groupExpanded = ui.groups[groupKey] === true;
-  
         listContainer.className = 'space-y-2' + (groupExpanded ? '' : ' hidden');
         listContainer.dataset.group = groupName;
         listContainer.dataset.groupContainer = groupName;
@@ -1876,98 +1965,118 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = 'bg-slate-900/80 rounded-xl px-3 py-3 space-y-2';
             card.dataset.index = String(idx);
   
-            card.innerHTML = `
-              <div class="flex items-center justify-between text-xs mb-1">
-                <button
-                  type="button"
-                  class="text-left flex-1 text-slate-100"
-                  data-role="toggleExercise"
-                >
-                  ${ex.name || 'Упражнение ' + (idx + 1)}
-                </button>
-                <button
-                  type="button"
-                  class="text-[11px] text-red-300 underline"
-                  data-delete="1"
-                >
-                  Удалить
-                </button>
+            // --- ШАПКА УПРАЖНЕНИЯ ---
+            const exHeader = document.createElement('div');
+            exHeader.className = 'flex items-center justify-between text-xs mb-1';
+  
+            const titleWrap = document.createElement('div');
+            titleWrap.className = 'flex-1';
+  
+            if (isEditing) {
+              // Редактируемое название
+              const nameInput = document.createElement('input');
+              nameInput.type = 'text';
+              nameInput.className = 'w-full bg-transparent text-left text-slate-100 text-xs font-semibold border-b border-white/10 focus:outline-none';
+              nameInput.placeholder = 'Название (Жим гантелей)';
+              nameInput.value = ex.name || '';
+              nameInput.dataset.field = 'name';
+  
+              titleWrap.appendChild(nameInput);
+            } else {
+              // Только текст (кнопка сворачивания)
+              const nameBtn = document.createElement('button');
+              nameBtn.type = 'button';
+              nameBtn.className = 'text-left flex-1 text-slate-100';
+              nameBtn.dataset.role = 'toggleExercise';
+              nameBtn.textContent = ex.name || 'Упражнение ' + (idx + 1);
+  
+              titleWrap.appendChild(nameBtn);
+            }
+  
+            exHeader.appendChild(titleWrap);
+  
+            // Кнопка удаления упражнения доступна всегда
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'text-[11px] text-red-300 underline';
+            delBtn.dataset.delete = '1';
+            delBtn.textContent = 'Удалить';
+  
+            exHeader.appendChild(delBtn);
+            card.appendChild(exHeader);
+  
+            // --- ТЕЛО УПРАЖНЕНИЯ ---
+            const body = document.createElement('div');
+            body.className = 'space-y-2 hidden';
+            body.dataset.role = 'exerciseBody';
+  
+            body.innerHTML = `
+              <div class="flex gap-2 text-xs">
+                <div class="flex-1">
+                  <div class="text-slate-400 mb-1">Рабочие подходы</div>
+                  <input
+                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
+                    placeholder="4x10x35 кг"
+                    value="${ex.sets || ''}"
+                    data-field="sets"
+                  />
+                </div>
+                <div class="flex-1">
+                  <div class="text-slate-400 mb-1">Разминка (опц.)</div>
+                  <input
+                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
+                    placeholder="2x15"
+                    value="${ex.warmup || ''}"
+                    data-field="warmup"
+                  />
+                </div>
               </div>
   
-              <div class="space-y-2 hidden" data-role="exerciseBody">
-                <input
-                  class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
-                  placeholder="Название (Жим гантелей)"
-                  value="${ex.name || ''}"
-                  data-field="name"
-                />
-  
-                <div class="flex gap-2 text-xs">
-                  <div class="flex-1">
-                    <div class="text-slate-400 mb-1">Рабочие подходы</div>
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex-1 mr-2">
+                  <div class="text-slate-400 mb-1">RPE 1–10</div>
+                  <div class="flex items-center gap-2">
                     <input
-                      class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                      placeholder="4x10x35 кг"
-                      value="${ex.sets || ''}"
-                      data-field="sets"
-                    />
-                  </div>
-                  <div class="flex-1">
-                    <div class="text-slate-400 mb-1">Разминка (опц.)</div>
-                    <input
-                      class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                      placeholder="2x15"
-                      value="${ex.warmup || ''}"
-                      data-field="warmup"
-                    />
+                      type="range"
+                      min="1"
+                      max="10"
+                      value="${ex.rpe || 7}"
+                      data-field="rpe"
+                      class="flex-1"
+                    >
+                    <span
+                      class="text-slate-100 text-xs"
+                      data-rpe-label
+                    >
+                      ${ex.rpe || 7}/10
+                    </span>
                   </div>
                 </div>
+              </div>
   
-                <div class="flex items-center justify-between text-xs">
-                  <div class="flex-1 mr-2">
-                    <div class="text-slate-400 mb-1">RPE 1–10</div>
-                    <div class="flex items-center gap-2">
-                      <input
-                        type="range"
-                        min="1"
-                        max="10"
-                        value="${ex.rpe || 7}"
-                        data-field="rpe"
-                        class="flex-1"
-                      >
-                      <span
-                        class="text-slate-100 text-xs"
-                        data-rpe-label
-                      >
-                        ${ex.rpe || 7}/10
-                      </span>
-                    </div>
-                  </div>
+              <div class="flex gap-2 text-xs">
+                <div class="flex-1">
+                  <div class="text-slate-400 mb-1">Прогресс за период</div>
+                  <input
+                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
+                    placeholder="+5 кг с начала"
+                    value="${ex.progressNote || ''}"
+                    data-field="progressNote"
+                  />
                 </div>
-  
-                <div class="flex gap-2 text-xs">
-                  <div class="flex-1">
-                    <div class="text-slate-400 mb-1">Прогресс за период</div>
-                    <input
-                      class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                      placeholder="+5 кг с начала"
-                      value="${ex.progressNote || ''}"
-                      data-field="progressNote"
-                    />
-                  </div>
-                  <div class="flex-1">
-                    <div class="text-slate-400 mb-1">План на след. цикл</div>
-                    <input
-                      class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                      placeholder="След. цикл: 37 кг"
-                      value="${ex.nextCyclePlan || ''}"
-                      data-field="nextCyclePlan"
-                    />
-                  </div>
+                <div class="flex-1">
+                  <div class="text-slate-400 mb-1">План на след. цикл</div>
+                  <input
+                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
+                    placeholder="След. цикл: 37 кг"
+                    value="${ex.nextCyclePlan || ''}"
+                    data-field="nextCyclePlan"
+                  />
                 </div>
               </div>
             `;
   
+            card.appendChild(body);
             listContainer.appendChild(card);
           });
         }
@@ -1980,7 +2089,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gymEl.groupsContainer.appendChild(dayWrapper);
     });
   
-    // --- КНОПКА/ФОРМА "ДОБАВИТЬ ДЕНЬ" ---
+    // --- КНОПКА/ФОРМА "ДОБАВИТЬ ДЕНЬ" (как раньше) ---
     const addDayContainer = document.createElement('div');
     addDayContainer.className = 'mt-3 space-y-2 text-xs text-slate-200';
     addDayContainer.innerHTML = `
@@ -2101,6 +2210,107 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   
+    // ---- ПЕРЕКЛЮЧЕНИЕ РЕЖИМА ДНЯ ----
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-role="dayEdit"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dayIndex = Number(btn.dataset.dayIndex || '1');
+          ui.editDays[dayIndex] = true;
+          gymSaveState(gymState);
+          gymRenderGroups();
+        });
+      });
+  
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-role="dayCancel"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dayIndex = Number(btn.dataset.dayIndex || '1');
+          ui.editDays[dayIndex] = false;
+          gymSaveState(gymState);
+          gymRenderGroups();
+        });
+      });
+  
+    // ---- СОХРАНИТЬ ДЕНЬ ----
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-role="daySave"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dayIndex = Number(btn.dataset.dayIndex || '1');
+          const period = gymGetActivePeriod();
+          if (!period) return;
+  
+          const days = Array.isArray(period.days) ? period.days : [];
+          let day = days.find((d) => d.dayIndex === dayIndex);
+          if (!day) {
+            day = { dayIndex, enabled: true, muscles: [] };
+            days.push(day);
+          }
+  
+          // enabled
+          const checkbox = gymEl.groupsContainer.querySelector(
+            `input[data-role="dayEnabled"][data-day-index="${dayIndex}"]`
+          );
+          day.enabled = checkbox ? !!checkbox.checked : true;
+  
+          // мышцы
+          const musclesInput = gymEl.groupsContainer.querySelector(
+            `input[data-role="dayMusclesInput"][data-day-index="${dayIndex}"]`
+          );
+          const raw = musclesInput?.value || '';
+          const muscles = raw
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+          day.muscles = muscles.length
+            ? muscles
+            : (Array.isArray(GYM_DEFAULT_GROUPS) ? GYM_DEFAULT_GROUPS.slice() : []);
+  
+          period.days = days;
+  
+          const runtime = gymGetCurrentCycle();
+          if (runtime && runtime.days && runtime.days[dayIndex]) {
+            const dayRuntime = runtime.days[dayIndex];
+            if (!dayRuntime.groups) dayRuntime.groups = {};
+            const allowed = new Set(day.muscles);
+            Object.keys(dayRuntime.groups).forEach((groupName) => {
+              if (!allowed.has(groupName)) {
+                delete dayRuntime.groups[groupName];
+              }
+            });
+          }
+  
+          ui.editDays[dayIndex] = false;
+          gymSaveState(gymState);
+          gymRenderGroups();
+        });
+      });
+  
+    // ---- УДАЛИТЬ ДЕНЬ ----
+    gymEl.groupsContainer
+      .querySelectorAll('button[data-role="dayDelete"]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dayIndex = Number(btn.dataset.dayIndex || '1');
+          const period = gymGetActivePeriod();
+          if (!period) return;
+  
+          const days = Array.isArray(period.days) ? period.days : [];
+          period.days = days.filter((d) => d.dayIndex !== dayIndex);
+  
+          const runtime = gymGetCurrentCycle();
+          if (runtime && runtime.days && runtime.days[dayIndex]) {
+            delete runtime.days[dayIndex];
+          }
+  
+          delete ui.editDays[dayIndex];
+          gymSaveState(gymState);
+          gymRenderGroups();
+        });
+      });
+  
     // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ ДЕНЬ ----
     gymEl.groupsContainer
       .querySelectorAll('[data-role="toggleDay"]')
@@ -2117,153 +2327,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const nowHidden = body.classList.toggle('hidden');
           ui.days[Number(dayIndex)] = !nowHidden;
           gymSaveState(gymState);
-        });
-      });
-  
-    // ---- ОТКРЫТЬ МОДАЛКУ "РЕДАКТИРОВАТЬ ДЕНЬ" ----
-    gymEl.groupsContainer
-      .querySelectorAll('button[data-role="editDay"]')
-      .forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const dayIndex = Number(btn.dataset.dayIndex || '1');
-          const period = gymGetActivePeriod();
-          if (!period) return;
-  
-          const days = Array.isArray(period.days) ? period.days : [];
-          const existing = days.find((d) => d.dayIndex === dayIndex) || {
-            dayIndex,
-            enabled: true,
-            muscles: [],
-          };
-  
-          const musclesText = existing.muscles && existing.muscles.length
-            ? existing.muscles.join(', ')
-            : '';
-  
-          const html = `
-            <h3 class="font-semibold mb-3 text-sm">День ${dayIndex}</h3>
-            <div class="space-y-3 text-xs">
-              <label class="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  class="accent-emerald-400"
-                  id="gmDayEnabled"
-                  ${existing.enabled ? 'checked' : ''}
-                />
-                <span class="text-slate-200">День активен</span>
-              </label>
-  
-              <div>
-                <div class="text-[11px] text-slate-300 mb-1">
-                  Группы мышц через запятую
-                </div>
-                <input
-                  id="gmDayMuscles"
-                  class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
-                  placeholder="Грудь, плечи, спина"
-                  value="${musclesText}"
-                />
-              </div>
-  
-              <div class="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  class="flex-1 bg-red-500/80 py-2 rounded-xl text-xs font-semibold"
-                  id="gmDayDelete"
-                >
-                  Удалить день
-                </button>
-                <button
-                  type="button"
-                  class="flex-1 bg-emerald-500 hover:bg-emerald-600 py-2 rounded-xl text-xs font-semibold"
-                  id="gmDaySave"
-                >
-                  Сохранить
-                </button>
-              </div>
-            </div>
-          `;
-  
-          if (!fitnessEl.modalOverlay || !fitnessEl.modalContent) return;
-          fitnessEl.modalContent.innerHTML = html;
-          fitnessEl.modalOverlay.classList.remove('hidden');
-  
-          const close = () => {
-            fitnessEl.modalOverlay.classList.add('hidden');
-          };
-  
-          fitnessEl.modalOverlay.addEventListener('click', (e) => {
-            if (e.target === fitnessEl.modalOverlay) close();
-          }, { once: true });
-  
-          const saveBtn = fitnessEl.modalContent.querySelector('#gmDaySave');
-          const deleteBtn = fitnessEl.modalContent.querySelector('#gmDayDelete');
-  
-          if (saveBtn) {
-            saveBtn.addEventListener('click', () => {
-              const enabledEl = document.getElementById('gmDayEnabled');
-              const musclesEl = document.getElementById('gmDayMuscles');
-  
-              const enabled = enabledEl ? !!enabledEl.checked : true;
-              const raw = musclesEl?.value || '';
-              const muscles = raw
-                .split(',')
-                .map((s) => s.trim())
-                .filter(Boolean);
-  
-              const musclesFinal = muscles.length
-                ? muscles
-                : (Array.isArray(GYM_DEFAULT_GROUPS) ? GYM_DEFAULT_GROUPS.slice() : []);
-  
-              const period = gymGetActivePeriod();
-              if (!period) return;
-  
-              const days = Array.isArray(period.days) ? period.days : [];
-              const idx = days.findIndex((d) => d.dayIndex === dayIndex);
-              if (idx >= 0) {
-                days[idx].enabled = enabled;
-                days[idx].muscles = musclesFinal;
-              } else {
-                days.push({ dayIndex, enabled, muscles: musclesFinal });
-              }
-              period.days = days;
-  
-              const runtime = gymGetCurrentCycle();
-              if (runtime && runtime.days && runtime.days[dayIndex]) {
-                const dayRuntime = runtime.days[dayIndex];
-                if (!dayRuntime.groups) dayRuntime.groups = {};
-                const allowed = new Set(musclesFinal);
-                Object.keys(dayRuntime.groups).forEach((groupName) => {
-                  if (!allowed.has(groupName)) {
-                    delete dayRuntime.groups[groupName];
-                  }
-                });
-              }
-  
-              gymSaveState(gymState);
-              close();
-              gymRenderGroups();
-            });
-          }
-  
-          if (deleteBtn) {
-            deleteBtn.addEventListener('click', () => {
-              const period = gymGetActivePeriod();
-              if (!period) return;
-  
-              const days = Array.isArray(period.days) ? period.days : [];
-              period.days = days.filter((d) => d.dayIndex !== dayIndex);
-  
-              const runtime = gymGetCurrentCycle();
-              if (runtime && runtime.days && runtime.days[dayIndex]) {
-                delete runtime.days[dayIndex];
-              }
-  
-              gymSaveState(gymState);
-              close();
-              gymRenderGroups();
-            });
-          }
         });
       });
   
@@ -2344,7 +2407,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
-    // ---- ИЗМЕНЕНИЯ В ПОЛЯХ УПРАЖНЕНИЙ ----
+    // ---- ИЗМЕНЕНИЯ В ПОЛЯХ УПРАЖНЕНИЙ (включая name) ----
     gymEl.groupsContainer
       .querySelectorAll('[data-field]')
       .forEach((input) => {
@@ -2419,6 +2482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   }
+  
   
   
   if (gymEl.daySelect) {
