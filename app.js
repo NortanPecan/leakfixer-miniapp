@@ -1169,9 +1169,12 @@ document.addEventListener('DOMContentLoaded', () => {
   
     const rt = gymState.runtime[period.id];
     const currentCycle = rt.currentCycle || 1;
-    const currentRuntime = rt.cycles[currentCycle] || { days: {} };
   
-    // создаём следующий цикл
+    if (!rt.cycles[currentCycle]) {
+      rt.cycles[currentCycle] = { days: {} };
+    }
+    const currentRuntime = rt.cycles[currentCycle];
+  
     const nextCycle = currentCycle + 1;
     const nextRuntimeDays = {};
   
@@ -1181,10 +1184,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const dayIndex = d.dayIndex;
       const prevDayRuntime = currentRuntime.days?.[dayIndex];
   
-      // читаем enabled из предыдущего цикла, по умолчанию true
       const enabled = prevDayRuntime ? prevDayRuntime.enabled !== false : true;
-  
-      if (!enabled) return; // этот день не переносим в новый цикл
+      if (!enabled) return;
   
       nextRuntimeDays[dayIndex] = {
         enabled: true,
@@ -1205,8 +1206,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (gymEl.newCycleBtn) {
     gymEl.newCycleBtn.addEventListener('click', gymCreateNextCycle);
   }
-
-
+  
   function gymSaveCurrentCycleDefinition() {
     const period = gymGetActivePeriod();
     if (!period || !gymEl.groupsContainer) return;
@@ -1653,6 +1653,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     return rt.cycles[idx];
   }
+  
   
   function gymRenderHeader() {
     if (!gymEl.cycleInfo || !gymEl.periodInfo || !gymEl.progressBar || !gymEl.progressLabel) return;
@@ -2609,48 +2610,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // экран конкретного периода
   if (gymEl.backBtn) {
     gymEl.backBtn.addEventListener('click', gymClose);
-  }
-  if (gymEl.newCycleBtn) {
-    gymEl.newCycleBtn.addEventListener('click', () => {
-      const period = gymGetActivePeriod();
-      if (!period) return;
-  
-      const rt = gymState.runtime || (gymState.runtime = {});
-      if (!rt[period.id]) {
-        // форс-инициализация
-        gymGetCurrentCycle();
-      }
-      const pr = rt[period.id];
-      if (!pr) return;
-  
-      if (pr.currentCycle < pr.totalCycles) {
-        const prevIndex = pr.currentCycle;
-        pr.currentCycle += 1;
-        pr.periodDone = Math.max(pr.periodDone || 1, pr.currentCycle);
-  
-        // создаём days для нового цикла на основе предыдущего
-        if (!pr.cycles) pr.cycles = [];
-        const prevCycle = pr.cycles[prevIndex - 1] || { days: {} };
-        const nextCycle = pr.cycles[pr.currentCycle - 1] || { days: {} };
-  
-        if (!nextCycle.days) nextCycle.days = {};
-  
-        // копируем только включённые дни
-        Object.keys(prevCycle.days || {}).forEach((key) => {
-          const d = prevCycle.days[key];
-          if (d && d.enabled !== false) {
-            nextCycle.days[key] = { ...d };
-          }
-        });
-  
-        // записываем назад
-        pr.cycles[pr.currentCycle - 1] = nextCycle;
-  
-        gymSaveState(gymState);
-        gymRenderHeader();
-        gymRenderGroups();
-      }
-    });
   }
   
   if (gymEl.saveBtn) {
