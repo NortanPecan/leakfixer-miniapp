@@ -1623,7 +1623,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
       ];
     }
-  
     const idx = Math.max(1, Math.min(rt.currentCycle, rt.cycles.length));
     const cycle = rt.cycles[idx - 1];
   
