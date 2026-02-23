@@ -2151,7 +2151,13 @@ document.addEventListener('DOMContentLoaded', () => {
             .filter(Boolean);
         
           const musclesFinal = muscles.length ? muscles : [];
-
+        
+          const existingDays = Array.isArray(period.days) ? period.days : [];
+          const nextIndex =
+            existingDays.length > 0
+              ? Math.max(...existingDays.map((d) => d.dayIndex || 0)) + 1
+              : 1;
+        
           period.days = [
             ...existingDays,
             {
@@ -2160,7 +2166,6 @@ document.addEventListener('DOMContentLoaded', () => {
             },
           ];
         
-          // 2) enabled записываем в runtime текущего цикла
           const runtime = gymGetCurrentCycle();
           if (runtime) {
             if (!runtime.days) runtime.days = {};
@@ -2170,7 +2175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
           gymSaveState(gymState);
           gymRenderGroups();
-        });        
+        });            
       }
     }
   
