@@ -563,19 +563,124 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // UPDATED: New water tracking with status
   function fitnessRenderWater() {
-    if (fitnessEl.waterTotal) {
-      const dayData = FS.getDayData(fitnessGetDateKey());
-      fitnessEl.waterTotal.textContent = FS.formatWaterLiters(dayData.waterMl);
-      // АВТОСОХРАНЕНИЕ
-      if (window.FitnessSync && window.currentAppUserId) {
+    if (!fitnessEl.waterTotal) return;
+    
+    const dateKey = fitnessGetDateKey();
+    const profile = FS.getFitnessProfile();
+    const baseline = profile.waterBaselineMl || 2000;
+    const waterData = FS.getWaterData(dateKey);
+    
+    const currentLiters = FS.formatWaterLiters(waterData.currentMl);
+    const targetLiters = FS.formatWaterLiters(waterData.targetMl);
+    
+    // Update main display
+    fitnessEl.waterTotal.textContent = `${currentLiters} / ${targetLiters} л`;
+    
+    // Calculate and display status
+    const status = FS.getWaterStatus(waterData.currentMl, waterData.targetMl);
+    const statusText = FS.getWaterStatusText(status);
+    
+    // Update or create status element
+    let statusEl = fitnessEl.waterTotal.parentElement?.querySelector('.water-status');
+    if (!statusEl) {
+      statusEl = document.createElement('div');
+      statusEl.className = 'water-status text-xs mt-1';
+      fitnessEl.waterTotal.parentElement?.appendChild(statusEl);
+    }
+    statusEl.textContent = statusText;
+    
+    // Set color based on status
+    if (status === 'low') {
+      statusEl.className = 'water-status text-xs mt-1 text-blue-300';
+    } else if (status === 'high') {
+      statusEl.className = 'water-status text-xs mt-1 text-cyan-300';
+    } else {
+      statusEl.className = 'water-status text-xs mt-1 text-green-300';
+    }
+    
+    // Auto-save to backend
+    if (window.FitnessSync && window.currentAppUserId) {
+      window.FitnessSync.saveDay(dateKey, {
+        water_ml: waterData.currentMl
+      }).catch(console.error);
+    }
+  }
+
+  // NEW: Adjust water by delta ml
+  function fitnessAdjustWater(deltaMl) {
+    const dateKey = fitnessGetDateKey();
+    FS.adjustWater(dateKey, deltaMl);
+    fitnessRenderWater();
+  }
+
+  // NEW: Open modal to manually adjust water
+  function fitnessOpenWaterAdjustModal() {
+    let html = '<h3 class="font-semibold mb-4">Изменить воду</h3>';
+    html += '<div class="space-y-3">';
+    html += '<label class="block text-sm">Изменение в мл (можно отрицательное)</label>';
+    html += '<input type="number" id="fmWaterDelta" class="w-full p-3 bg-white/30 rounded-xl text-white" placeholder="Например: -200 или +500">';
+    html += '<p class="text-xs opacity-70">Введите положительное число для добавления, отрицательное — для уменьшения</p>';
+    html += '</div>';
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmWaterAdjustCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmWaterAdjustSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
+    
+    fitnessOpenModal(html, () => {
+      fitnessEl.modalOverlay.querySelector('#fmWaterAdjustCancel')?.addEventListener('click', fitnessCloseModal);
+      fitnessEl.modalOverlay.querySelector('#fmWaterAdjustSave')?.addEventListener('click', () => {
+        const deltaInput = document.getElementById('fmWaterDelta')?.value;
+        const delta = Number(deltaInput);
+        if (!Number.isNaN(delta)) {
+          fitnessAdjustWater(delta);
+        }
+        fitnessCloseModal();
+        fitnessRenderWater();
+      });
+    });
+  }
+
+  // NEW: Open modal to change water baseline
+  function fitnessOpenWaterBaselineModal() {
+    const profile = FS.getFitnessProfile();
+    const currentBaseline = profile.waterBaselineMl || 2000;
+    
+    let html = '<h3 class="font-semibold mb-4">Изменить норму воды</h3>';
+    html += '<div class="space-y-3">';
+    html += '<label class="block text-sm">Дневная норма в мл</label>';
+    html += '<input type="number" id="fmWaterBaseline" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentBaseline + '" placeholder="2000">';
+    html += '<p class="text-xs opacity-70">Примеры: 1800, 2000, 2500 мл</p>';
+    html += '</div>';
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmWaterBaselineCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmWaterBaselineSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
+    
+    fitnessOpenModal(html, () => {
+      fitnessEl.modalOverlay.querySelector('#fmWaterBaselineCancel')?.addEventListener('click', fitnessCloseModal);
+      fitnessEl.modalOverlay.querySelector('#fmWaterBaselineSave')?.addEventListener('click', () => {
+        const baselineInput = document.getElementById('fmWaterBaseline')?.value;
+        const newBaseline = Number(baselineInput);
+        
+        if (!Number.isNaN(newBaseline) && newBaseline > 0) {
+          // Update profile
+          profile.waterBaselineMl = newBaseline;
+          FS.setFitnessProfile(profile);
+          
+          // Update today's target if water exists, or initialize it
           const dateKey = fitnessGetDateKey();
           const dayData = FS.getDayData(dateKey);
-          window.FitnessSync.saveDay(dateKey, {
-            water_ml: dayData.waterMl || 0
-          }).catch(console.error);
+          if (dayData.water) {
+            // Update target for today
+            FS.updateDayData(dateKey, { 
+              water: { 
+                targetMl: newBaseline, 
+                currentMl: dayData.water.currentMl 
+              } 
+            });
+          }
         }
-    }
+        
+        fitnessCloseModal();
+        fitnessRenderWater();
+      });
+    });
   }
 
   function fitnessRenderSupplementList() {
@@ -608,7 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
-
+  
   function fitnessRenderDashboard() {
     const photoEl = document.getElementById('profilePhoto');
     if (fitnessEl.avatar && photoEl?.src) fitnessEl.avatar.src = photoEl.src;
@@ -1039,14 +1144,25 @@ document.addEventListener('DOMContentLoaded', () => {
   fitnessEl.foodAdd?.addEventListener('click', () => fitnessOpenFoodModal(null));
   fitnessEl.supplementAdd?.addEventListener('click', () => fitnessOpenSupplementModal(null));
 
+  // UPDATED: Water button handlers - use new fitnessAdjustWater
   document.querySelectorAll('.fitness-water-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const addMl = Number(btn.dataset.water) || 0;
-      const k = fitnessGetDateKey();
-      const dayData = FS.getDayData(k);
-      const nextMl = FS.addWaterToDay(dayData.waterMl, addMl);
-      FS.updateDayData(k, { waterMl: nextMl });
-      fitnessRenderWater();
+      const deltaMl = Number(btn.dataset.water) || 0;
+      fitnessAdjustWater(deltaMl);
+    });
+  });
+
+  // NEW: Water manual adjust link handler
+  document.querySelectorAll('.fitness-water-adjust').forEach((link) => {
+    link.addEventListener('click', () => {
+      fitnessOpenWaterAdjustModal();
+    });
+  });
+
+  // NEW: Water baseline change link handler
+  document.querySelectorAll('.fitness-water-baseline').forEach((link) => {
+    link.addEventListener('click', () => {
+      fitnessOpenWaterBaselineModal();
     });
   });
 

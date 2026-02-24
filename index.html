@@ -786,12 +786,25 @@
           <div class="bg-white/5 rounded-xl p-3">
             <div class="flex items-center justify-between mb-2">
               <h4 class="font-semibold text-sm">Вода</h4>
-              <!-- в будущем тут можно показать цель, например "цель 1.8 л" -->
             </div>
-            <p class="text-xs opacity-90 mb-2">
-              Выпито за день: <span id="fitnessWaterTotal">0</span> л
+            <p class="text-xs opacity-90 mb-1">
+              Выпито: <span id="fitnessWaterTotal">0.0 / 2.0</span> л
             </p>
-            <div class="flex gap-2">
+            <div class="flex gap-2 mb-2">
+              <button
+                type="button"
+                data-water="-200"
+                class="fitness-water-btn flex-1 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-medium"
+              >
+                –200 мл
+              </button>
+              <button
+                type="button"
+                data-water="-500"
+                class="fitness-water-btn flex-1 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-medium"
+              >
+                –500 мл
+              </button>
               <button
                 type="button"
                 data-water="200"
@@ -806,12 +819,13 @@
               >
                 +500 мл
               </button>
-              <button
-                type="button"
-                data-water="1000"
-                class="fitness-water-btn flex-1 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-medium"
-              >
-                +1 л
+            </div>
+            <div class="flex gap-3 text-[11px]">
+              <button type="button" class="fitness-water-adjust text-blue-300 hover:underline">
+                Изменить на сегодня
+              </button>
+              <button type="button" class="fitness-water-baseline text-cyan-300 hover:underline">
+                Изменить норму
               </button>
             </div>
           </div>
@@ -902,7 +916,7 @@
       </div>
     </div>
 
-
+    
     <div id="gymScreen" class="hidden px-4 py-4 space-y-4 text-sm">
       <div class="flex items-center justify-between mb-1">
         <div>

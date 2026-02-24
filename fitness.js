@@ -54,11 +54,14 @@
  * @property {boolean} taken
  * @property {string} time
 
+ * @typedef {Object} WaterData
+ * @property {number} targetMl
+ * @property {number} currentMl
  *
  * @typedef {Object} FitnessDayData
  * @property {ActivityEntry[]} activities
  * @property {FoodEntry[]} foods
- * @property {number} waterMl
+ * @property {WaterData} [water]
  * @property {SupplementEntry[]} supplements
  * @property {'low'|'normal'|'high'|undefined} [workDay]
  *
@@ -143,7 +146,24 @@ function saveAllFitnessData(data) {
 
 /** @returns {FitnessDayData} */
 function createEmptyDayData() {
-  return { activities: [], foods: [], waterMl: 0, supplements: [], workDay: undefined };
+  return { activities: [], foods: [], water: undefined, supplements: [], workDay: undefined };
+}
+
+/** Get water data for a day with defaults from profile
+ * @param {string} dateKey
+ * @returns {WaterData}
+ */
+function getWaterData(dateKey) {
+  const dayData = getDayData(dateKey);
+  const profile = getFitnessProfile();
+  const baseline = profile.waterBaselineMl || 2000;
+  
+  if (dayData.water) {
+    return dayData.water;
+  }
+  
+  // Default: current = target = baseline
+  return { targetMl: baseline, currentMl: baseline };
 }
 
 /** @param {string} dateKey YYYY-MM-DD
@@ -163,7 +183,7 @@ function updateDayData(dateKey, patch) {
   const day = getDayData(dateKey);
   if (patch.activities !== undefined) day.activities = patch.activities;
   if (patch.foods !== undefined) day.foods = patch.foods;
-  if (patch.waterMl !== undefined) day.waterMl = patch.waterMl;
+  if (patch.water !== undefined) day.water = patch.water;
   if (patch.supplements !== undefined) day.supplements = patch.supplements;
   if (patch.workDay !== undefined) day.workDay = patch.workDay;
   all[dateKey] = day;
@@ -172,7 +192,7 @@ function updateDayData(dateKey, patch) {
   // синхронизация дня в Supabase
   if (window.FitnessSync && window.currentAppUserId) {
     window.FitnessSync.saveDay(dateKey, {
-      water_ml: day.waterMl || 0,
+      water_ml: day.water?.currentMl || 0,
       work_day: day.workDay || 'normal',
       data: {
         activities: day.activities || [],
@@ -422,11 +442,83 @@ function removeSupplementById(supplements, id) {
   return (supplements || []).filter((s) => s.id !== id);
 }
 
-/** @param {number} currentMl
- *  @param {number} addMl
- *  @returns {number} */
-function addWaterToDay(currentMl, addMl) {
-  return (currentMl || 0) + addMl;
+// ─── Pure: water tracking helpers ─────────────────────────────────────────
+
+/** Clamp value between min and max
+ * @param {number} x
+ * @param {number} min
+ * @param {number} max
+ * @returns {number} */
+function clamp(x, min, max) {
+  return Math.max(min, Math.min(max, x));
+}
+
+/** Get water status based on current vs target
+ * @param {number} currentMl
+ * @param {number} targetMl
+ * @returns {'low'|'normal'|'high'} */
+function getWaterStatus(currentMl, targetMl) {
+  const ratio = currentMl / targetMl;
+  if (ratio < 0.8) return 'low';
+  if (ratio > 1.2) return 'high';
+  return 'normal';
+}
+
+/** Get water status text in Russian
+ * @param {'low'|'normal'|'high'} status
+ * @returns {string} */
+function getWaterStatusText(status) {
+  if (status === 'low') return 'Воды меньше обычного.';
+  if (status === 'high') return 'Воды больше обычного.';
+  return 'Вода как обычно.';
+}
+
+/** Format water in liters with 1 decimal
+ * @param {number} ml
+ * @returns {string} e.g. "1.5" */
+function formatWaterLiters(ml) {
+  return ((ml || 0) / 1000).toFixed(1);
+}
+
+/** Adjust water for a day by delta ml
+ * @param {string} dateKey
+ * @param {number} deltaMl - positive or negative adjustment
+ * @returns {WaterData} updated water data */
+function adjustWater(dateKey, deltaMl) {
+  const profile = getFitnessProfile();
+  const baseline = profile.waterBaselineMl || 2000;
+  
+  let dayData;
+  try {
+    dayData = getDayData(dateKey);
+  } catch {
+    dayData = createEmptyDayData();
+  }
+  
+  // Initialize water if not present
+  if (!dayData.water) {
+    dayData.water = { targetMl: baseline, currentMl: baseline };
+  }
+  
+  // Calculate new current value with clamp
+  const maxMl = Math.max(0, 3 * dayData.water.targetMl);
+  const newCurrent = clamp(dayData.water.currentMl + deltaMl, 0, maxMl);
+  
+  const updatedWater = {
+    targetMl: dayData.water.targetMl,
+    currentMl: newCurrent,
+  };
+  
+  updateDayData(dateKey, { water: updatedWater });
+  return updatedWater;
+}
+
+/** Legacy function - converts old waterMl format to new water format
+ * @deprecated Use getWaterData instead
+ * @param {number} waterMl
+ * @returns {string} */
+function formatWaterLitersLegacy(waterMl) {
+  return ((waterMl || 0) / 1000).toFixed(1);
 }
 
 // ─── Pure: parse form values → domain objects (React: pass form state here) ──
@@ -579,6 +671,7 @@ window.FitnessState = {
   setFitnessProfile,
   getAllFitnessData,
   getDayData,
+  getWaterData,
   createEmptyDayData,
   updateDayData,
   generateId,
@@ -601,7 +694,11 @@ window.FitnessState = {
   removeActivityById,
   removeFoodById,
   removeSupplementById,
-  addWaterToDay,
+  // UPDATED: water helpers
+  adjustWater,
+  getWaterStatus,
+  getWaterStatusText,
+  clamp,
   parseProfileFromValues,
   buildActivityEntry,
   buildFoodEntry,
