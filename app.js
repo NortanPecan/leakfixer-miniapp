@@ -1277,6 +1277,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     rt.cycles[nextCycle].days = nextRuntimeDays;
 
+    // If exercises include a nextCyclePlan, prefill workWeight in the new cycle from that plan
+    Object.keys(nextRuntimeDays).forEach((dIdx) => {
+      const d = nextRuntimeDays[dIdx];
+      if (!d || !d.groups) return;
+      Object.keys(d.groups).forEach((gName) => {
+        const arr = d.groups[gName] || [];
+        if (!Array.isArray(arr)) return;
+        arr.forEach((ex) => {
+          if (!ex) return;
+          // ensure working set fields exist
+          if (ex.setsCount === undefined) ex.setsCount = ex.setsCount || '';
+          if (ex.repsCount === undefined) ex.repsCount = ex.repsCount || '';
+          if (ex.workWeight === undefined) ex.workWeight = ex.workWeight || '';
+          if (ex.nextCyclePlan) {
+            ex.workWeight = ex.nextCyclePlan;
+          }
+        });
+      });
+    });
+
     // keep runtime.totalCycles in sync but never exceed period.totalCycles
     rt.totalCycles = Math.min(maxCycles, Math.max(Number(rt.totalCycles) || 1, nextCycle));
     rt.periodDone = Math.min(maxCycles, Math.max(Number(rt.periodDone) || 1, nextCycle));
@@ -1646,7 +1666,68 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
           </div>
         </div>
+        <div class="mt-2 text-xs text-slate-300">
+          <label class="block mb-1">Дата старта периода (можно переопределить)</label>
+          <input type="date" class="w-full bg-white/10 rounded-lg px-2 py-1" data-role="periodStartInput" value="${p.startDate || ''}" />
+          <div class="mt-2">
+            <div class="text-[11px]">План: <span data-role="plannedRange">—</span></div>
+            <div class="text-[11px]">Фактически: <span data-role="actualRange">—</span></div>
+          </div>
+        </div>
       `;
+
+      // If no explicit startDate set, but there are completed workouts, infer startDate
+      const cw = Array.isArray(gymState.completedWorkouts) ? gymState.completedWorkouts.filter(e => e.periodId === p.id) : [];
+      if (!p.startDate && cw.length) {
+        const dates = cw.map(x => x.dateCompleted).filter(Boolean).sort();
+        if (dates.length) {
+          p.startDate = dates[0];
+          gymState.periods[id].startDate = p.startDate;
+          gymSaveState(gymState);
+        }
+      }
+
+      // fill planned and actual ranges
+      const plannedRangeEl = card.querySelector('[data-role="plannedRange"]');
+      const actualRangeEl = card.querySelector('[data-role="actualRange"]');
+      const startVal = p.startDate || '';
+      if (plannedRangeEl) {
+        if (startVal) {
+          const sd = new Date(startVal + 'T00:00:00');
+          const daysTotal = Number(p.cycleLengthDays || 0) * Number(p.totalCycles || 0);
+          const ed = new Date(sd.getTime() + (daysTotal - 1) * 24 * 60 * 60 * 1000);
+          plannedRangeEl.textContent = `${startVal} — ${ed.toISOString().slice(0,10)}`;
+        } else {
+          plannedRangeEl.textContent = '—';
+        }
+      }
+      if (actualRangeEl) {
+        if (cw.length) {
+          const sorted = cw.map(x => x.dateCompleted).filter(Boolean).sort();
+          actualRangeEl.textContent = `${sorted[0]} — ${sorted[sorted.length-1]}`;
+        } else {
+          actualRangeEl.textContent = '—';
+        }
+      }
+
+      // attach listener to start date input
+      const startInput = card.querySelector('[data-role="periodStartInput"]');
+      if (startInput) {
+        startInput.addEventListener('change', () => {
+          const v = startInput.value || null;
+          gymState.periods[id].startDate = v;
+          gymSaveState(gymState);
+          // update planned range text
+          if (plannedRangeEl) {
+            if (v) {
+              const sd = new Date(v + 'T00:00:00');
+              const daysTotal = Number(p.cycleLengthDays || 0) * Number(p.totalCycles || 0);
+              const ed = new Date(sd.getTime() + (daysTotal - 1) * 24 * 60 * 60 * 1000);
+              plannedRangeEl.textContent = `${v} — ${ed.toISOString().slice(0,10)}`;
+            } else plannedRangeEl.textContent = '—';
+          }
+        });
+      }
   
       gymEl.periodsList.appendChild(card);
     });
@@ -1949,9 +2030,6 @@ document.addEventListener('DOMContentLoaded', () => {
       titleBtn.innerHTML = `
         <div class="flex items-center justify-between">
           <div class="text-sm font-semibold text-white">День ${day.dayIndex}</div>
-          <span class="ml-2 px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-slate-300">
-            Цикл ${currentCycle}
-          </span>
         </div>
         <div class="text-xs text-slate-300" data-role="dayMusclesView">
           ${
@@ -2161,11 +2239,39 @@ document.addEventListener('DOMContentLoaded', () => {
             const titleWrap = document.createElement('div');
             titleWrap.className = 'flex-1';
 
-            // метка цикла
-            const cycleBadge = document.createElement('span');
-            cycleBadge.className = 'ml-2 px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-slate-300';
-            cycleBadge.textContent = `Цикл ${gymState.runtime?.[period.id]?.currentCycle || 1}`;
-            exHeader.appendChild(cycleBadge);
+            // compact working-set inputs in header (setsCount, repsCount, workWeight)
+            const setsInput = document.createElement('input');
+            setsInput.type = 'number';
+            setsInput.min = '0';
+            setsInput.placeholder = '';
+            setsInput.dataset.field = 'setsCount';
+            setsInput.className = 'bg-white/5 text-xs text-white rounded px-1 mr-1';
+            setsInput.style.width = '2.2em';
+
+            const repsInput = document.createElement('input');
+            repsInput.type = 'number';
+            repsInput.min = '0';
+            repsInput.placeholder = '';
+            repsInput.dataset.field = 'repsCount';
+            repsInput.className = 'bg-white/5 text-xs text-white rounded px-1 mr-1';
+            repsInput.style.width = '3.2em';
+
+            const weightInput = document.createElement('input');
+            weightInput.type = 'number';
+            weightInput.min = '0';
+            weightInput.placeholder = '';
+            weightInput.dataset.field = 'workWeight';
+            weightInput.className = 'bg-white/5 text-xs text-white rounded px-1 mr-1';
+            weightInput.style.width = '4.2em';
+
+            // prefill from ex object
+            if (ex.setsCount !== undefined) setsInput.value = ex.setsCount;
+            if (ex.repsCount !== undefined) repsInput.value = ex.repsCount;
+            if (ex.workWeight !== undefined) weightInput.value = ex.workWeight;
+
+            titleWrap.appendChild(setsInput);
+            titleWrap.appendChild(repsInput);
+            titleWrap.appendChild(weightInput);
 
 
             if (isEditing) {
@@ -2210,13 +2316,12 @@ document.addEventListener('DOMContentLoaded', () => {
             body.innerHTML = `
               <div class="flex gap-2 text-xs">
                 <div class="flex-1">
-                  <div class="text-slate-400 mb-1">Рабочие подходы</div>
-                  <input
-                    class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                    placeholder="4x10x35 кг"
-                    value="${ex.sets || ''}"
-                    data-field="sets"
-                  />
+                  <div class="text-slate-400 mb-1">Подходы (кол-во/повт/вес)</div>
+                  <div class="flex gap-2">
+                    <input class="w-16 bg-white/10 text-white rounded-lg px-2 py-1" placeholder="sets" value="${ex.setsCount || ''}" data-field="setsCount" />
+                    <input class="w-20 bg-white/10 text-white rounded-lg px-2 py-1" placeholder="reps" value="${ex.repsCount || ''}" data-field="repsCount" />
+                    <input class="w-24 bg-white/10 text-white rounded-lg px-2 py-1" placeholder="weight" value="${ex.workWeight || ''}" data-field="workWeight" />
+                  </div>
                 </div>
                 <div class="flex-1">
                   <div class="text-slate-400 mb-1">Разминка (опц.)</div>
@@ -2556,7 +2661,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
           dayRuntime.groups[groupName].push({
             name: '',
-            sets: '',
+            setsCount: '',
+            repsCount: '',
+            workWeight: '',
             warmup: '',
             rpe: 7,
             progressNote: '',
@@ -2766,13 +2873,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function mapDateToPeriodCycleDay(periodId, dateStr) {
     if (!periodId || !dateStr) return null;
-    if (!gymState.periodStartDates) gymState.periodStartDates = {};
-    const start = gymState.periodStartDates[periodId];
-    if (!start) return { error: 'No start date set for this period. Set a start date first.' };
     const p = gymState.periods[periodId];
     if (!p) return { error: 'Period not found' };
-    const startDate = new Date(start + 'T00:00:00');
+
     const d = new Date(dateStr + 'T00:00:00');
+
+    // Prefer mapping by completed workouts (actual boundaries)
+    const cw = Array.isArray(gymState.completedWorkouts) ? gymState.completedWorkouts.filter(e => e.periodId === periodId) : [];
+    if (cw.length) {
+      // group by cycleIndex and compute min/max dates per cycle
+      const cycles = {};
+      cw.forEach((r) => {
+        const ci = Number(r.cycleIndex) || 1;
+        if (!cycles[ci]) cycles[ci] = { min: null, max: null, dates: [] };
+        cycles[ci].dates.push(r.dateCompleted);
+        const dt = new Date(r.dateCompleted + 'T00:00:00');
+        if (!cycles[ci].min || dt < new Date(cycles[ci].min + 'T00:00:00')) cycles[ci].min = r.dateCompleted;
+        if (!cycles[ci].max || dt > new Date(cycles[ci].max + 'T00:00:00')) cycles[ci].max = r.dateCompleted;
+      });
+
+      const sortedCycleIndexes = Object.keys(cycles).map(Number).sort((a,b)=>a-b);
+      if (!sortedCycleIndexes.length) return { error: 'No completed cycles' };
+
+      // find cycle containing date; if date falls between cycles, assign to previous cycle
+      for (let i = 0; i < sortedCycleIndexes.length; i++) {
+        const ci = sortedCycleIndexes[i];
+        const info = cycles[ci];
+        const minD = new Date(info.min + 'T00:00:00');
+        const maxD = new Date(info.max + 'T00:00:00');
+        if (d >= minD && d <= maxD) {
+          const dayOfCycle = Math.floor((d - minD) / (24*60*60*1000)) + 1;
+          return { cycleIndex: ci, dayOfCycle, cycleStart: info.min, cycleEnd: info.max };
+        }
+        if (d < minD) {
+          // assign to previous cycle if exists, otherwise this one
+          const prev = i > 0 ? sortedCycleIndexes[i-1] : ci;
+          const prevInfo = cycles[prev];
+          const prevStart = prevInfo.min;
+          const dayOfCycle = Math.floor((d - new Date(prevStart + 'T00:00:00')) / (24*60*60*1000)) + 1;
+          return { cycleIndex: prev, dayOfCycle, cycleStart: prevInfo.min, cycleEnd: prevInfo.max };
+        }
+      }
+
+      // date after last cycle -> map to last cycle
+      const last = sortedCycleIndexes[sortedCycleIndexes.length-1];
+      const lastInfo = cycles[last];
+      const dayOfCycle = Math.floor((d - new Date(lastInfo.min + 'T00:00:00')) / (24*60*60*1000)) + 1;
+      return { cycleIndex: last, dayOfCycle, cycleStart: lastInfo.min, cycleEnd: lastInfo.max };
+    }
+
+    // fallback: use planned start (period.startDate or saved periodStartDates)
+    const start = (p && p.startDate) || (gymState.periodStartDates && gymState.periodStartDates[periodId]);
+    if (!start) return { error: 'No start date set for this period. Set a start date first.' };
+    const startDate = new Date(start + 'T00:00:00');
     const msPerDay = 24 * 60 * 60 * 1000;
     const daysSince = Math.floor((d - startDate) / msPerDay);
     if (daysSince < 0) return { error: 'Date is before period start' };
