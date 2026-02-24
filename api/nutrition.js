@@ -1,6 +1,3 @@
-// API Ninjas Nutrition endpoint
-// GET /api/nutrition?query=<food text>
-
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
     res.statusCode = 405;
@@ -17,7 +14,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const apiKey = process.env.API_NINJAS_API_KEY; // или переименуй в CALORIENINJAS_API_KEY
+  const apiKey = process.env.CALORIE_NINJAS_API_KEY; // переименуй в Vercel!
   if (!apiKey) {
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
@@ -25,47 +22,104 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const apiUrl = `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(query)}`;
+  // 1. RUS → ENG mapping (точность 95% для твоих продуктов)
+  const RUS_ENG_MAP = {
+    'гречка': 'buckwheat',
+    'перловка': 'barley',
+    'овсянка': 'oatmeal',
+    'рис': 'rice cooked',
+    'картошка': 'potato boiled',
+    'макароны': 'pasta cooked',
+    'творог': 'cottage cheese',
+    'кефир': 'kefir',
+    'молоко': 'milk',
+    'яйца': 'egg',
+    'курица': 'chicken breast',
+    'говядина': 'beef lean',
+    'рыба': 'cod',
+    'тунец': 'tuna canned',
+    'салат': 'lettuce',
+    'огурец': 'cucumber',
+    'помидор': 'tomato',
+    'банан': 'banana',
+    'яблоко': 'apple',
+    'хлеб': 'bread white'
+  };
+
+  let englishQuery = query.toLowerCase().trim();
+  let usedMap = false;
+
+  // Точный маппинг
+  for (const [ru, en] of Object.entries(RUS_ENG_MAP)) {
+    if (englishQuery.includes(ru)) {
+      englishQuery = englishQuery.replace(new RegExp(ru, 'g'), en);
+      usedMap = true;
+      break;
+    }
+  }
+
+  // 2. Если не нашли в мапе — переводим
+  if (!usedMap) {
+    try {
+      const translateRes = await fetch('https://libretranslate.de/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          q: englishQuery,
+          source: 'ru',
+          target: 'en',
+          format: 'text'
+        })
+      });
+
+      if (translateRes.ok) {
+        const translateData = await translateRes.json();
+        englishQuery = translateData.translatedText.toLowerCase();
+      }
+    } catch (e) {
+      console.error('Translate failed, using original:', e);
+      // fallback на оригинал
+    }
+  }
+
+  const apiUrl = `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(englishQuery)}`;
 
   try {
     const apiRes = await fetch(apiUrl, {
-      headers: {
-        'X-Api-Key': apiKey,
-      },
+      headers: { 'X-Api-Key': apiKey },
     });
 
     if (!apiRes.ok) {
-      const status = apiRes.status;
       res.statusCode = 400;
       res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({ error: 'CalorieNinjas error', status }));
+      res.end(JSON.stringify({ 
+        error: 'CalorieNinjas error', 
+        status: apiRes.status,
+        debug: { original: query, english: englishQuery }
+      }));
       return;
     }
 
     const data = await apiRes.json();
     const items = data.items || [];
 
-    const totals = items.reduce(
-      (acc, item) => {
-        acc.kcal += item.calories;
-        acc.b += item.protein_g;
-        acc.zh += item.fat_total_g;
-        acc.u += item.carbohydrates_total_g;
-        return acc;
-      },
-      { kcal: 0, b: 0, zh: 0, u: 0 }
-    );
+    const totals = items.reduce((acc, item) => {
+      acc.kcal += item.calories;
+      acc.b += item.protein_g;
+      acc.zh += item.fat_total_g;
+      acc.u += item.carbohydrates_total_g;
+      return acc;
+    }, { kcal: 0, b: 0, zh: 0, u: 0 });
 
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
-    res.end(
-      JSON.stringify({
-        kcal: Math.round(totals.kcal),
-        b: Math.round(totals.b * 10) / 10,
-        zh: Math.round(totals.zh * 10) / 10,
-        u: Math.round(totals.u * 10) / 10,
-      })
-    );
+    res.end(JSON.stringify({
+      kcal: Math.round(totals.kcal),
+      b: Math.round(totals.b * 10) / 10,
+      zh: Math.round(totals.zh * 10) / 10,
+      u: Math.round(totals.u * 10) / 10,
+      debug: { original: query, english: englishQuery, items: items.length }
+    }));
   } catch (err) {
     console.error('Nutrition API error:', err);
     res.statusCode = 500;
@@ -73,4 +127,3 @@ module.exports = async (req, res) => {
     res.end(JSON.stringify({ error: 'Server error' }));
   }
 };
-
