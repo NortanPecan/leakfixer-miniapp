@@ -3339,7 +3339,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (gymEl.periodsBackBtn) {
     gymEl.periodsBackBtn.addEventListener('click', gymClosePeriodsScreen);
   }
-  console.log('NEW PERIOD OBJ', newPeriod)
+
   // кнопки "Создать период"
   if (gymEl.createPeriodBtn) {
     gymEl.createPeriodBtn.addEventListener('click', () => {
@@ -3449,9 +3449,20 @@ document.addEventListener('DOMContentLoaded', () => {
         },
       };
 
+      // Debug logging for new period creation
+      if (typeof console !== 'undefined' && console.log) {
+        console.log('[GYM] Created new period:', {
+          periodId: period.id,
+          name: period.name,
+          startDate: period.startDate,
+          daysCount: days.length,
+          runtimeCycles: Object.keys(gymState.runtime[periodId].cycles)
+        });
+      }
+
       gymSetActivePeriod(periodId);
   
-      gymSaveState(gymState);
+      gymPersistState();
   
       // закрываем мастер и открываем экран периода
       if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
