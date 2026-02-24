@@ -1804,15 +1804,44 @@ document.addEventListener('DOMContentLoaded', () => {
           const v = startInput.value || null;
           gymState.periods[id].startDate = v;
           gymSaveState(gymState);
-          // update planned range text
+          // Recompute planned range using same logic as initial render (with completedWorkouts)
           if (plannedRangeEl) {
-            if (v) {
-              const sd = new Date(v + 'T00:00:00');
-              const daysTotal = Number(p.cycleLengthDays || 0) * Number(p.totalCycles || 0);
-              const ed = new Date(sd.getTime() + (daysTotal - 1) * 24 * 60 * 60 * 1000);
-              plannedRangeEl.textContent = `${v} — ${ed.toISOString().slice(0,10)}`;
-            } else plannedRangeEl.textContent = '—';
+            const cw = Array.isArray(gymState.completedWorkouts) ? gymState.completedWorkouts.filter(e => e.periodId === p.id) : [];
+            const totalCycles = Number(p.totalCycles) || 1;
+            const cycleLen = Number(p.cycleLengthDays) || 1;
+            const cycleStarts = {};
+            // use completed workouts' earliest date per cycle if present
+            cw.forEach(r => {
+              const ci = Number(r.cycleIndex) || 1;
+              if (!cycleStarts[ci]) cycleStarts[ci] = r.dateCompleted;
+              else if (r.dateCompleted && r.dateCompleted < cycleStarts[ci]) cycleStarts[ci] = r.dateCompleted;
+            });
+            // seed cycle 1 from explicit period.startDate if missing
+            if (!cycleStarts[1] && v) cycleStarts[1] = v;
+            // propagate projected starts
+            for (let i = 1; i <= totalCycles; i++) {
+              if (!cycleStarts[i]) {
+                const prev = i - 1;
+                if (cycleStarts[prev]) {
+                  const prevDate = new Date(cycleStarts[prev] + 'T00:00:00');
+                  const projected = new Date(prevDate.getTime() + cycleLen * 24 * 60 * 60 * 1000);
+                  cycleStarts[i] = projected.toISOString().slice(0,10);
+                }
+              }
+            }
+            if (cycleStarts[1]) {
+              const lastStart = cycleStarts[totalCycles] || cycleStarts[Object.keys(cycleStarts).map(Number).sort((a,b)=>a-b).pop()];
+              if (lastStart) {
+                const lastStartDate = new Date(lastStart + 'T00:00:00');
+                const lastEndDate = new Date(lastStartDate.getTime() + (cycleLen - 1) * 24 * 60 * 60 * 1000);
+                plannedRangeEl.textContent = `${cycleStarts[1]} — ${lastEndDate.toISOString().slice(0,10)}`;
+              } else plannedRangeEl.textContent = '—';
+            } else {
+              plannedRangeEl.textContent = '—';
+            }
           }
+          // Re-render periods list to reflect changes
+          gymRenderPeriodsList();
         });
       }
   
@@ -1901,7 +1930,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function gymGetCurrentCycle() {
     const period = gymGetActivePeriod();
     if (!period) return null;
-  
+
     if (!gymState.runtime) gymState.runtime = {};
     if (!gymState.runtime[period.id]) {
       gymState.runtime[period.id] = { currentCycle: 1, totalCycles: 8, periodDone: 1, cycles: {} };
@@ -2409,6 +2438,18 @@ document.addEventListener('DOMContentLoaded', () => {
             body.dataset.role = 'exerciseBody';
   
             body.innerHTML = `
+              <div class="flex gap-4 text-xs text-slate-300 mb-2">
+                <div>
+                  <span class="text-slate-400">Подходы:</span> ${ex.setsCount || '—'}
+                </div>
+                <div>
+                  <span class="text-slate-400">Повторения:</span> ${ex.repsCount || '—'}
+                </div>
+                <div>
+                  <span class="text-slate-400">Вес:</span> ${ex.workWeight || '—'}
+                </div>
+              </div>
+
               <div class="flex gap-2 text-xs">
                 <div class="flex-1">
                   <div class="text-slate-400 mb-1">Разминка (опц.)</div>
@@ -2821,6 +2862,28 @@ document.addEventListener('DOMContentLoaded', () => {
           }
   
           gymSaveState(gymState);
+
+          // Sync working sets to backend immediately (per storage contract)
+          const workingSetFields = ['setsCount', 'repsCount', 'workWeight'];
+          if (workingSetFields.includes(field)) {
+            const period = gymGetActivePeriod();
+            if (period && typeof FitnessSync !== 'undefined' && FitnessSync.saveGymExerciseSets) {
+              const rtFull = gymState.runtime?.[period.id];
+              const currentCycle = rtFull?.currentCycle || 1;
+              FitnessSync.saveGymExerciseSets(
+                period.id,
+                currentCycle,
+                dayIndex,
+                groupName,
+                idx,
+                {
+                  setsCount: arr[idx].setsCount,
+                  repsCount: arr[idx].repsCount,
+                  workWeight: arr[idx].workWeight,
+                }
+              );
+            }
+          }
         });
       });
   
@@ -3170,6 +3233,10 @@ document.addEventListener('DOMContentLoaded', () => {
   
       // закрываем мастер и открываем экран периода
       if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
+      // Re-render periods list to include new period, then open the period screen
+      gymOpenPeriodsScreen();
+      // Automatically open the newly created period
+      gymSetActivePeriod(periodId);
       gymOpen();
 
     });
