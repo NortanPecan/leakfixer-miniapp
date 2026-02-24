@@ -1434,14 +1434,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Set current date for the new cycle (for immediate rendering)
-    // Store date in the cycle itself, not in a global object
     const today = new Date().toISOString().slice(0, 10);
+    if (!gymState.periodStartDates) gymState.periodStartDates = {};
+    // Calculate the projected start date for this cycle
     const cycleLen = Number(period.cycleLengthDays) || 7;
     const projectedDate = new Date(new Date(today).getTime() + (nextCycle - 1) * cycleLen * 24 * 60 * 60 * 1000);
-    
-    // Store date directly in the cycle runtime object (per-cycle, not global)
-    if (!rt.cycles[nextCycle]) rt.cycles[nextCycle] = { days: {}, groups: {} };
-    rt.cycles[nextCycle].date = projectedDate.toISOString().slice(0, 10);
+    gymState.periodStartDates[period.id + '_cycle' + nextCycle] = projectedDate.toISOString().slice(0, 10);
 
     // keep runtime.totalCycles in sync but never exceed period.totalCycles
     rt.totalCycles = Math.min(maxCycles, Math.max(Number(rt.totalCycles) || 1, nextCycle));
@@ -1630,7 +1628,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     period.days = Array.from(templateMap.values()).sort((a,b)=>a.dayIndex-b.dayIndex);
 
-    // Propagate the active days structure (muscles + groups/exercises NAMES ONLY) forward to all future cycles
+    // Propagate the active days structure (muscles + groups/exercises) forward to all future cycles
+    // Propagate the active days structure (muscles + exercise NAMES ONLY) forward to all future cycles
     // IMPORTANT: Do NOT copy actual workout data (weights, reps, completion flags) - only structure
     for (let c = currentCycleIndex + 1; c <= maxCycles; c += 1) {
       if (!rtFull.cycles[c]) rtFull.cycles[c] = { days: {}, groups: {} };
