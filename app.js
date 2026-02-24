@@ -434,8 +434,6 @@ document.addEventListener('DOMContentLoaded', () => {
     foodList: document.getElementById('fitnessFoodList'),
     foodAdd: document.getElementById('fitnessFoodAdd'),
     waterTotal: document.getElementById('fitnessWaterTotal'),
-    supplementList: document.getElementById('fitnessSupplementList'),
-    supplementAdd: document.getElementById('fitnessSupplementAdd'),
     // NEW: Supplements tracking container
     supplementsTracking: document.getElementById('fitnessSupplementsTracking'),
     modalOverlay: document.getElementById('fitnessModalOverlay'),
@@ -685,37 +683,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function fitnessRenderSupplementList() {
-    if (!fitnessEl.supplementList) return;
-    const dayData = FS.getDayData(fitnessGetDateKey());
-    const items = FS.getSupplementListViewModel(dayData.supplements);
-    const empty = '<li class="opacity-70 text-sm">Нет записей</li>';
-    fitnessEl.supplementList.innerHTML = items.length
-      ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
-            <span>
-              ${item.timeText ? `<span class="opacity-70 mr-1">${item.timeText}</span>` : ''}
-              ${item.name} ${item.dose} — ${item.taken ? '✓' : '—'}
-            </span>
-            <span>
-              <button type="button" class="fitness-supplement-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
-              <button type="button" class="fitness-supplement-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
-            </span>
-          </li>`).join('')
-      : empty;    
-    fitnessEl.supplementList.querySelectorAll('.fitness-supplement-edit').forEach((btn) => {
-      btn.addEventListener('click', () => fitnessOpenSupplementModal(btn.dataset.id));
-    });
-    fitnessEl.supplementList.querySelectorAll('.fitness-supplement-delete').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const k = fitnessGetDateKey();
-        const dayData = FS.getDayData(k);
-        const next = FS.removeSupplementById(dayData.supplements, btn.dataset.id);
-        FS.updateDayData(k, { supplements: next });
-        fitnessRenderSupplementList();
-      });
-    });
-  }
-  
   function fitnessRenderDashboard() {
     const photoEl = document.getElementById('profilePhoto');
     if (fitnessEl.avatar && photoEl?.src) fitnessEl.avatar.src = photoEl.src;
@@ -733,7 +700,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessRenderActivityList();
     fitnessRenderFoodList();
     fitnessRenderWater();
-    fitnessRenderSupplementList();
     // NEW: Render new supplements tracking
     fitnessRenderSupplementsTracking();
     fitnessRenderWorkDay();
@@ -973,37 +939,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
       
-  function fitnessOpenSupplementModal(editId) {
-    const dayData = FS.getDayData(fitnessGetDateKey());
-    const existing = editId ? (dayData.supplements || []).find((s) => s.id === editId) : null;
-    const defaultTime = existing?.time || FS.formatTimeHM(new Date());
-    let html = '<h3 class="font-semibold mb-4">Добавить БАД</h3>';
-    html += '<div class="space-y-3"><label class="block">Название</label><input type="text" id="fmSuppName" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.name ?? '') + '" placeholder="Омега-3">';
-    html += '<label class="block">Доза</label><input type="text" id="fmSuppDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.dose ?? '') + '" placeholder="2 капсулы, 500 мг">';
-    html += '<label class="block">Время приёма (примерно)</label><input type="time" id="fmSuppTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
-    html += '<label class="flex items-center gap-2 mt-2"><input type="checkbox" id="fmSuppTaken" class="rounded"' + (existing?.taken ? ' checked' : '') + '> Принято сегодня</label></div>';
-    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmSuppCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmSuppSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
-    fitnessOpenModal(html, () => {
-      fitnessEl.modalOverlay.querySelector('#fmSuppCancel')?.addEventListener('click', fitnessCloseModal);
-      fitnessEl.modalOverlay.querySelector('#fmSuppSave')?.addEventListener('click', () => {
-        const k = fitnessGetDateKey();
-        const dayData = FS.getDayData(k);
-        const formValues = {
-          name: document.getElementById('fmSuppName')?.value,
-          dose: document.getElementById('fmSuppDose')?.value,
-          taken: !!document.getElementById('fmSuppTaken')?.checked,
-          time: document.getElementById('fmSuppTime')?.value,
-        };
-  
-        const entry = FS.buildSupplementEntry(formValues, editId);
-        const next = FS.mergeSupplement(dayData.supplements, entry, editId);
-        FS.updateDayData(k, { supplements: next });
-        fitnessCloseModal();
-        fitnessRenderSupplementList();
-      });
-    });
-  }
-
   // ===================== NEW SUPPLEMENTS TRACKING UI =====================
 
   // NEW: Render new supplements tracking (today's plan + intakes)
@@ -1517,7 +1452,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
 
   fitnessEl.foodAdd?.addEventListener('click', () => fitnessOpenFoodModal(null));
-  fitnessEl.supplementAdd?.addEventListener('click', () => fitnessOpenSupplementModal(null));
 
   // UPDATED: Water button handlers - use new fitnessAdjustWater
   document.querySelectorAll('.fitness-water-btn').forEach((btn) => {

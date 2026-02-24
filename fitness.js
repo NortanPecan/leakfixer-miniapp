@@ -310,11 +310,17 @@ function getOrCreateDayIntakes(supplement, dateKey) {
   return dayIntakes;
 }
   
-/** Generate planned intakes for today based on template
+/** Generate planned intakes for a date based on template (only for daily supplements)
  * @param {Supplement} supplement
  * @param {string} dateKey - "YYYY-MM-DD"
  * @returns {SupplementIntake[]} */
 function generatePlannedIntakes(supplement, dateKey) {
+  // Don't generate for dates before supplement was created
+  const createdDateKey = supplement.createdAt ? formatDateKey(new Date(supplement.createdAt)) : null;
+  if (createdDateKey && dateKey < createdDateKey) {
+    return [];
+  }
+  
   const dayIntakes = getOrCreateDayIntakes(supplement, dateKey);
   
   // If already has intakes for this day, return existing (don't regenerate)
@@ -337,7 +343,7 @@ function generatePlannedIntakes(supplement, dateKey) {
   return intakes;
 }
 
-/** Get intakes for a specific date (with auto-generation if needed for today)
+/** Get intakes for a specific date
  * @param {string} supplementId
  * @param {string} dateKey - "YYYY-MM-DD"
  * @returns {SupplementIntake[]} */
@@ -345,12 +351,18 @@ function getSupplementIntakesForDay(supplementId, dateKey) {
   const supplement = getSupplementById(supplementId);
   if (!supplement) return [];
   
-  // For daily supplements, generate plan if needed
+  // Don't show supplements for dates before they were created
+  const createdDateKey = supplement.createdAt ? formatDateKey(new Date(supplement.createdAt)) : null;
+  if (createdDateKey && dateKey < createdDateKey) {
+    return [];
+  }
+  
+  // For daily supplements, generate plan if needed (current/future dates only)
   if (supplement.daily) {
     return generatePlannedIntakes(supplement, dateKey);
   }
   
-  // For non-daily, just return history if exists
+  // For non-daily supplements: only show manually added intakes from history
   const dayIntakes = supplement.history?.find(h => h.date === dateKey);
   return dayIntakes?.intakes || [];
 }
@@ -468,7 +480,9 @@ function removeSupplementIntake(supplementId, dateKey, intakeId) {
  * @returns {Supplement} created supplement */
 function createSupplement({ name, unit, daily, standardDailyDose, templateIntakes }) {
   const profile = loadSupplementsProfile();
-  const now = new Date().toISOString();
+  const now = new Date();
+  const nowISO = now.toISOString();
+  const todayKey = formatDateKey(now);
   
   const supplement = {
     id: generateId(),
@@ -478,9 +492,23 @@ function createSupplement({ name, unit, daily, standardDailyDose, templateIntake
     standardDailyDose,
     templateIntakes: templateIntakes || [],
     history: [],
-    createdAt: now,
-    updatedAt: now,
+    createdAt: nowISO,
+    updatedAt: nowISO,
   };
+  
+  // Immediately create at least one intake for today so checkbox works
+  const firstIntake = {
+    id: generateId(),
+    time: formatTimeHM(now),
+    dose: templateIntakes?.[0]?.defaultDose || standardDailyDose || 1,
+    checked: false,
+    edited: false,
+  };
+  
+  supplement.history = [{
+    date: todayKey,
+    intakes: [firstIntake],
+  }];
   
   profile.supplements = profile.supplements || [];
   profile.supplements.push(supplement);
