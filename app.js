@@ -1171,6 +1171,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const GYM_STORAGE_KEY = 'leakfixer_gym_data';
   const GYM_DEFAULT_GROUPS = ['Грудь + Трицепс', 'Спина + Бицепс', 'Ноги + Икры'];
 
+  // Функция форматирования даты без года для UI (дд MMM)
+  function gymFormatDateNoYear(dateStr) {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr + 'T00:00:00');
+      const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+      return `${d.getDate()} ${months[d.getMonth()]}`;
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
   function gymLoadState() {
     try {
       const raw = localStorage.getItem(GYM_STORAGE_KEY);
@@ -1183,9 +1195,9 @@ document.addEventListener('DOMContentLoaded', () => {
       periods: {},
       periodOrder: [],
       activePeriodId: null,
-    };
+    };    
   }
-
+  
   function gymSaveState(state) {
     localStorage.setItem(GYM_STORAGE_KEY, JSON.stringify(state));
   }
@@ -1286,13 +1298,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentRuntime = rt.cycles[currentCycle];
   
     const nextCycle = currentCycle + 1;
-    // snapshot current cycle into completedCycles storage
+    // snapshot current cycle into completedCycles storage (only structure, not actual data)
     if (!gymState.completedCycles) gymState.completedCycles = {};
     if (!gymState.completedCycles[period.id]) gymState.completedCycles[period.id] = {};
     try {
+      // Only save structure, not actual workout data (weights, reps, completion flags)
+      const structureOnly = {
+        days: JSON.parse(JSON.stringify(currentRuntime.days || {})),
+        groups: {},
+      };
+      // Clear actual data from groups - keep only exercise names
+      Object.keys(structureOnly.days).forEach(dIdx => {
+        const day = structureOnly.days[dIdx];
+        if (day && day.groups) {
+          Object.keys(day.groups).forEach(gName => {
+            const arr = day.groups[gName];
+            if (Array.isArray(arr)) {
+              day.groups[gName] = arr.map(ex => ex ? { name: ex.name || '' } : null);
+            }
+          });
+        }
+      });
       gymState.completedCycles[period.id][currentCycle] = {
         savedAt: new Date().toISOString(),
-        data: JSON.parse(JSON.stringify(currentRuntime || { days: {}, groups: {} })),
+        data: structureOnly,
       };
     } catch (e) {
       // ignore clone errors
@@ -1312,14 +1341,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const dayIndex = d.dayIndex;
       const prevDayRuntime = currentRuntime.days?.[dayIndex];
 
+      // Skip extra days - they should stay only in the current cycle
+      if (prevDayRuntime && prevDayRuntime.isExtra) return;
+
       const enabled = prevDayRuntime ? prevDayRuntime.enabled !== false : true;
       if (!enabled) return;
 
+      // Copy only structure: day enabled flag and exercise names
+      // Do NOT copy actual data (weights, reps, completion flags)
       nextRuntimeDays[dayIndex] = {
         enabled: true,
-        groups: prevDayRuntime && prevDayRuntime.groups
-          ? JSON.parse(JSON.stringify(prevDayRuntime.groups))
-          : {},
+        groups: {},
+        muscles: prevDayRuntime && prevDayRuntime.muscles ? [...prevDayRuntime.muscles] : [],
       };
     });
 
@@ -1330,8 +1363,7 @@ document.addEventListener('DOMContentLoaded', () => {
     rt.cycles[nextCycle].days = nextRuntimeDays;
 
     // If exercises include a nextCyclePlan, prefill workWeight in the new cycle from that plan
-    // "Save cycle": commit current runtime structure for this cycle to gymState + localStorage.
-
+    // Then clear nextCyclePlan for the new cycle
     Object.keys(nextRuntimeDays).forEach((dIdx) => {
       const d = nextRuntimeDays[dIdx];
       if (!d || !d.groups) return;
@@ -1340,16 +1372,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!Array.isArray(arr)) return;
         arr.forEach((ex) => {
           if (!ex) return;
-          // ensure working set fields exist
-          if (ex.setsCount === undefined) ex.setsCount = ex.setsCount || '';
-          if (ex.repsCount === undefined) ex.repsCount = ex.repsCount || '';
-          if (ex.workWeight === undefined) ex.workWeight = ex.workWeight || '';
+          // Reset working sets to empty in new cycle
+          ex.setsCount = '';
+          ex.repsCount = '';
+          ex.workWeight = '';
+          // Transfer "plan for next cycle" to weight
           if (ex.nextCyclePlan) {
             ex.workWeight = ex.nextCyclePlan;
+            ex.nextCyclePlan = ''; // Clear after transfer
           }
         });
       });
     });
+
+    // Set current date for the new cycle (for immediate rendering)
+    const today = new Date().toISOString().slice(0, 10);
+    if (!gymState.periodStartDates) gymState.periodStartDates = {};
+    // Calculate the projected start date for this cycle
+    const cycleLen = Number(period.cycleLengthDays) || 7;
+    const projectedDate = new Date(new Date(today).getTime() + (nextCycle - 1) * cycleLen * 24 * 60 * 60 * 1000);
+    gymState.periodStartDates[period.id + '_cycle' + nextCycle] = projectedDate.toISOString().slice(0, 10);
 
     // keep runtime.totalCycles in sync but never exceed period.totalCycles
     rt.totalCycles = Math.min(maxCycles, Math.max(Number(rt.totalCycles) || 1, nextCycle));
@@ -1788,9 +1830,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const completedInLast = cw.filter(e => Number(e.cycleIndex) === lastCycle);
           if (expectedCount > 0 && completedInLast.length >= expectedCount) {
             const lastDates = completedInLast.map(x => x.dateCompleted).filter(Boolean).sort();
-            actualRangeEl.textContent = `${earliest} — ${lastDates[lastDates.length-1]}`;
+            actualRangeEl.textContent = `${gymFormatDateNoYear(earliest)} — ${gymFormatDateNoYear(lastDates[lastDates.length-1])}`;
           } else {
-            actualRangeEl.textContent = `${earliest} — —`;
+            actualRangeEl.textContent = `${gymFormatDateNoYear(earliest)} — —`;
           }
         } else {
           actualRangeEl.textContent = '—';
@@ -1834,7 +1876,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (lastStart) {
                 const lastStartDate = new Date(lastStart + 'T00:00:00');
                 const lastEndDate = new Date(lastStartDate.getTime() + (cycleLen - 1) * 24 * 60 * 60 * 1000);
-                plannedRangeEl.textContent = `${cycleStarts[1]} — ${lastEndDate.toISOString().slice(0,10)}`;
+                plannedRangeEl.textContent = `${gymFormatDateNoYear(cycleStarts[1])} — ${gymFormatDateNoYear(lastEndDate.toISOString().slice(0,10))}`;
               } else plannedRangeEl.textContent = '—';
             } else {
               plannedRangeEl.textContent = '—';
@@ -2622,7 +2664,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const nextIndex = used.length ? Math.max(...used) + 1 : 1;
 
           if (!rt.days) rt.days = {};
-          rt.days[nextIndex] = { groups: {}, enabled: enabled, muscles: musclesFinal };
+          // Mark as extra day - these should not be copied to next cycle
+          rt.days[nextIndex] = { groups: {}, enabled: enabled, muscles: musclesFinal, isExtra: true };
 
           gymSaveState(gymState);
           gymRenderGroups();
@@ -3208,15 +3251,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!gymState.periodOrder || !Array.isArray(gymState.periodOrder)) gymState.periodOrder = [];
       gymState.periodOrder.push(periodId);
       // Initialize runtime fresh for the new period — do NOT reuse old runtime data
+      // Also reset any history/status/progress from old period
       if (!gymState.runtime) gymState.runtime = {};
       // initialize runtime cycles[1] with template days enabled
       const initialDays = {};
       (period.days || []).forEach(d => {
         const idx = Number(d.dayIndex);
         if (!Number.isNaN(idx) && idx > 0) {
+          // New period: reset all history fields, no inheritance from old periods
           initialDays[idx] = { enabled: true, groups: {}, muscles: Array.isArray(d.muscles) ? d.muscles.slice() : [] };
         }
       });
+
+      // Set start date to today for immediate rendering
+      const today = new Date().toISOString().slice(0, 10);
+      period.startDate = today;
 
       gymState.runtime[periodId] = {
         currentCycle: 1,
