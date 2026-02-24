@@ -436,6 +436,8 @@ document.addEventListener('DOMContentLoaded', () => {
     waterTotal: document.getElementById('fitnessWaterTotal'),
     supplementList: document.getElementById('fitnessSupplementList'),
     supplementAdd: document.getElementById('fitnessSupplementAdd'),
+    // NEW: Supplements tracking container
+    supplementsTracking: document.getElementById('fitnessSupplementsTracking'),
     modalOverlay: document.getElementById('fitnessModalOverlay'),
     modalContent: document.getElementById('fitnessModalContent'),
     workDayLabel: document.getElementById('fitnessWorkDayLabel'),
@@ -732,6 +734,8 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessRenderFoodList();
     fitnessRenderWater();
     fitnessRenderSupplementList();
+    // NEW: Render new supplements tracking
+    fitnessRenderSupplementsTracking();
     fitnessRenderWorkDay();
   }
   
@@ -1000,6 +1004,377 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ===================== NEW SUPPLEMENTS TRACKING UI =====================
+
+  // NEW: Render new supplements tracking (today's plan + intakes)
+  function fitnessRenderSupplementsTracking() {
+    if (!fitnessEl.supplementsTracking) return;
+    
+    const dateKey = fitnessGetDateKey();
+    const supplements = FS.getAllSupplements();
+    
+    if (supplements.length === 0) {
+      fitnessEl.supplementsTracking.innerHTML = `
+        <div class="text-center py-4 opacity-70">
+          <p class="text-sm mb-2">Нет добавленных БАДов</p>
+          <button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Добавить первый БАД</button>
+        </div>
+      `;
+      document.getElementById('addFirstSupplement')?.addEventListener('click', () => fitnessOpenSupplementProfileModal());
+      return;
+    }
+  
+    let html = '';
+    
+    for (const supp of supplements) {
+      const intakes = FS.getSupplementIntakesForDay(supp.id, dateKey);
+      const totalDose = FS.getTotalDoseForDay(intakes);
+      const unitLabel = supp.unit === 'табл' ? 'табл' : supp.unit;
+      
+      html += '<div class="bg-white/5 rounded-xl p-3 mb-3">';
+      html += '<div class="flex items-center justify-between mb-2">';
+      html += '<h4 class="font-semibold text-sm">' + supp.name + '</h4>';
+      html += '<div class="flex gap-1">';
+      html += '<button type="button" class="supp-edit-norm text-xs opacity-70" data-id="' + supp.id + '">норма</button>';
+      html += '<button type="button" class="supp-history text-xs opacity-70" data-id="' + supp.id + '">история</button>';
+      html += '</div></div>';
+      
+      html += '<p class="text-xs opacity-70 mb-2">' + supp.standardDailyDose + ' ' + unitLabel + '/день' + (supp.daily ? ' (ежедневно)' : '') + '</p>';
+      
+      // Show intakes
+      for (const intake of intakes) {
+        const doseClass = intake.edited ? 'text-yellow-300' : '';
+        const checkedClass = intake.checked ? 'opacity-100' : 'opacity-50';
+        
+        html += '<div class="flex items-center gap-2 py-1 border-b border-white/5 last:border-0">';
+        html += '<input type="checkbox" class="supp-intake-check rounded" data-supp-id="' + supp.id + '" data-intake-id="' + intake.id + '"' + (intake.checked ? ' checked' : '') + '>';
+        
+        if (intake.time) {
+          html += '<span class="text-xs opacity-70 w-12">' + intake.time + '</span>';
+        } else {
+          html += '<span class="text-xs opacity-30 w-12">--:--</span>';
+        }
+        
+        html += '<span class="flex-1 text-sm ' + doseClass + '">' + intake.dose + ' ' + unitLabel + '</span>';
+        
+        html += '<button type="button" class="supp-edit-intake text-xs opacity-70" data-supp-id="' + supp.id + '" data-intake-id="' + intake.id + '">✏</button>';
+        html += '</div>';
+      }
+
+      // Total for today
+      html += '<div class="text-xs mt-2 pt-2 border-t border-white/10">';
+      html += 'Сегодня: ' + totalDose + ' ' + unitLabel + ' / ' + supp.standardDailyDose + ' ' + unitLabel;
+      html += '</div>';
+      
+      // Add intake button
+      html += '<button type="button" class="supp-add-intake w-full mt-2 py-1 text-xs bg-white/10 rounded" data-supp-id="' + supp.id + '">+ Добавить приём</button>';
+      
+      html += '</div>';
+    }
+    
+    // Add new supplement button
+    html += '<button type="button" id="addNewSupplement" class="w-full py-2 rounded-xl bg-green-500/30 text-sm">+ Добавить БАД</button>';
+    
+    fitnessEl.supplementsTracking.innerHTML = html;
+    
+    // Attach event listeners
+    document.getElementById('addNewSupplement')?.addEventListener('click', () => fitnessOpenSupplementProfileModal());
+    document.getElementById('addFirstSupplement')?.addEventListener('click', () => fitnessOpenSupplementProfileModal());
+    
+    // Checkbox handlers
+    document.querySelectorAll('.supp-intake-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const suppId = cb.dataset.suppId;
+        const intakeId = cb.dataset.intakeId;
+        FS.toggleSupplementIntakeChecked(suppId, dateKey, intakeId);
+        fitnessRenderSupplementsTracking();
+      });
+    });
+    
+    // Edit intake handlers
+    document.querySelectorAll('.supp-edit-intake').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const suppId = btn.dataset.suppId;
+        const intakeId = btn.dataset.intakeId;
+        fitnessOpenIntakeEditModal(suppId, dateKey, intakeId);
+      });
+    });
+  
+    // Add intake handlers
+    document.querySelectorAll('.supp-add-intake').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const suppId = btn.dataset.suppId;
+        fitnessOpenIntakeAddModal(suppId, dateKey);
+      });
+    });
+    
+    // Edit norm handlers
+    document.querySelectorAll('.supp-edit-norm').forEach(btn => {
+      btn.addEventListener('click', () => {
+        fitnessOpenSupplementProfileModal(btn.dataset.id);
+      });
+    });
+    
+    // History handlers
+    document.querySelectorAll('.supp-history').forEach(btn => {
+      btn.addEventListener('click', () => {
+        fitnessOpenSupplementHistoryModal(btn.dataset.id);
+      });
+    });
+  }
+
+  // NEW: Open modal to add/edit supplement profile
+  function fitnessOpenSupplementProfileModal(editId) {
+    const existing = editId ? FS.getSupplementById(editId) : null;
+    
+    let html = '<h3 class="font-semibold mb-4">' + (existing ? 'Редактировать БАД' : 'Добавить БАД') + '</h3>';
+    html += '<div class="space-y-3">';
+    html += '<label class="block text-sm">Название</label>';
+    html += '<input type="text" id="suppProfileName" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.name ?? '') + '" placeholder="Креатин, Кленбутерол...">';
+    
+    html += '<label class="block text-sm">Единица измерения</label>';
+    html += '<select id="suppProfileUnit" class="w-full p-3 bg-white/30 rounded-xl text-white">';
+    html += '<option value="мг"' + (existing?.unit === 'мг' ? ' selected' : '') + '>мг</option>';
+    html += '<option value="г"' + (existing?.unit === 'г' ? ' selected' : '') + '>г</option>';
+    html += '<option value="табл"' + (existing?.unit === 'табл' ? ' selected' : '') + '>таблетки</option>';
+    html += '</select>';
+    
+    html += '<label class="flex items-center gap-2 mt-2">';
+    html += '<input type="checkbox" id="suppProfileDaily" class="rounded"' + (existing?.daily !== false ? ' checked' : '') + '>';
+    html += '<span class="text-sm">Принимать каждый день</span></label>';
+    
+    html += '<label class="block text-sm mt-2">Дневная норма</label>';
+    html += '<input type="number" id="suppProfileDailyDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.standardDailyDose ?? '1') + '" placeholder="10">';
+    
+    html += '<label class="block text-sm mt-2">Количество приёмов в день</label>';
+    html += '<input type="number" id="suppProfileIntakesCount" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.templateIntakes?.length ?? 1) + '" min="1" max="5">';
+    
+    html += '<label class="block text-sm mt-2">Доза на приём (базовая)</label>';
+    html += '<input type="number" id="suppProfileDefaultDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.templateIntakes?.[0]?.defaultDose ?? '1') + '">';
+    
+    if (existing) {
+      html += '<button type="button" id="suppProfileDelete" class="w-full py-2 mt-2 rounded-xl bg-red-500/30 text-sm text-red-300">Удалить БАД</button>';
+    }
+    html += '</div>';
+    
+    html += '<div class="flex gap-3 mt-4">';
+    html += '<button type="button" id="suppProfileCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
+    html += '<button type="button" id="suppProfileSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button>';
+    html += '</div>';
+    
+    fitnessOpenModal(html, () => {
+      document.getElementById('suppProfileCancel')?.addEventListener('click', fitnessCloseModal);
+      document.getElementById('suppProfileSave')?.addEventListener('click', () => {
+        const name = document.getElementById('suppProfileName')?.value?.trim();
+        const unit = document.getElementById('suppProfileUnit')?.value;
+        const daily = document.getElementById('suppProfileDaily')?.checked;
+        const standardDailyDose = Number(document.getElementById('suppProfileDailyDose')?.value) || 1;
+        const intakesCount = Number(document.getElementById('suppProfileIntakesCount')?.value) || 1;
+        const defaultDose = Number(document.getElementById('suppProfileDefaultDose')?.value) || 1;
+        
+        if (!name) {
+          alert('Введите название БАДа');
+          return;
+        }
+  
+        // Generate template intakes
+        const templateIntakes = [];
+        for (let i = 0; i < intakesCount; i++) {
+          templateIntakes.push({ defaultDose: defaultDose });
+        }
+        
+        if (editId) {
+          FS.updateSupplement(editId, { name, unit, daily, standardDailyDose, templateIntakes });
+        } else {
+          FS.createSupplement({ name, unit, daily, standardDailyDose, templateIntakes });
+        }
+      
+        fitnessCloseModal();
+        fitnessRenderSupplementsTracking();
+      });
+      
+      document.getElementById('suppProfileDelete')?.addEventListener('click', () => {
+        if (confirm('Удалить этот БАД? История приёмов будет потеряна.')) {
+          FS.deleteSupplement(editId);
+          fitnessCloseModal();
+          fitnessRenderSupplementsTracking();
+        }
+      });
+    });
+  }
+
+  // NEW: Open modal to edit single intake (dose)
+  function fitnessOpenIntakeEditModal(suppId, dateKey, intakeId) {
+    const intakes = FS.getSupplementIntakesForDay(suppId, dateKey);
+    const intake = intakes.find(i => i.id === intakeId);
+    if (!intake) return;
+    
+    const supp = FS.getSupplementById(suppId);
+    const unit = supp?.unit || 'табл';
+    
+    let html = '<h3 class="font-semibold mb-4">Изменить приём</h3>';
+    html += '<div class="space-y-3">';
+    html += '<label class="block text-sm">Доза (' + unit + ')</label>';
+    html += '<input type="number" id="intakeEditDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + intake.dose + '">';
+    html += '<div class="flex gap-2">';
+    html += '<button type="button" id="intakeEditMinus1" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">−1</button>';
+    html += '<button type="button" id="intakeEditPlus1" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">+1</button>';
+    html += '<button type="button" id="intakeEditX2" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">×2</button>';
+    html += '</div>';
+    html += '<label class="block text-sm mt-2">Время (HH:MM)</label>';
+    html += '<input type="time" id="intakeEditTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (intake.time || '') + '">';
+    html += '</div>';
+    html += '<div class="flex gap-3 mt-4">';
+    html += '<button type="button" id="intakeEditDelete" class="flex-1 py-3 rounded-xl bg-red-500/30 text-red-300">Удалить</button>';
+    html += '<button type="button" id="intakeEditCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
+    html += '<button type="button" id="intakeEditSave" class="flex-1 py-3 rounded-xl bg-green-500">Сохранить</button>';
+    html += '</div>';
+    
+    fitnessOpenModal(html, () => {
+      const doseInput = document.getElementById('intakeEditDose');
+      
+      document.getElementById('intakeEditMinus1')?.addEventListener('click', () => {
+        doseInput.value = Math.max(0, Number(doseInput.value) - 1);
+      });
+      document.getElementById('intakeEditPlus1')?.addEventListener('click', () => {
+        doseInput.value = Number(doseInput.value) + 1;
+      });
+      document.getElementById('intakeEditX2')?.addEventListener('click', () => {
+        doseInput.value = Number(doseInput.value) * 2;
+      });
+      
+      document.getElementById('intakeEditCancel')?.addEventListener('click', fitnessCloseModal);
+      document.getElementById('intakeEditDelete')?.addEventListener('click', () => {
+        FS.removeSupplementIntake(suppId, dateKey, intakeId);
+        fitnessCloseModal();
+        fitnessRenderSupplementsTracking();
+      });
+      document.getElementById('intakeEditSave')?.addEventListener('click', () => {
+        const dose = Number(doseInput.value);
+        const time = document.getElementById('intakeEditTime')?.value;
+        
+        if (!isNaN(dose) && dose >= 0) {
+          FS.updateSupplementIntake(suppId, dateKey, intakeId, { dose, time });
+          fitnessCloseModal();
+          fitnessRenderSupplementsTracking();
+        }
+      });
+    });
+  }
+
+  // NEW: Open modal to add new intake
+  function fitnessOpenIntakeAddModal(suppId, dateKey) {
+    const supp = FS.getSupplementById(suppId);
+    const unit = supp?.unit || 'табл';
+    const defaultDose = supp?.templateIntakes?.[0]?.defaultDose || 1;
+    const currentTime = FS.formatTimeHM(new Date());
+    
+    let html = '<h3 class="font-semibold mb-4">Добавить приём</h3>';
+    html += '<div class="space-y-3">';
+    html += '<label class="block text-sm">Доза (' + unit + ')</label>';
+    html += '<input type="number" id="intakeAddDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultDose + '">';
+    html += '<label class="block text-sm mt-2">Время (HH:MM)</label>';
+    html += '<input type="time" id="intakeAddTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentTime + '">';
+    html += '</div>';
+    html += '<div class="flex gap-3 mt-4">';
+    html += '<button type="button" id="intakeAddCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
+    html += '<button type="button" id="intakeAddSave" class="flex-1 py-3 rounded-xl bg-green-500">Добавить</button>';
+    html += '</div>';
+    
+    fitnessOpenModal(html, () => {
+      document.getElementById('intakeAddCancel')?.addEventListener('click', fitnessCloseModal);
+      document.getElementById('intakeAddSave')?.addEventListener('click', () => {
+        const dose = Number(document.getElementById('intakeAddDose')?.value);
+        const time = document.getElementById('intakeAddTime')?.value;
+        
+        if (!isNaN(dose) && dose >= 0 && time) {
+          FS.addSupplementIntake(suppId, dateKey, dose, time);
+          fitnessCloseModal();
+          fitnessRenderSupplementsTracking();
+        }
+      });
+    });
+  }
+
+  // NEW: Open modal to view/edit supplement history
+  function fitnessOpenSupplementHistoryModal(suppId) {
+    const supp = FS.getSupplementById(suppId);
+    if (!supp) return;
+    
+    const unit = supp.unit || 'табл';
+    const history = supp.history || [];
+    
+    // Get last 14 days with data
+    const dates = [];
+    for (let i = 0; i < 14; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      dates.push(FS.formatDateKey(d));
+    }
+    
+    let html = '<h3 class="font-semibold mb-4">История: ' + supp.name + '</h3>';
+    html += '<div class="space-y-3 max-h-96 overflow-y-auto">';
+    
+    for (const dateKey of dates) {
+      const dayIntakes = history.find(h => h.date === dateKey);
+      const intakes = dayIntakes?.intakes || [];
+      const totalDose = FS.getTotalDoseForDay(intakes);
+      const checkedCount = intakes.filter(i => i.checked).length;
+      
+      html += '<div class="bg-white/5 rounded-lg p-2">';
+      html += '<div class="flex items-center justify-between mb-1">';
+      html += '<span class="text-sm font-medium">' + FS.formatDateLocal(dateKey) + '</span>';
+      html += '<span class="text-xs opacity-70">' + totalDose + ' ' + unit + ' (' + checkedCount + '/' + intakes.length + ')</span>';
+      html += '</div>';
+      
+      for (const intake of intakes) {
+        const checkedClass = intake.checked ? 'opacity-100' : 'opacity-40';
+        html += '<div class="flex items-center gap-2 py-1 text-xs ' + checkedClass + '">';
+        html += '<input type="checkbox" class="hist-intake-check rounded" data-date="' + dateKey + '" data-intake-id="' + intake.id + '"' + (intake.checked ? ' checked' : '') + '>';
+        html += '<span class="w-12">' + (intake.time || '--:--') + '</span>';
+        html += '<span class="flex-1">' + intake.dose + ' ' + unit + '</span>';
+        html += '<button type="button" class="hist-intake-edit text-xs opacity-70" data-date="' + dateKey + '" data-intake-id="' + intake.id + '">✏</button>';
+        html += '</div>';
+      }
+      
+      if (intakes.length === 0) {
+        html += '<div class="text-xs opacity-50 py-1">Нет данных</div>';
+      }
+      
+      html += '</div>';
+    }
+    
+    html += '</div>';
+    html += '<div class="flex gap-3 mt-4">';
+    html += '<button type="button" id="histClose" class="flex-1 py-3 rounded-xl bg-white/20">Закрыть</button>';
+    html += '</div>';
+    
+    fitnessOpenModal(html, () => {
+      document.getElementById('histClose')?.addEventListener('click', fitnessCloseModal);
+      
+      // Checkbox handlers
+      document.querySelectorAll('.hist-intake-check').forEach(cb => {
+        cb.addEventListener('change', () => {
+          const dateKey = cb.dataset.date;
+          const intakeId = cb.dataset.intakeId;
+          FS.toggleSupplementIntakeChecked(suppId, dateKey, intakeId);
+          fitnessOpenSupplementHistoryModal(suppId); // Refresh
+        });
+      });
+      
+      // Edit handlers
+      document.querySelectorAll('.hist-intake-edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dateKey = btn.dataset.date;
+          const intakeId = btn.dataset.intakeId;
+          fitnessOpenIntakeEditModal(suppId, dateKey, intakeId);
+          // Refresh history after edit
+          setTimeout(() => fitnessOpenSupplementHistoryModal(suppId), 500);
+        });
+      });
+    });
+  }
+  
   function fitnessGetSelectedWorkProfile() {
     const input = document.querySelector('input[name="fitnessWorkProfile"]:checked');
     return input ? input.value : undefined;

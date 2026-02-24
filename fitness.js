@@ -92,8 +92,50 @@
  * @property {string} timeText
  */
 
+// ===================== SUPPLEMENTS TRACKING TYPES =====================
+
+/** Single intake record
+ * @typedef {Object} SupplementIntake
+ * @property {string} id - unique ID
+ * @property {string} time - "HH:MM"
+ * @property {number} dose - actual dose taken
+ * @property {boolean} checked - true if actually taken
+ * @property {boolean} edited - true if dose differs from template/standard
+ */
+
+/** All intakes for one day
+ * @typedef {Object} SupplementDayIntakes
+ * @property {string} date - "YYYY-MM-DD"
+ * @property {SupplementIntake[]} intakes
+ */
+
+/** Template for auto-generating intakes
+ * @typedef {Object} SupplementTemplateIntake
+ * @property {number} defaultDose - base dose for this intake (e.g. 40 mg)
+ * @property {string} [time] - optional default time "HH:MM"
+ */
+
+/** Supplement definition in user's profile
+ * @typedef {Object} Supplement
+ * @property {string} id
+ * @property {string} name - e.g. "Кленбутерол", "Креатин"
+ * @property {'мг'|'г'|'табл'} unit
+ * @property {boolean} daily - "every day" flag
+ * @property {number} standardDailyDose - current daily norm (e.g. 80 mg)
+ * @property {SupplementTemplateIntake[]} templateIntakes
+ * @property {SupplementDayIntakes[]} history - actual history by date
+ * @property {string} createdAt
+ * @property {string} updatedAt
+ */
+
+/** User's supplements profile
+ * @typedef {Object} SupplementsProfile
+ * @property {Supplement[]} supplements
+ */
+
 const FITNESS_PROFILE_KEY = 'leakfixer_fitness_profile';
 const FITNESS_DATA_KEY = 'leakfixer_fitness_data';
+const SUPPLEMENTS_PROFILE_KEY = 'leakfixer_supplements_profile';
 
 const BALANCE_GREEN_MAX = 300;
 const BALANCE_RED_THRESHOLD = 500;
@@ -120,7 +162,7 @@ function getFitnessProfile() {
     return {};
   }
 }
-
+  
 /** @param {ProfileFitnessSettings} profile */
 function setFitnessProfile(profile) {
   localStorage.setItem(getProfileStorageKey(), JSON.stringify(profile));
@@ -128,7 +170,7 @@ function setFitnessProfile(profile) {
     window.FitnessSync.saveProfile(profile).catch(() => {});
   }
 }
-
+  
 /** @returns {Record<string, FitnessDayData>} */
 function getAllFitnessData() {
   try {
@@ -206,6 +248,284 @@ function updateDayData(dateKey, patch) {
 /** @returns {string} */
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+// ===================== SUPPLEMENTS STORAGE LAYER =====================
+
+/** Get storage key for supplements profile
+ * @returns {string} */
+function getSupplementsStorageKey() {
+  const id = window.currentAppUserId || 'anon';
+  return `${SUPPLEMENTS_PROFILE_KEY}_${id}`;
+}
+
+/** Load supplements profile from localStorage
+ * @returns {SupplementsProfile} */
+function loadSupplementsProfile() {
+  try {
+    const raw = localStorage.getItem(getSupplementsStorageKey());
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch (e) {
+    console.error('loadSupplementsProfile error:', e);
+  }
+  return { supplements: [] };
+}
+  
+/** Save supplements profile to localStorage
+ * @param {SupplementsProfile} profile */
+function saveSupplementsProfile(profile) {
+  localStorage.setItem(getSupplementsStorageKey(), JSON.stringify(profile));
+}
+
+// ===================== SUPPLEMENTS LOGIC =====================
+
+/** Get all supplements from profile
+ * @returns {Supplement[]} */
+function getAllSupplements() {
+  const profile = loadSupplementsProfile();
+  return profile.supplements || [];
+}
+
+/** Find supplement by ID
+ * @param {string} id
+ * @returns {Supplement|undefined} */
+function getSupplementById(id) {
+  const supplements = getAllSupplements();
+  return supplements.find(s => s.id === id);
+}
+
+/** Get or create history entry for a specific date
+ * @param {Supplement} supplement
+ * @param {string} dateKey - "YYYY-MM-DD"
+ * @returns {SupplementDayIntakes} */
+function getOrCreateDayIntakes(supplement, dateKey) {
+  let dayIntakes = supplement.history?.find(h => h.date === dateKey);
+  if (!dayIntakes) {
+    dayIntakes = { date: dateKey, intakes: [] };
+    supplement.history = supplement.history || [];
+    supplement.history.push(dayIntakes);
+  }
+  return dayIntakes;
+}
+  
+/** Generate planned intakes for today based on template
+ * @param {Supplement} supplement
+ * @param {string} dateKey - "YYYY-MM-DD"
+ * @returns {SupplementIntake[]} */
+function generatePlannedIntakes(supplement, dateKey) {
+  const dayIntakes = getOrCreateDayIntakes(supplement, dateKey);
+  
+  // If already has intakes for this day, return existing (don't regenerate)
+  if (dayIntakes.intakes.length > 0) {
+    return dayIntakes.intakes;
+  }
+  
+  // Generate from template
+  const intakes = [];
+  for (const template of supplement.templateIntakes) {
+    intakes.push({
+      id: generateId(),
+      time: template.time || '',
+      dose: template.defaultDose,
+      checked: false,
+      edited: false,
+    });
+  }
+  dayIntakes.intakes = intakes;
+  return intakes;
+}
+
+/** Get intakes for a specific date (with auto-generation if needed for today)
+ * @param {string} supplementId
+ * @param {string} dateKey - "YYYY-MM-DD"
+ * @returns {SupplementIntake[]} */
+function getSupplementIntakesForDay(supplementId, dateKey) {
+  const supplement = getSupplementById(supplementId);
+  if (!supplement) return [];
+  
+  // For daily supplements, generate plan if needed
+  if (supplement.daily) {
+    return generatePlannedIntakes(supplement, dateKey);
+  }
+  
+  // For non-daily, just return history if exists
+  const dayIntakes = supplement.history?.find(h => h.date === dateKey);
+  return dayIntakes?.intakes || [];
+}
+
+/** Toggle intake checked status
+ * @param {string} supplementId
+ * @param {string} dateKey - "YYYY-MM-DD"
+ * @param {string} intakeId
+ * @returns {SupplementIntake|undefined} updated intake */
+function toggleSupplementIntakeChecked(supplementId, dateKey, intakeId) {
+  const profile = loadSupplementsProfile();
+  const supplement = profile.supplements.find(s => s.id === supplementId);
+  if (!supplement) return undefined;
+  
+  const dayIntakes = getOrCreateDayIntakes(supplement, dateKey);
+  const intake = dayIntakes.intakes.find(i => i.id === intakeId);
+  if (!intake) return undefined;
+  
+  // Toggle checked
+  intake.checked = !intake.checked;
+  
+  // If checking and no time set, set current time
+  if (intake.checked && !intake.time) {
+    intake.time = formatTimeHM(new Date());
+  }
+  
+  saveSupplementsProfile(profile);
+  return intake;
+}
+
+/** Update intake dose/time
+ * @param {string} supplementId
+ * @param {string} dateKey - "YYYY-MM-DD"
+ * @param {string} intakeId
+ * @param {Partial<SupplementIntake>} updates - dose, time, checked
+ * @returns {SupplementIntake|undefined} updated intake */
+function updateSupplementIntake(supplementId, dateKey, intakeId, updates) {
+  const profile = loadSupplementsProfile();
+  const supplement = profile.supplements.find(s => s.id === supplementId);
+  if (!supplement) return undefined;
+  
+  const dayIntakes = getOrCreateDayIntakes(supplement, dateKey);
+  const intake = dayIntakes.intakes.find(i => i.id === intakeId);
+  if (!intake) return undefined;
+  
+  // Apply updates
+  if (updates.dose !== undefined) {
+    intake.dose = updates.dose;
+    // Mark as edited if dose differs from template default
+    const templateIdx = dayIntakes.intakes.findIndex(i => i.id === intakeId);
+    if (templateIdx >= 0 && supplement.templateIntakes[templateIdx]) {
+      intake.edited = updates.dose !== supplement.templateIntakes[templateIdx].defaultDose;
+    }
+  }
+  if (updates.time !== undefined) intake.time = updates.time;
+  if (updates.checked !== undefined) intake.checked = updates.checked;
+  
+  saveSupplementsProfile(profile);
+  return intake;
+}
+
+/** Add new intake for a specific date
+ * @param {string} supplementId
+ * @param {string} dateKey - "YYYY-MM-DD"
+ * @param {number} dose
+ * @param {string} time - "HH:MM"
+ * @returns {SupplementIntake} created intake */
+function addSupplementIntake(supplementId, dateKey, dose, time) {
+  const profile = loadSupplementsProfile();
+  const supplement = profile.supplements.find(s => s.id === supplementId);
+  if (!supplement) throw new Error('Supplement not found');
+  
+  const dayIntakes = getOrCreateDayIntakes(supplement, dateKey);
+  const newIntake = {
+    id: generateId(),
+    time,
+    dose,
+    checked: false,
+    edited: true, // Custom intake is always "edited" from template
+  };
+  
+  dayIntakes.intakes.push(newIntake);
+  saveSupplementsProfile(profile);
+  return newIntake;
+}
+
+/** Remove intake from a specific date
+ * @param {string} supplementId
+ * @param {string} dateKey - "YYYY-MM-DD"
+ * @param {string} intakeId
+ * @returns {boolean} success */
+function removeSupplementIntake(supplementId, dateKey, intakeId) {
+  const profile = loadSupplementsProfile();
+  const supplement = profile.supplements.find(s => s.id === supplementId);
+  if (!supplement) return false;
+  
+  const dayIntakes = supplement.history?.find(h => h.date === dateKey);
+  if (!dayIntakes) return false;
+  
+  const idx = dayIntakes.intakes.findIndex(i => i.id === intakeId);
+  if (idx < 0) return false;
+  
+  dayIntakes.intakes.splice(idx, 1);
+  saveSupplementsProfile(profile);
+  return true;
+}
+
+/** Add new supplement to profile
+ * @param {Object} params
+ * @param {string} params.name
+ * @param {'мг'|'г'|'табл'} params.unit
+ * @param {boolean} params.daily
+ * @param {number} params.standardDailyDose
+ * @param {SupplementTemplateIntake[]} params.templateIntakes
+ * @returns {Supplement} created supplement */
+function createSupplement({ name, unit, daily, standardDailyDose, templateIntakes }) {
+  const profile = loadSupplementsProfile();
+  const now = new Date().toISOString();
+  
+  const supplement = {
+    id: generateId(),
+    name,
+    unit,
+    daily,
+    standardDailyDose,
+    templateIntakes: templateIntakes || [],
+    history: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+  
+  profile.supplements = profile.supplements || [];
+  profile.supplements.push(supplement);
+  saveSupplementsProfile(profile);
+  return supplement;
+}
+
+/** Update supplement settings (not history)
+ * @param {string} id
+ * @param {Partial<Pick<Supplement, 'name' | 'unit' | 'daily' | 'standardDailyDose' | 'templateIntakes'>>} updates
+ * @returns {Supplement|undefined} updated supplement */
+function updateSupplement(id, updates) {
+  const profile = loadSupplementsProfile();
+  const supplement = profile.supplements.find(s => s.id === id);
+  if (!supplement) return undefined;
+  
+  if (updates.name !== undefined) supplement.name = updates.name;
+  if (updates.unit !== undefined) supplement.unit = updates.unit;
+  if (updates.daily !== undefined) supplement.daily = updates.daily;
+  if (updates.standardDailyDose !== undefined) supplement.standardDailyDose = updates.standardDailyDose;
+  if (updates.templateIntakes !== undefined) supplement.templateIntakes = updates.templateIntakes;
+  
+  supplement.updatedAt = new Date().toISOString();
+  saveSupplementsProfile(profile);
+  return supplement;
+}
+
+/** Delete supplement from profile
+ * @param {string} id
+ * @returns {boolean} success */
+function deleteSupplement(id) {
+  const profile = loadSupplementsProfile();
+  const idx = profile.supplements?.findIndex(s => s.id === id);
+  if (idx < 0) return false;
+  
+  profile.supplements.splice(idx, 1);
+  saveSupplementsProfile(profile);
+  return true;
+}
+
+/** Get total dose for a day
+ * @param {SupplementIntake[]} intakes
+ * @returns {number} */
+function getTotalDoseForDay(intakes) {
+  return intakes.reduce((sum, i) => sum + (i.checked ? i.dose : 0), 0);
 }
 
 // ─── Pure: date helpers ───────────────────────────────────────────────────
@@ -709,4 +1029,18 @@ window.FitnessState = {
   // NEW: API Ninjas integration
   fetchNutritionForInput,
   onFoodSubmit,
+  // NEW: Supplements tracking
+  loadSupplementsProfile,
+  saveSupplementsProfile,
+  getAllSupplements,
+  getSupplementById,
+  getSupplementIntakesForDay,
+  toggleSupplementIntakeChecked,
+  updateSupplementIntake,
+  addSupplementIntake,
+  removeSupplementIntake,
+  createSupplement,
+  updateSupplement,
+  deleteSupplement,
+  getTotalDoseForDay,
 };
