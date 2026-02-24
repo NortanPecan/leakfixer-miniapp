@@ -1,6 +1,5 @@
 // /api/nutrition.js
 
-// Мини-словарь RUS -> ENG для частых продуктов
 const RUS_ENG_MAP = {
   'гречка': 'buckwheat',
   'батон': 'white bread',
@@ -48,72 +47,34 @@ const RUS_ENG_MAP = {
   'капуста': 'cabbage',
 };
 
-// Маппинг русских обозначений единиц -> латиница
-const UNIT_MAP = {
-  'грамм': 'g',
-  'граммов': 'g',
-  'грамма': 'g',
-  'гр': 'g',
-  'г.': 'g',
-  'г': 'g',
-
-  'килограмм': 'kg',
-  'килограмма': 'kg',
-  'кг': 'kg',
-
-  'миллилитр': 'ml',
-  'миллилитров': 'ml',
-  'миллилитра': 'ml',
-  'мл': 'ml',
-
-  'литр': 'l',
-  'литра': 'l',
-  'литров': 'l',
-  'л': 'l',
-
-  'шт': 'pcs',
-  'шт.': 'pcs',
-  'штук': 'pcs',
-  'штуки': 'pcs'
-};
-
 function isCyrillic(text) {
   return /[а-яё]/i.test(text);
 }
 
-// Нормализация единиц: "200г", "200 г", "200 мл" → "200 g", "200 ml"
+// 1) нормализуем единицы
 function normalizeUnits(raw) {
   let q = raw.toLowerCase().trim();
 
-  // 1) слепленные варианты: 200г, 200гр, 150мл
-  q = q.replace(/(\d+)\s*г\b/gi, '$1 g');
-  q = q.replace(/(\d+)\s*гр\b/gi, '$1 g');
+  // слепленные: 200г, 200гр, 150мл
+  q = q.replace(/(\d+)\s*гр?\b/gi, '$1 g');
   q = q.replace(/(\d+)\s*кг\b/gi, '$1 kg');
   q = q.replace(/(\d+)\s*мл\b/gi, '$1 ml');
   q = q.replace(/(\d+)\s*л\b/gi, '$1 l');
   q = q.replace(/(\d+)\s*шт\b/gi, '$1 pcs');
 
-  // 2) текстовые варианты типа "200 грамм", "200 миллилитров"
-  for (const [ru, en] of Object.entries(UNIT_MAP)) {
-    const re = new RegExp(`\\b${ru}\\b`, 'g');
-    q = q.replace(re, en);
-  }
-
-  // 3) брутфорс: если после числа стоит одиночная кириллическая буква — считаем, что это граммы
-  q = q.replace(/(\d+)\s*[а-яё]\b/gi, '$1 g');
+  // любые кириллические буквы после числа → g
+  q = q.replace(/(\d+)\s*[а-яё]+\b/gi, '$1 g');
 
   return q;
 }
 
-
-// Маппинг RU -> EN продуктов + нормализация единиц
+// 2) мапим продукт + вычищаем ВСЮ кириллицу
 function mapRussianToEnglish(raw) {
   let q = raw.toLowerCase().trim();
 
-  // сначала единицы
   q = normalizeUnits(q);
 
-  // дальше, если осталось что‑то русское, маппим продукты
+  // продукты
   if (isCyrillic(q)) {
     for (const [ru, en] of Object.entries(RUS_ENG_MAP)) {
       if (q.includes(ru)) {
@@ -123,9 +84,24 @@ function mapRussianToEnglish(raw) {
     }
   }
 
+  // на всякий случай выкинуть всё русское вообще
+  q = q.replace(/[а-яё]/gi, '');
+
+  // подчистить двойные пробелы
+  q = q.replace(/\s+/g, ' ').trim();
+
   return q;
 }
 
+async function fetchNutrition(query, apiKey) {
+  const url = `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(query)}`;
+
+  const apiRes = await fetch(url, {
+    headers: { 'X-Api-Key': apiKey },
+  });
+
+  return apiRes;
+}
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
@@ -151,15 +127,22 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const englishQuery = mapRussianToEnglish(query);
-
-  const apiUrl =
-    `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(englishQuery)}`;
+  const englishQuery = mapRussianToEnglish(query); // напр. "buckwheat 200 g"
 
   try {
-    const apiRes = await fetch(apiUrl, {
-      headers: { 'X-Api-Key': apiKey },
-    });
+    // 1-й запрос: с количеством
+    let apiRes = await fetchNutrition(englishQuery, apiKey);
+
+    // если 502 или пусто — пробуем без количества (только продукт)
+    let triedFallback = false;
+    let fallbackQuery = englishQuery;
+
+    if (apiRes.status === 502) {
+      triedFallback = true;
+      // выкинем числа и единицы, оставим только название продукта
+      fallbackQuery = englishQuery.replace(/\d+(\s*(g|kg|ml|l|pcs))?/gi, '').trim();
+      apiRes = await fetchNutrition(fallbackQuery, apiKey);
+    }
 
     if (!apiRes.ok) {
       const status = apiRes.status;
@@ -168,7 +151,11 @@ module.exports = async (req, res) => {
       res.end(JSON.stringify({
         error: 'CalorieNinjas error',
         status,
-        debug: { original: query, english: englishQuery }
+        debug: {
+          original: query,
+          english: englishQuery,
+          fallbackQuery: triedFallback ? fallbackQuery : null
+        }
       }));
       return;
     }
@@ -194,7 +181,11 @@ module.exports = async (req, res) => {
       b: Math.round(totals.b * 10) / 10,
       zh: Math.round(totals.zh * 10) / 10,
       u: Math.round(totals.u * 10) / 10,
-      debug: { original: query, english: englishQuery, items: items.length }
+      debug: {
+        original: query,
+        english: englishQuery,
+        items: items.length
+      }
     }));
   } catch (err) {
     console.error('Nutrition API error:', err);
