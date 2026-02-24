@@ -2,7 +2,6 @@
 // GET /api/nutrition?query=<food text>
 
 module.exports = async (req, res) => {
-  // Only allow GET
   if (req.method !== 'GET') {
     res.statusCode = 405;
     res.setHeader('Content-Type', 'application/json');
@@ -10,7 +9,6 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Read query param
   const query = req.query?.query;
   if (!query || typeof query !== 'string' || query.trim() === '') {
     res.statusCode = 400;
@@ -19,8 +17,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Read API key from environment
-  const apiKey = process.env.API_NINJAS_API_KEY;
+  const apiKey = process.env.API_NINJAS_API_KEY; // или переименуй в CALORIENINJAS_API_KEY
   if (!apiKey) {
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
@@ -28,9 +25,8 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Call API Ninjas
   const apiUrl = `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(query)}`;
-  
+
   try {
     const apiRes = await fetch(apiUrl, {
       headers: {
@@ -42,13 +38,13 @@ module.exports = async (req, res) => {
       const status = apiRes.status;
       res.statusCode = 400;
       res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({ error: 'API Ninjas error', status }));
+      res.end(JSON.stringify({ error: 'CalorieNinjas error', status }));
       return;
     }
 
-    const items = await apiRes.json();
+    const data = await apiRes.json();
+    const items = data.items || [];
 
-    // Aggregate totals
     const totals = items.reduce(
       (acc, item) => {
         acc.kcal += item.calories;
@@ -60,7 +56,6 @@ module.exports = async (req, res) => {
       { kcal: 0, b: 0, zh: 0, u: 0 }
     );
 
-    // Return formatted response
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(
@@ -78,3 +73,4 @@ module.exports = async (req, res) => {
     res.end(JSON.stringify({ error: 'Server error' }));
   }
 };
+
