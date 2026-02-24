@@ -1434,12 +1434,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Set current date for the new cycle (for immediate rendering)
+    // Store date in the cycle itself, not in a global object
     const today = new Date().toISOString().slice(0, 10);
-    if (!gymState.periodStartDates) gymState.periodStartDates = {};
-    // Calculate the projected start date for this cycle
     const cycleLen = Number(period.cycleLengthDays) || 7;
     const projectedDate = new Date(new Date(today).getTime() + (nextCycle - 1) * cycleLen * 24 * 60 * 60 * 1000);
-    gymState.periodStartDates[period.id + '_cycle' + nextCycle] = projectedDate.toISOString().slice(0, 10);
+    
+    // Store date directly in the cycle runtime object (per-cycle, not global)
+    if (!rt.cycles[nextCycle]) rt.cycles[nextCycle] = { days: {}, groups: {} };
+    rt.cycles[nextCycle].date = projectedDate.toISOString().slice(0, 10);
 
     // keep runtime.totalCycles in sync but never exceed period.totalCycles
     rt.totalCycles = Math.min(maxCycles, Math.max(Number(rt.totalCycles) || 1, nextCycle));
@@ -1465,10 +1467,100 @@ document.addEventListener('DOMContentLoaded', () => {
     gymEl.newCycleBtn.addEventListener('click', gymCreateNextCycle);
   }
   
+  // Обработчик создания нового периода (кнопка "Создать период" в мастере)
+  if (gymEl.periodStep2CreateBtn) {
+    gymEl.periodStep2CreateBtn.addEventListener('click', () => {
+      if (!gymPeriodWizardDraft) return;
+      
+      const periodId = gymCreatePeriodId();
+      const today = new Date().toISOString().slice(0, 10);
+      
+      // Собираем дни из DOM (шаг 2 мастера)
+      const days = [];
+      if (gymEl.periodDaysContainer) {
+        const dayDivs = gymEl.periodDaysContainer.querySelectorAll('[data-day-index]');
+        dayDivs.forEach(div => {
+          const dayIndex = Number(div.dataset.dayIndex);
+          const musclesInput = div.querySelector('[data-field="muscles"]');
+          const muscles = musclesInput ? (musclesInput.value || '').split(',').map(s => s.trim()).filter(Boolean) : [];
+          const enabledCheckbox = div.querySelector('[data-field="dayEnabled"]');
+          const enabled = enabledCheckbox ? enabledCheckbox.checked : true;
+          
+          if (enabled) {
+            days.push({ dayIndex, muscles });
+          }
+        });
+      }
+      
+      // Создаём НОВЫЙ период без наследования истории от старых периодов
+      const newPeriod = {
+        id: periodId,
+        name: gymPeriodWizardDraft.name || 'Период',
+        type: gymPeriodWizardDraft.type || 'strength',
+        splitType: gymPeriodWizardDraft.splitType || 'split',
+        cycleLengthDays: gymPeriodWizardDraft.cycleLengthDays || 7,
+        totalCycles: gymPeriodWizardDraft.totalCycles || 8,
+        workoutsPerCycle: gymPeriodWizardDraft.workoutsPerCycle || 3,
+        days: days,
+        startDate: today, // Устанавливаем текущую дату сразу
+        // НЕ копируем никакие данные из старых периодов:
+        // - нет history
+        // - нет completedWorkouts
+        // - нет previousPeriodData
+      };
+
+      // Debug logging
+      if (typeof console !== 'undefined' && console.log) {
+        console.log('[GYM] Created new period:', {
+          periodId: newPeriod.id,
+          name: newPeriod.name,
+          startDate: newPeriod.startDate,
+          daysCount: days.length
+        });
+      }
+      
+      // Добавляем в state
+      if (!gymState.periods) gymState.periods = {};
+      gymState.periods[periodId] = newPeriod;
+      
+      if (!gymState.periodOrder) gymState.periodOrder = [];
+      gymState.periodOrder.push(periodId);
+      
+      // Инициализируем runtime для нового периода - чистый, без данных
+      if (!gymState.runtime) gymState.runtime = {};
+      const initialDays = {};
+      days.forEach(d => {
+        initialDays[d.dayIndex] = { enabled: true, groups: {}, muscles: d.muscles || [] };
+      });
+      
+      gymState.runtime[periodId] = {
+        currentCycle: 1,
+        totalCycles: newPeriod.totalCycles,
+        periodDone: 1,
+        cycles: {
+          1: { days: initialDays, groups: {} },
+        },
+      };
+      
+      // Сохраняем и рендерим
+      gymPersistState();
+      
+      // Закрываем мастер и открываем период
+      if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
+      
+      // Открываем список периодов - новый период будет виден
+      gymOpenPeriodsScreen();
+      
+      // Автоматически открываем созданный период
+      gymSetActivePeriod(periodId);
+      gymOpen();
+    });
+  }
+  
   function gymSaveCurrentCycleDefinition() {
     const period = gymGetActivePeriod();
     if (!period || !gymEl.groupsContainer) return;
-  
+
     // базовая карта только с dayIndex + muscles
     const daysMap = new Map();
     const baseDays = Array.isArray(period.days) ? period.days : [];
@@ -1538,16 +1630,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     period.days = Array.from(templateMap.values()).sort((a,b)=>a.dayIndex-b.dayIndex);
 
-    // Propagate the active days structure (muscles + groups/exercises) forward to all future cycles
+    // Propagate the active days structure (muscles + groups/exercises NAMES ONLY) forward to all future cycles
+    // IMPORTANT: Do NOT copy actual workout data (weights, reps, completion flags) - only structure
     for (let c = currentCycleIndex + 1; c <= maxCycles; c += 1) {
       if (!rtFull.cycles[c]) rtFull.cycles[c] = { days: {}, groups: {} };
       const dest = rtFull.cycles[c];
       activeDayIndexes.forEach((idx) => {
         const srcDay = currentCycleRuntime.days && currentCycleRuntime.days[idx] ? currentCycleRuntime.days[idx] : {};
-        // deep clone groups/exercises if present
+        
+        // Copy only exercise NAMES, not actual workout data (weights, reps, etc.)
+        let targetGroups = {};
+        if (srcDay.groups && typeof srcDay.groups === 'object') {
+          Object.keys(srcDay.groups).forEach(gName => {
+            const arr = srcDay.groups[gName];
+            if (Array.isArray(arr)) {
+              // Keep only exercise names, clear all actual data
+              targetGroups[gName] = arr.map(ex => ex ? { name: ex.name || '' } : null);
+            }
+          });
+        }
+        
         dest.days[idx] = {
           enabled: true,
-          groups: srcDay.groups ? JSON.parse(JSON.stringify(srcDay.groups)) : {},
+          groups: targetGroups,
           muscles: Array.isArray(srcDay.muscles) ? srcDay.muscles.slice() : (templateMap.get(idx)?.muscles || []),
         };
       });
@@ -3235,7 +3340,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (gymEl.periodsBackBtn) {
     gymEl.periodsBackBtn.addEventListener('click', gymClosePeriodsScreen);
   }
-
+  console.log('NEW PERIOD OBJ', newPeriod)
   // кнопки "Создать период"
   if (gymEl.createPeriodBtn) {
     gymEl.createPeriodBtn.addEventListener('click', () => {
