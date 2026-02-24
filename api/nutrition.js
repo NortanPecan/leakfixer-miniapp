@@ -25,8 +25,8 @@ const RUS_ENG_MAP = {
   'яйца': 'egg',
   'омлет': 'omelette',
 
-  'курица': 'chicken breast',
   'курица грудка': 'chicken breast',
+  'курица': 'chicken breast',
   'цыпленок': 'chicken',
   'говядина': 'beef lean',
   'свинина': 'pork',
@@ -48,16 +48,70 @@ const RUS_ENG_MAP = {
   'капуста': 'cabbage',
 };
 
-// Проверка: есть ли кириллица
+// Маппинг русских обозначений единиц -> латиница
+const UNIT_MAP = {
+  'грамм': 'g',
+  'граммов': 'g',
+  'грамма': 'g',
+  'гр': 'g',
+  'г.': 'g',
+  'г': 'g',
+
+  'килограмм': 'kg',
+  'килограмма': 'kg',
+  'кг': 'kg',
+
+  'миллилитр': 'ml',
+  'миллилитров': 'ml',
+  'миллилитра': 'ml',
+  'мл': 'ml',
+
+  'литр': 'l',
+  'литра': 'l',
+  'литров': 'l',
+  'л': 'l',
+
+  'шт': 'pcs',
+  'шт.': 'pcs',
+  'штук': 'pcs',
+  'штуки': 'pcs'
+};
+
 function isCyrillic(text) {
   return /[а-яё]/i.test(text);
 }
 
-// Маппинг RU -> EN по словарю
+// Нормализация единиц: "200г", "200 г", "200 мл" → "200 g", "200 ml"
+function normalizeUnits(raw) {
+  let q = raw.toLowerCase();
+
+  // Случай слепленных: 200г, 150мл
+  q = q.replace(/(\d+)\s*г\b/gi, '$1 g');
+  q = q.replace(/(\d+)\s*гр\b/gi, '$1 g');
+  q = q.replace(/(\d+)\s*кг\b/gi, '$1 kg');
+  q = q.replace(/(\d+)\s*мл\b/gi, '$1 ml');
+  q = q.replace(/(\d+)\s*л\b/gi, '$1 l');
+  q = q.replace(/(\d+)\s*шт\b/gi, '$1 pcs');
+
+  // Текстовые варианты
+  for (const [ru, en] of Object.entries(UNIT_MAP)) {
+    const re = new RegExp(`\\b${ru}\\b`, 'g');
+    q = q.replace(re, en);
+  }
+
+  return q;
+}
+
+// Маппинг RU -> EN продуктов + нормализация единиц
 function mapRussianToEnglish(raw) {
   let q = raw.toLowerCase().trim();
+
+  // сначала нормализуем единицы
+  q = normalizeUnits(q);
+
   if (!isCyrillic(q)) return q; // уже английский
 
+  // потом продукты
   for (const [ru, en] of Object.entries(RUS_ENG_MAP)) {
     if (q.includes(ru)) {
       q = q.replace(new RegExp(ru, 'g'), en);
@@ -68,7 +122,6 @@ function mapRussianToEnglish(raw) {
 }
 
 module.exports = async (req, res) => {
-  // Только GET
   if (req.method !== 'GET') {
     res.statusCode = 405;
     res.setHeader('Content-Type', 'application/json');
@@ -76,7 +129,6 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // query ?query=
   const query = req.query?.query;
   if (!query || typeof query !== 'string' || query.trim() === '') {
     res.statusCode = 400;
@@ -85,7 +137,6 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // ключ CalorieNinjas (зарегистрируйся на calorieninjas.com)
   const apiKey = process.env.CALORIE_NINJAS_API_KEY;
   if (!apiKey) {
     res.statusCode = 500;
@@ -94,7 +145,6 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // 1) пробуем словарь, 2) если всё ещё кириллица — просто шлём как есть
   const englishQuery = mapRussianToEnglish(query);
 
   const apiUrl =
