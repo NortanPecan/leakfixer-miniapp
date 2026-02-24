@@ -3100,6 +3100,44 @@ document.addEventListener('DOMContentLoaded', () => {
               );
             }
           }
+
+          // UX: "План на след цикл" - immediately show in next cycle if it exists
+          if (field === 'nextCyclePlan') {
+            const period = gymGetActivePeriod();
+            if (period) {
+              const rtFull = gymState.runtime?.[period.id];
+              const currentCycle = rtFull?.currentCycle || 1;
+              const nextCycle = currentCycle + 1;
+              
+              // Check if next cycle already exists
+              if (rtFull?.cycles?.[nextCycle]) {
+                const nextCycleRuntime = rtFull.cycles[nextCycle];
+                if (nextCycleRuntime?.days?.[dayIndex]?.groups?.[groupName]) {
+                  const nextArr = nextCycleRuntime.days[dayIndex].groups[groupName];
+                  if (nextArr[idx]) {
+                    // Transfer nextCyclePlan to workWeight in next cycle immediately
+                    nextArr[idx].workWeight = arr[idx].nextCyclePlan || '';
+                    // Debug logging
+                    if (typeof console !== 'undefined' && console.log) {
+                      console.log('[GYM] nextCyclePlan updated:', {
+                        periodId: period.id,
+                        currentCycle,
+                        nextCycle,
+                        dayIndex,
+                        groupName,
+                        exerciseIdx: idx,
+                        nextCyclePlan: arr[idx].nextCyclePlan,
+                        workWeight: nextArr[idx].workWeight
+                      });
+                    }
+                    // Re-render to show the change
+                    gymPersistState();
+                    gymRenderAll();
+                  }
+                }
+              }
+            }
+          }
         });
       });
   
@@ -3481,11 +3519,25 @@ document.addEventListener('DOMContentLoaded', () => {
     gymEl.backBtn.addEventListener('click', gymClose);
   }
   // "Save cycle": commit current runtime structure for this cycle to gymState + localStorage.
+  // IMPORTANT: Only save current cycle data - do NOT propagate to future cycles
   if (gymEl.saveBtn) {
     gymEl.saveBtn.textContent = 'Сохранить цикл';
     gymEl.saveBtn.addEventListener('click', () => {
-      gymSaveCurrentCycleDefinition();
-      gymRenderGroups();
+      const period = gymGetActivePeriod();
+      if (!period) return;
+      
+      // Debug logging
+      if (typeof console !== 'undefined' && console.log) {
+        console.log('[GYM] Save cycle:', {
+          periodId: period.id,
+          currentCycle: gymState.runtime?.[period.id]?.currentCycle,
+          savedAt: new Date().toISOString()
+        });
+      }
+      
+      // Only save current cycle - no propagation to future cycles
+      gymPersistState();
+      gymRenderAll();
     });
   }
   
