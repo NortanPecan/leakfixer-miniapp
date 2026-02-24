@@ -3101,44 +3101,68 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
 
-          // UX: "План на след цикл" - immediately show in next cycle if it exists
+          // UX: "План на след цикл" - apply only on blur (when user finishes typing)
+          // Using 'change' event instead of 'input' - triggers when user leaves the field
           if (field === 'nextCyclePlan') {
+            // The actual sync to next cycle will happen on 'change' event, handled separately below
+          }
+        });
+
+        // Separate handler for nextCyclePlan 'change' event (when user finishes typing)
+        if (input.dataset.field === 'nextCyclePlan') {
+          input.addEventListener('change', () => {
+            const card = input.closest('[data-index]');
+            const list = input.closest('[data-group]');
+            const dayWrapper = input.closest('[data-day-index]');
+            if (!card || !list || !dayWrapper) return;
+
+            const idx = Number(card.dataset.index || '0');
+            const groupName = list.dataset.group;
+            const dayIndex = Number(dayWrapper.dataset.dayIndex || '1');
+
+            const runtime = gymGetCurrentCycle();
+            if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
+            const dayRuntime = runtime.days[dayIndex];
+            if (!dayRuntime.groups[groupName]) dayRuntime.groups[groupName] = [];
+            const arr = dayRuntime.groups[groupName];
+
+            if (!arr[idx]) return;
+
+            // Update the value
+            arr[idx].nextCyclePlan = input.value;
+
+            // Apply to next cycle if it exists
             const period = gymGetActivePeriod();
             if (period) {
               const rtFull = gymState.runtime?.[period.id];
               const currentCycle = rtFull?.currentCycle || 1;
               const nextCycle = currentCycle + 1;
-              
-              // Check if next cycle already exists
+
               if (rtFull?.cycles?.[nextCycle]) {
                 const nextCycleRuntime = rtFull.cycles[nextCycle];
                 if (nextCycleRuntime?.days?.[dayIndex]?.groups?.[groupName]) {
                   const nextArr = nextCycleRuntime.days[dayIndex].groups[groupName];
                   if (nextArr[idx]) {
-                    // Transfer nextCyclePlan to workWeight in next cycle immediately
                     nextArr[idx].workWeight = arr[idx].nextCyclePlan || '';
-                    // Debug logging
+                    
                     if (typeof console !== 'undefined' && console.log) {
-                      console.log('[GYM] nextCyclePlan updated:', {
+                      console.log('[GYM] nextCyclePlan applied to next cycle:', {
                         periodId: period.id,
                         currentCycle,
                         nextCycle,
-                        dayIndex,
-                        groupName,
-                        exerciseIdx: idx,
                         nextCyclePlan: arr[idx].nextCyclePlan,
                         workWeight: nextArr[idx].workWeight
                       });
                     }
-                    // Re-render to show the change
-                    gymPersistState();
-                    gymRenderAll();
                   }
                 }
               }
             }
-          }
-        });
+
+            gymPersistState();
+            gymRenderAll();
+          });
+        }
       });
   
     // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ УПРАЖНЕНИЕ ----
