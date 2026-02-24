@@ -83,9 +83,9 @@ function isCyrillic(text) {
 
 // Нормализация единиц: "200г", "200 г", "200 мл" → "200 g", "200 ml"
 function normalizeUnits(raw) {
-  let q = raw.toLowerCase();
+  let q = raw.toLowerCase().trim();
 
-  // Случай слепленных: 200г, 150мл
+  // 1) слепленные варианты: 200г, 200гр, 150мл
   q = q.replace(/(\d+)\s*г\b/gi, '$1 g');
   q = q.replace(/(\d+)\s*гр\b/gi, '$1 g');
   q = q.replace(/(\d+)\s*кг\b/gi, '$1 kg');
@@ -93,33 +93,39 @@ function normalizeUnits(raw) {
   q = q.replace(/(\d+)\s*л\b/gi, '$1 l');
   q = q.replace(/(\d+)\s*шт\b/gi, '$1 pcs');
 
-  // Текстовые варианты
+  // 2) текстовые варианты типа "200 грамм", "200 миллилитров"
   for (const [ru, en] of Object.entries(UNIT_MAP)) {
     const re = new RegExp(`\\b${ru}\\b`, 'g');
     q = q.replace(re, en);
   }
 
+  // 3) брутфорс: если после числа стоит одиночная кириллическая буква — считаем, что это граммы
+  q = q.replace(/(\d+)\s*[а-яё]\b/gi, '$1 g');
+
   return q;
 }
+
 
 // Маппинг RU -> EN продуктов + нормализация единиц
 function mapRussianToEnglish(raw) {
   let q = raw.toLowerCase().trim();
 
-  // сначала нормализуем единицы
+  // сначала единицы
   q = normalizeUnits(q);
 
-  if (!isCyrillic(q)) return q; // уже английский
-
-  // потом продукты
-  for (const [ru, en] of Object.entries(RUS_ENG_MAP)) {
-    if (q.includes(ru)) {
-      q = q.replace(new RegExp(ru, 'g'), en);
-      break;
+  // дальше, если осталось что‑то русское, маппим продукты
+  if (isCyrillic(q)) {
+    for (const [ru, en] of Object.entries(RUS_ENG_MAP)) {
+      if (q.includes(ru)) {
+        q = q.replace(new RegExp(ru, 'g'), en);
+        break;
+      }
     }
   }
+
   return q;
 }
+
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
