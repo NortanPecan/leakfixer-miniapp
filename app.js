@@ -1116,6 +1116,58 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+/**
+ * GYM storage & saving contract (LeakFixer)
+ *
+ * Terminology:
+ * - Period card  = item in the "GYM periods" list (name, type, dates, totalCycles, etc.).
+ * - Cycle card   = screen for one period + cycle (header with "Cycle X/Y", list of days, "Save cycle" button).
+ * - Day card     = one day inside a cycle (set of exercises, "Day active", "Day completed").
+ * - Exercise card= one exercise inside a day (header with name + working sets, expanded details).
+ *
+ * Saving rules:
+ *
+ * 1) Period card
+ *    - name, type, manual startDate edits:
+ *      → saved immediately to gymState + localStorage on change (low-frequency settings).
+ *
+ * 2) Cycle card (whole cycle with all days)
+ *    - structural / planning changes for the cycle (days, which are active, how active days propagate to future cycles, etc.)
+ *      live in memory/runtime while editing.
+ *    - "Save cycle" button:
+ *      → commits the current cycle structure and plan to gymState + localStorage,
+ *      → used for copying active days to future cycles, updating period progress, etc.
+ *
+ * 3) Day card
+ *    - editing a day (adding/removing exercises, toggling "day active", etc.)
+ *      updates runtime for that day while editing.
+ *    - "Save day" button:
+ *      → commits that day's structure/settings to gymState + localStorage.
+ *    - "Day completed" checkbox + completion date:
+ *      → saved immediately (no extra button) to gymState.completedWorkouts + backend DB,
+ *        using "today" if no date is chosen.
+ *
+ * 4) Exercise card
+ *    - Header (right side of exercise name):
+ *      - editable working sets: setsCount, repsCount, workWeight.
+ *      - when these change:
+ *          → update exercise fields in gymState,
+ *          → immediately persist to localStorage via gymSaveState,
+ *          → immediately send to backend DB (e.g. FitnessSync.saveGymExerciseSets),
+ *            if FitnessSync / currentAppUserId are available.
+ *    - Inside expanded exercise body:
+ *      - working sets are read-only (display the same setsCount/repsCount/workWeight),
+ *        no second editable copy.
+ *      - other fields like notes, RPE, nextCyclePlan can be saved immediately on change.
+ *
+ * Summary:
+ * - Period & exercise-level details (settings, notes, working sets) save immediately.
+ * - Day-level structure saves on "Save day".
+ * - Cycle-level structure & propagation saves on "Save cycle".
+ * - Day completion and working sets also sync to backend right away.
+ */
+
+
   const GYM_STORAGE_KEY = 'leakfixer_gym_data';
   const GYM_DEFAULT_GROUPS = ['Грудь + Трицепс', 'Спина + Бицепс', 'Ноги + Икры'];
 
@@ -1278,6 +1330,8 @@ document.addEventListener('DOMContentLoaded', () => {
     rt.cycles[nextCycle].days = nextRuntimeDays;
 
     // If exercises include a nextCyclePlan, prefill workWeight in the new cycle from that plan
+    // "Save cycle": commit current runtime structure for this cycle to gymState + localStorage.
+
     Object.keys(nextRuntimeDays).forEach((dIdx) => {
       const d = nextRuntimeDays[dIdx];
       if (!d || !d.groups) return;
@@ -1676,35 +1730,68 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
-      // If no explicit startDate set, but there are completed workouts, infer startDate
       const cw = Array.isArray(gymState.completedWorkouts) ? gymState.completedWorkouts.filter(e => e.periodId === p.id) : [];
-      if (!p.startDate && cw.length) {
-        const dates = cw.map(x => x.dateCompleted).filter(Boolean).sort();
-        if (dates.length) {
-          p.startDate = dates[0];
-          gymState.periods[id].startDate = p.startDate;
-          gymSaveState(gymState);
-        }
-      }
 
       // fill planned and actual ranges
       const plannedRangeEl = card.querySelector('[data-role="plannedRange"]');
       const actualRangeEl = card.querySelector('[data-role="actualRange"]');
-      const startVal = p.startDate || '';
+      // Planned range: compute cycle start dates using completed-workout starts where available,
+      // otherwise project future cycle starts by adding cycleLengthDays.
+      const totalCycles = Number(p.totalCycles) || 1;
+      const cycleLen = Number(p.cycleLengthDays) || 1;
+      const cycleStarts = {};
+      // use completed workouts' earliest date per cycle if present
+      cw.forEach(r => {
+        const ci = Number(r.cycleIndex) || 1;
+        if (!cycleStarts[ci]) cycleStarts[ci] = r.dateCompleted;
+        else if (r.dateCompleted && r.dateCompleted < cycleStarts[ci]) cycleStarts[ci] = r.dateCompleted;
+      });
+      // seed cycle 1 from explicit period.startDate if missing
+      if (!cycleStarts[1] && p.startDate) cycleStarts[1] = p.startDate;
+      // propagate projected starts
+      for (let i = 1; i <= totalCycles; i++) {
+        if (!cycleStarts[i]) {
+          const prev = i - 1;
+          if (cycleStarts[prev]) {
+            const prevDate = new Date(cycleStarts[prev] + 'T00:00:00');
+            const projected = new Date(prevDate.getTime() + cycleLen * 24 * 60 * 60 * 1000);
+            cycleStarts[i] = projected.toISOString().slice(0,10);
+          }
+        }
+      }
+
       if (plannedRangeEl) {
-        if (startVal) {
-          const sd = new Date(startVal + 'T00:00:00');
-          const daysTotal = Number(p.cycleLengthDays || 0) * Number(p.totalCycles || 0);
-          const ed = new Date(sd.getTime() + (daysTotal - 1) * 24 * 60 * 60 * 1000);
-          plannedRangeEl.textContent = `${startVal} — ${ed.toISOString().slice(0,10)}`;
+        if (cycleStarts[1]) {
+          const lastStart = cycleStarts[totalCycles] || cycleStarts[Object.keys(cycleStarts).map(Number).sort((a,b)=>a-b).pop()];
+          if (lastStart) {
+            const lastStartDate = new Date(lastStart + 'T00:00:00');
+            const lastEndDate = new Date(lastStartDate.getTime() + (cycleLen - 1) * 24 * 60 * 60 * 1000);
+            plannedRangeEl.textContent = `${cycleStarts[1]} — ${lastEndDate.toISOString().slice(0,10)}`;
+          } else plannedRangeEl.textContent = '—';
         } else {
           plannedRangeEl.textContent = '—';
         }
       }
+
+      // Actual range: start = earliest completed date; end = only set when last cycle fully completed
       if (actualRangeEl) {
         if (cw.length) {
           const sorted = cw.map(x => x.dateCompleted).filter(Boolean).sort();
-          actualRangeEl.textContent = `${sorted[0]} — ${sorted[sorted.length-1]}`;
+          const earliest = sorted[0];
+          // check completion of last cycle
+          const lastCycle = Number(p.totalCycles) || 1;
+          const rtFull = gymState.runtime && gymState.runtime[p.id] ? gymState.runtime[p.id] : null;
+          let expectedCount = 0;
+          if (rtFull && rtFull.cycles && rtFull.cycles[lastCycle] && rtFull.cycles[lastCycle].days) {
+            expectedCount = Object.keys(rtFull.cycles[lastCycle].days).filter(k => (rtFull.cycles[lastCycle].days[k].enabled !== false)).length;
+          }
+          const completedInLast = cw.filter(e => Number(e.cycleIndex) === lastCycle);
+          if (expectedCount > 0 && completedInLast.length >= expectedCount) {
+            const lastDates = completedInLast.map(x => x.dateCompleted).filter(Boolean).sort();
+            actualRangeEl.textContent = `${earliest} — ${lastDates[lastDates.length-1]}`;
+          } else {
+            actualRangeEl.textContent = `${earliest} — —`;
+          }
         } else {
           actualRangeEl.textContent = '—';
         }
@@ -2074,7 +2161,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const checked = completedCheckbox.checked;
         const dateVal = completedDate.value || todayStr;
         if (checked) {
+          const beforeCount = (gymState.completedWorkouts || []).filter(e => e.periodId === period.id).length;
           gymState.completedWorkouts.push({ periodId: period.id, cycleIndex: currentCycleIndexForCompletion, dayIndex: dayIndex, dateCompleted: dateVal });
+          // if this is the very first completed workout for the period and startDate is empty, set it
+          if (beforeCount === 0 && (!gymState.periods[period.id].startDate || gymState.periods[period.id].startDate === '')) {
+            gymState.periods[period.id].startDate = dateVal;
+          }
         } else {
           gymState.completedWorkouts = (gymState.completedWorkouts || []).filter(e => !(e.periodId === period.id && Number(e.cycleIndex) === Number(currentCycleIndexForCompletion) && Number(e.dayIndex) === Number(dayIndex)));
         }
@@ -2269,6 +2361,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ex.repsCount !== undefined) repsInput.value = ex.repsCount;
             if (ex.workWeight !== undefined) weightInput.value = ex.workWeight;
 
+            setsInput.setAttribute('data-field','setsCount');
+            repsInput.setAttribute('data-field','repsCount');
+            weightInput.setAttribute('data-field','workWeight');
             titleWrap.appendChild(setsInput);
             titleWrap.appendChild(repsInput);
             titleWrap.appendChild(weightInput);
@@ -2316,14 +2411,6 @@ document.addEventListener('DOMContentLoaded', () => {
             body.innerHTML = `
               <div class="flex gap-2 text-xs">
                 <div class="flex-1">
-                  <div class="text-slate-400 mb-1">Подходы (кол-во/повт/вес)</div>
-                  <div class="flex gap-2">
-                    <input class="w-16 bg-white/10 text-white rounded-lg px-2 py-1" placeholder="sets" value="${ex.setsCount || ''}" data-field="setsCount" />
-                    <input class="w-20 bg-white/10 text-white rounded-lg px-2 py-1" placeholder="reps" value="${ex.repsCount || ''}" data-field="repsCount" />
-                    <input class="w-24 bg-white/10 text-white rounded-lg px-2 py-1" placeholder="weight" value="${ex.workWeight || ''}" data-field="workWeight" />
-                  </div>
-                </div>
-                <div class="flex-1">
                   <div class="text-slate-400 mb-1">Разминка (опц.)</div>
                   <input
                     class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
@@ -2333,7 +2420,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   />
                 </div>
               </div>
-  
+
               <div class="flex items-center justify-between text-xs">
                 <div class="flex-1 mr-2">
                   <div class="text-slate-400 mb-1">RPE 1–10</div>
@@ -2355,7 +2442,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   </div>
                 </div>
               </div>
-  
+
               <div class="flex gap-2 text-xs">
                 <div class="flex-1">
                   <div class="text-slate-400 mb-1">Прогресс за период</div>
@@ -2526,6 +2613,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   
     // ---- СОХРАНИТЬ ДЕНЬ ----
+    // "Save day": commit this day's structure/settings to gymState + localStorage.
+
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="daySave"]')
       .forEach((btn) => {
@@ -3091,7 +3180,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (gymEl.backBtn) {
     gymEl.backBtn.addEventListener('click', gymClose);
   }
-  
+  // "Save cycle": commit current runtime structure for this cycle to gymState + localStorage.
   if (gymEl.saveBtn) {
     gymEl.saveBtn.textContent = 'Сохранить цикл';
     gymEl.saveBtn.addEventListener('click', () => {
