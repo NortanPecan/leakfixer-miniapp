@@ -3717,43 +3717,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // --- Fitness: Еда - добавление с API Ninjas ---
+  // --- Fitness: Еда - добавление (открытие модалки) ---
   const fitnessFoodAddBtn = document.getElementById('fitnessFoodAdd');
-  const fitnessFoodListEl = document.getElementById('fitnessFoodList');
 
   if (fitnessFoodAddBtn) {
-    fitnessFoodAddBtn.addEventListener('click', async () => {
-      const inputText = prompt('Что съели? (например: гречка 200г вареная)');
-      if (!inputText || !inputText.trim()) return;
-
-      // Show loading state
-      fitnessFoodAddBtn.textContent = 'Загрузка...';
-      fitnessFoodAddBtn.disabled = true;
-
-      try {
-        // Use FitnessState.onFoodSubmit which calls API Ninjas
-        const result = await FitnessState.onFoodSubmit(inputText.trim());
-        
-        if (result.success) {
-          // Re-render food list
-          if (fitnessFoodListEl && typeof FitnessState.getFoodListViewModel === 'function') {
-            const dateKey = FitnessState.formatDateKey(new Date());
-            const dayData = FitnessState.getDayData(dateKey);
-            const vm = FitnessState.getFoodListViewModel(dayData.foods || []);
-            fitnessFoodListEl.innerHTML = vm.html;
-          }
-          showAlert(`Добавлено: ${result.entry.calories} ккал (Б: ${result.entry.protein}, Ж: ${result.entry.fat}, У: ${result.entry.carbs})`);
-        } else {
-          showAlert('Ошибка: ' + (result.error || 'Не удалось получить данные о питании'));
-        }
-      } catch (err) {
-        console.error('Food add error:', err);
-        showAlert('Ошибка при добавлении еды');
-      } finally {
-        fitnessFoodAddBtn.textContent = 'Добавить приём пищи';
-        fitnessFoodAddBtn.disabled = false;
-      }
+    fitnessFoodAddBtn.addEventListener('click', () => {
+      fitnessOpenFoodModal(null); // открываем нашу объединённую форму (ручной/авто)
     });
   }
+
 
 }); // конец DOMContentLoaded
