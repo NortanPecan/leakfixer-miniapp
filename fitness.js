@@ -500,6 +500,55 @@ function buildSupplementEntry(form, editId) {
 
 // ─── Public API ───────────────────────────────────────────────────────────
 
+// ─── API Ninjas Nutrition integration ───────────────────────────────────
+
+/** Call backend nutrition API
+ * @param {string} inputText - food text like "гречка 200г вареная"
+ * @returns {Promise<{kcal: number, b: number, zh: number, u: number}>}
+ */
+async function fetchNutritionForInput(inputText) {
+  const res = await fetch(`/api/nutrition?query=${encodeURIComponent(inputText)}`);
+  if (!res.ok) {
+    throw new Error('Nutrition API error');
+  }
+  return res.json();
+}
+
+/** Handle food submission with API Ninjas nutrition lookup
+ * @param {string} inputText - user input like "гречка 200г вареная"
+ * @param {Date} [time] - optional time, defaults to now
+ * @returns {Promise<{success: boolean, entry?: FoodEntry, error?: string}>}
+ */
+async function onFoodSubmit(inputText, time = new Date()) {
+  try {
+    // Get nutrition data from API
+    const nutrition = await fetchNutritionForInput(inputText);
+
+    // Build food entry with nutrition data
+    const entry = {
+      id: generateId(),
+      name: inputText,
+      amount: '',
+      calories: nutrition.kcal,
+      protein: nutrition.b,
+      fat: nutrition.zh,
+      carbs: nutrition.u,
+      time: formatTimeHM(time),
+    };
+
+    // Get current day data and add entry
+    const dateKey = formatDateKey(time);
+    const dayData = getDayData(dateKey);
+    const updatedFoods = mergeFood(dayData.foods || [], entry);
+    updateDayData(dateKey, { foods: updatedFoods });
+
+    return { success: true, entry };
+  } catch (err) {
+    console.error('onFoodSubmit error:', err);
+    return { success: false, error: err.message || 'Failed to get nutrition data' };
+  }
+}
+
 window.FitnessState = {
   getFitnessProfile,
   setFitnessProfile,
@@ -535,4 +584,7 @@ window.FitnessState = {
   BALANCE_GREEN_MAX,
   BALANCE_RED_THRESHOLD,
   getWorkActivityMultiplier,
+  // NEW: API Ninjas integration
+  fetchNutritionForInput,
+  onFoodSubmit,
 };
