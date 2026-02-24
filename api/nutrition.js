@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
   }
 
   // Call API Ninjas
-  const apiUrl = `https://api.api-ninjas.com/v1/nutrition?query=${encodeURIComponent(query)}`;
+  const apiUrl = `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(query)}`;
   
   try {
     const apiRes = await fetch(apiUrl, {
