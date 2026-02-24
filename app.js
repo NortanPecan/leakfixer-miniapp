@@ -539,7 +539,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
             <span>
               ${item.timeText ? `<span class="opacity-70 mr-1">${item.timeText}</span>` : ''}
-              ${item.name} ${item.amount}${item.caloriesText ? ' • ' + item.caloriesText : ''}
+              ${item.name} ${item.amount ? item.amount + ' ' : ''}${item.caloriesText ? '• ' + item.caloriesText : ''}
+              ${item.macrosText ? `<span class="text-xs opacity-70 ml-1">(${item.macrosText})</span>` : ''}
             </span>
             <span>
               <button type="button" class="fitness-food-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
@@ -690,34 +691,179 @@ document.addEventListener('DOMContentLoaded', () => {
     const dayData = FS.getDayData(fitnessGetDateKey());
     const existing = editId ? (dayData.foods || []).find((f) => f.id === editId) : null;
     const defaultTime = existing?.time || FS.formatTimeHM(new Date());
-    let html = '<h3 class="font-semibold mb-4">Добавить приём пищи</h3>';
-    html += '<div class="space-y-3"><label class="block">Название</label><input type="text" id="fmFoodName" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.name ?? '') + '" placeholder="Что съели">';
-    html += '<label class="block">Количество</label><input type="text" id="fmFoodAmount" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.amount ?? '') + '" placeholder="200 г, 1 порция">';
-    html += '<label class="block">Калории (опционально)</label><input type="number" id="fmFoodCalories" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.calories ?? '') + '">';
-    html += '<label class="block">Время (примерно)</label><input type="time" id="fmFoodTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
-    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmFoodCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmFoodSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
+    
+    // For editing, only show Manual mode with pre-filled values
+    const isEditMode = !!editId;
+    
+    let html = '<h3 class="font-semibold mb-4">' + (isEditMode ? 'Редактировать приём пищи' : 'Добавить приём пищи') + '</h3>';
+    
+    // Mode toggle (only for new entries)
+    if (!isEditMode) {
+      html += '<div class="flex gap-2 mb-4">';
+      html += '<button type="button" id="fmModeManual" class="flex-1 py-2 px-3 rounded-lg bg-green-500/50 text-sm font-medium">Ручной ввод</button>';
+      html += '<button type="button" id="fmModeAuto" class="flex-1 py-2 px-3 rounded-lg bg-white/10 text-sm font-medium opacity-70">Авто (текст)</button>';
+      html += '</div>';
+    }
+    
+    // Manual mode content
+    html += '<div id="fmManualContent" class="space-y-3">';
+    html += '<label class="block text-sm">Название</label><input type="text" id="fmFoodName" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.name ?? '') + '" placeholder="Что съели">';
+    html += '<label class="block text-sm">Количество</label><input type="text" id="fmFoodAmount" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.amount ?? '') + '" placeholder="200 г, 1 порция">';
+    html += '<label class="block text-sm">Калории (опционально)</label><input type="number" id="fmFoodCalories" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.calories ?? '') + '">';
+    html += '<div class="flex gap-2">';
+    html += '<div class="flex-1"><label class="block text-sm">Б (опц.)</label><input type="number" id="fmFoodProtein" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.protein ?? '') + '" placeholder="0"></div>';
+    html += '<div class="flex-1"><label class="block text-sm">Ж (опц.)</label><input type="number" id="fmFoodFat" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.fat ?? '') + '" placeholder="0"></div>';
+    html += '<div class="flex-1"><label class="block text-sm">У (опц.)</label><input type="number" id="fmFoodCarbs" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.carbs ?? '') + '" placeholder="0"></div>';
+    html += '</div>';
+    html += '<label class="block text-sm">Время (примерно)</label><input type="time" id="fmFoodTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
+    html += '</div>';
+    
+    // Auto mode content (hidden by default, only for new entries)
+    if (!isEditMode) {
+      html += '<div id="fmAutoContent" class="space-y-3 hidden">';
+      html += '<label class="block text-sm">Текст (лучше по‑английски)</label><input type="text" id="fmFoodQuery" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" placeholder="buckwheat 200 g или гречка 200 г">';
+      html += '<p class="text-xs opacity-70">Авто‑режим считает калории и БЖУ по тексту. Лучше вводить на английском (buckwheat 200 g). Русский тоже работает: гречка 200 г, творог 150 г.</p>';
+      html += '<label class="block text-sm">Время (примерно)</label><input type="time" id="fmFoodTimeAuto" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
+      html += '<div id="fmAutoError" class="text-red-300 text-sm hidden"></div>';
+      html += '</div>';
+    }
+    
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmFoodCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmFoodSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">' + (isEditMode ? 'Сохранить' : 'Добавить') + '</button></div>';
+    
     fitnessOpenModal(html, () => {
+      // Mode toggle handlers (only for new entries)
+      if (!isEditMode) {
+        const modeManual = fitnessEl.modalOverlay.querySelector('#fmModeManual');
+        const modeAuto = fitnessEl.modalOverlay.querySelector('#fmModeAuto');
+        const manualContent = fitnessEl.modalOverlay.querySelector('#fmManualContent');
+        const autoContent = fitnessEl.modalOverlay.querySelector('#fmAutoContent');
+        
+        modeManual?.addEventListener('click', () => {
+          modeManual.classList.add('bg-green-500/50');
+          modeManual.classList.remove('bg-white/10', 'opacity-70');
+          modeAuto.classList.remove('bg-green-500/50');
+          modeAuto.classList.add('bg-white/10', 'opacity-70');
+          manualContent?.classList.remove('hidden');
+          autoContent?.classList.add('hidden');
+        });
+        
+        modeAuto?.addEventListener('click', () => {
+          modeAuto.classList.add('bg-green-500/50');
+          modeAuto.classList.remove('bg-white/10', 'opacity-70');
+          modeManual.classList.remove('bg-green-500/50');
+          modeManual.classList.add('bg-white/10', 'opacity-70');
+          autoContent?.classList.remove('hidden');
+          manualContent?.classList.add('hidden');
+        });
+      }
+      
+      // Cancel button
       fitnessEl.modalOverlay.querySelector('#fmFoodCancel')?.addEventListener('click', fitnessCloseModal);
-      fitnessEl.modalOverlay.querySelector('#fmFoodSave')?.addEventListener('click', () => {
+      
+      // Save button - handles both Manual and Auto modes
+      fitnessEl.modalOverlay.querySelector('#fmFoodSave')?.addEventListener('click', async () => {
         const k = fitnessGetDateKey();
         const dayData = FS.getDayData(k);
-        const formValues = {
-          name: document.getElementById('fmFoodName')?.value,
-          amount: document.getElementById('fmFoodAmount')?.value,
-          calories: document.getElementById('fmFoodCalories')?.value,
-          time: document.getElementById('fmFoodTime')?.value,
-        };
-  
-        const entry = FS.buildFoodEntry(formValues, editId);
-        const next = FS.mergeFood(dayData.foods, entry, editId);
-        FS.updateDayData(k, { foods: next });
-        fitnessCloseModal();
-        fitnessRenderFoodList();
-        fitnessRenderCalories();
+        
+        // Determine which mode is active (for new entries)
+        let isAutoMode = false;
+        if (!isEditMode) {
+          const autoContent = fitnessEl.modalOverlay.querySelector('#fmAutoContent');
+          isAutoMode = !autoContent?.classList.contains('hidden');
+        }
+        
+        if (isAutoMode) {
+          // Auto mode: fetch nutrition data
+          const queryText = document.getElementById('fmFoodQuery')?.value?.trim();
+          const time = document.getElementById('fmFoodTimeAuto')?.value;
+          const saveBtn = fitnessEl.modalOverlay.querySelector('#fmFoodSave');
+          const errorEl = fitnessEl.modalOverlay.querySelector('#fmAutoError');
+          
+          if (!queryText) {
+            if (errorEl) {
+              errorEl.textContent = 'Введите текст (например: buckwheat 200 g)';
+              errorEl.classList.remove('hidden');
+            }
+            return;
+          }
+          
+          // Show loading state
+          if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Считаем...';
+          }
+          if (errorEl) {
+            errorEl.classList.add('hidden');
+          }
+          
+          try {
+            const res = await fetch('/api/nutrition?query=' + encodeURIComponent(queryText));
+            const data = await res.json();
+            
+            if (res.ok && data.kcal) {
+              // Build entry from API response
+              const entry = FS.buildFoodEntry({
+                name: queryText,
+                amount: null,
+                calories: data.kcal,
+                protein: data.b,
+                fat: data.zh,
+                carbs: data.u,
+                time: time,
+                source: 'auto',
+              }, editId);
+              
+              const next = FS.mergeFood(dayData.foods, entry, editId);
+              FS.updateDayData(k, { foods: next });
+              fitnessCloseModal();
+              fitnessRenderFoodList();
+              fitnessRenderCalories();
+            } else {
+              // Show error
+              if (errorEl) {
+                errorEl.textContent = 'Не удалось автоматически посчитать. Попробуйте ввести по‑английски (buckwheat 200 g) или используйте ручной ввод.';
+                errorEl.classList.remove('hidden');
+              }
+              if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Добавить';
+              }
+            }
+          } catch (err) {
+            console.error('Auto mode error:', err);
+            if (errorEl) {
+              errorEl.textContent = 'Ошибка соединения. Попробуйте ещё раз или используйте ручной ввод.';
+              errorEl.classList.remove('hidden');
+            }
+            if (saveBtn) {
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Добавить';
+            }
+          }
+        } else {
+          // Manual mode
+          const formValues = {
+            name: document.getElementById('fmFoodName')?.value,
+            amount: document.getElementById('fmFoodAmount')?.value,
+            calories: document.getElementById('fmFoodCalories')?.value,
+            protein: document.getElementById('fmFoodProtein')?.value,
+            fat: document.getElementById('fmFoodFat')?.value,
+            carbs: document.getElementById('fmFoodCarbs')?.value,
+            time: document.getElementById('fmFoodTime')?.value,
+            source: 'manual',
+          };
+    
+          const entry = FS.buildFoodEntry(formValues, editId);
+          const next = FS.mergeFood(dayData.foods, entry, editId);
+          FS.updateDayData(k, { foods: next });
+          fitnessCloseModal();
+          fitnessRenderFoodList();
+          fitnessRenderCalories();
+        }
       });
     });
   }
-
+      
   function fitnessOpenSupplementModal(editId) {
     const dayData = FS.getDayData(fitnessGetDateKey());
     const existing = editId ? (dayData.supplements || []).find((s) => s.id === editId) : null;

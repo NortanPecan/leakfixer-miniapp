@@ -39,9 +39,13 @@
  * @typedef {Object} FoodEntry
  * @property {string} id
  * @property {string} name
- * @property {string} amount
- * @property {number} [calories]
+ * @property {string|null} amount
+ * @property {number|null} calories
+ * @property {number|null} protein
+ * @property {number|null} fat
+ * @property {number|null} carbs
  * @property {string} time
+ * @property {'manual'|'auto'} source
 ...
  * @typedef {Object} SupplementEntry
  * @property {string} id
@@ -73,7 +77,9 @@
  * @property {string} name
  * @property {string} amount
  * @property {string} caloriesText
+ * @property {string} macrosText
  * @property {string} timeText
+ * @property {'manual'|'auto'} source
  *
  * @typedef {Object} SupplementListItem
  * @property {string} id
@@ -317,13 +323,24 @@ function getActivityListViewModel(activities) {
 /** @param {FoodEntry[]} foods
  *  @returns {FoodListItem[]} */
 function getFoodListViewModel(foods) {
-  return (foods || []).map((f) => ({
-    id: f.id,
-    name: f.name,
-    amount: f.amount,
-    caloriesText: f.calories != null ? `${f.calories} ккал` : '',
-    timeText: f.time || '',
-  }));
+  return (foods || []).map((f) => {
+    // Build macros text: "Б: X г, Ж: Y г, У: Z г"
+    const macros = [];
+    if (f.protein != null) macros.push(`Б: ${f.protein}г`);
+    if (f.fat != null) macros.push(`Ж: ${f.fat}г`);
+    if (f.carbs != null) macros.push(`У: ${f.carbs}г`);
+    const macrosText = macros.length > 0 ? macros.join(', ') : '';
+    
+    return {
+      id: f.id,
+      name: f.name,
+      amount: f.amount || '',
+      caloriesText: f.calories != null ? `${f.calories} ккал` : '',
+      macrosText,
+      timeText: f.time || '',
+      source: f.source || 'manual',
+    };
+  });
 }
 
 
@@ -465,20 +482,28 @@ function buildActivityEntry(kind, form, editId) {
   };
 }
 
-/** @param {{ name?: string, amount?: string, calories?: string|number }} form
+/** @param {{ name?: string, amount?: string, calories?: string|number, protein?: string|number, fat?: string|number, carbs?: string|number, time?: string, source?: 'manual'|'auto' }} form
  *  @param {string} [editId]
  *  @returns {FoodEntry} */
 function buildFoodEntry(form, editId) {
   const name = String(form.name || '').trim();
-  const amount = String(form.amount || '').trim();
-  const calories = form.calories !== '' && form.calories != null ? Number(form.calories) : undefined;
+  const amount = form.amount != null && String(form.amount).trim() ? String(form.amount).trim() : null;
+  const calories = form.calories !== '' && form.calories != null ? Number(form.calories) : null;
+  const protein = form.protein !== '' && form.protein != null ? Number(form.protein) : null;
+  const fat = form.fat !== '' && form.fat != null ? Number(form.fat) : null;
+  const carbs = form.carbs !== '' && form.carbs != null ? Number(form.carbs) : null;
   const time = form.time && String(form.time).trim() ? String(form.time).trim() : formatTimeHM(new Date());
+  const source = form.source || 'manual';
   return {
     id: editId || generateId(),
     name,
     amount,
     calories,
+    protein,
+    fat,
+    carbs,
     time,
+    source,
   };
 }
 
