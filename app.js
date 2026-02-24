@@ -1183,6 +1183,54 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Централизованная функция сохранения GYM-состояния
+  // Все записи в storage должны проходить через эту функцию
+  function gymPersistState() {
+    // Debug logging for key operations
+    if (typeof console !== 'undefined' && console.log) {
+      const period = gymGetActivePeriod();
+      console.log('[GYM persist]', {
+        periodsCount: Object.keys(gymState.periods || {}).length,
+        activePeriod: period?.id,
+        currentCycle: gymState.runtime?.[period?.id]?.currentCycle,
+        completedWorkouts: gymState.completedWorkouts?.length || 0
+      });
+    }
+    // Use existing gymSaveState if available, otherwise fallback
+    if (typeof gymSaveState === 'function') {
+      gymSaveState(gymState);
+    } else if (typeof localStorage !== 'undefined') {
+      // Fallback: direct localStorage save
+      localStorage.setItem('leakfixer_gym_data', JSON.stringify(gymState));
+    }
+  }
+
+  // Централизованная функция рендера всего GYM UI
+  // Вызывает все необходимые рендер-функции
+  function gymRenderAll() {
+    const period = gymGetActivePeriod();
+    
+    // Debug logging
+    if (typeof console !== 'undefined' && console.log) {
+      console.log('[GYM render]', {
+        activePeriod: period?.id,
+        currentCycle: gymState.runtime?.[period?.id]?.currentCycle,
+        hasGroupsContainer: !!gymEl?.groupsContainer
+      });
+    }
+    
+    // Always render periods list if visible
+    if (gymEl?.periodsScreen && !gymEl.periodsScreen.classList.contains('hidden')) {
+      gymRenderPeriodsList();
+    }
+    
+    // Render current period UI if active
+    if (period) {
+      gymRenderHeader();
+      gymRenderGroups();
+    }
+  }
+  
   function gymLoadState() {
     try {
       const raw = localStorage.getItem(GYM_STORAGE_KEY);
@@ -1397,9 +1445,19 @@ document.addEventListener('DOMContentLoaded', () => {
     rt.totalCycles = Math.min(maxCycles, Math.max(Number(rt.totalCycles) || 1, nextCycle));
     rt.periodDone = Math.min(maxCycles, Math.max(Number(rt.periodDone) || 1, nextCycle));
   
-    gymSaveState(gymState);
-    gymRenderHeader();
-    gymRenderGroups();
+    // Debug logging for next cycle creation
+    if (typeof console !== 'undefined' && console.log) {
+      console.log('[GYM] Created next cycle:', {
+        periodId: period.id,
+        previousCycle: currentCycle,
+        newCycle: nextCycle,
+        maxCycles: maxCycles,
+        nextCycleDays: Object.keys(nextRuntimeDays)
+      });
+    }
+  
+    gymPersistState();
+    gymRenderAll();
   }
   
   
@@ -1808,7 +1866,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (lastStart) {
             const lastStartDate = new Date(lastStart + 'T00:00:00');
             const lastEndDate = new Date(lastStartDate.getTime() + (cycleLen - 1) * 24 * 60 * 60 * 1000);
-            plannedRangeEl.textContent = `${cycleStarts[1]} — ${lastEndDate.toISOString().slice(0,10)}`;
+            plannedRangeEl.textContent = `${gymFormatDateNoYear(cycleStarts[1])} — ${gymFormatDateNoYear(lastEndDate.toISOString().slice(0,10))}`;
           } else plannedRangeEl.textContent = '—';
         } else {
           plannedRangeEl.textContent = '—';
@@ -2667,7 +2725,18 @@ document.addEventListener('DOMContentLoaded', () => {
           // Mark as extra day - these should not be copied to next cycle
           rt.days[nextIndex] = { groups: {}, enabled: enabled, muscles: musclesFinal, isExtra: true };
 
-          gymSaveState(gymState);
+          // Debug logging for extra day creation
+          if (typeof console !== 'undefined' && console.log) {
+            console.log('[GYM] Added extra day:', {
+              periodId: period.id,
+              cycleIndex: currentCycle,
+              dayIndex: nextIndex,
+              isExtra: true
+            });
+          }
+
+          gymPersistState();
+          gymRenderAll();
           gymRenderGroups();
         });            
       }
