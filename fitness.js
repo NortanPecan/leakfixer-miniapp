@@ -845,6 +845,20 @@ function getBalanceColor(balance) {
  * @returns {CaloriesSummary}
  */
 function getCaloriesSummary(profile, dayData) {
+  // Защита от undefined dayData
+  if (!dayData) {
+    return {
+      eaten: 0,
+      burned: 0,
+      balance: 0,
+      balanceColor: 'gray',
+      baseRest: 0,
+      baseWithWork: 0,
+      activityCal: 0,
+      workMultiplier: 1.2,
+    };
+  }
+  
   const eaten = (dayData.foods || []).reduce((s, f) => s + (f.calories || 0), 0);
   const baseRest = calculateBaseMetabolism(profile); // чистый BMR
   const activityCal = calculateActivityCalories(dayData.activities || []);
@@ -931,7 +945,7 @@ function getActivityLabel(a) {
     const typeLabel = typeLabels[a.cardioType] || 'Кардио (зал)';
     return `${typeLabel} ${a.durationMinutes} мин${calories}`;
   }
-  
+
   // Кардио (улица)
   if (a.kind === 'cardio_outdoor') {
     const calories = a.calories ? ` · ${a.calories} ккал` : '';

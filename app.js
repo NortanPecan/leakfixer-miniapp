@@ -5415,4 +5415,226 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  // ========== COLLAPSIBLE FITNESS CARDS ==========
+  
+  // Инициализация сворачиваемых карточек
+  function fitnessInitCollapsibleCards() {
+    const headers = document.querySelectorAll('.fitness-card-header');
+    
+    headers.forEach(header => {
+      // Проверяем, не добавлен ли уже обработчик
+      if (header.dataset.collapseInitialized) return;
+      header.dataset.collapseInitialized = 'true';
+      
+      header.addEventListener('click', (e) => {
+        // Не сворачивать при клике на кнопки внутри шапки
+        if (e.target.tagName === 'BUTTON' || e.target.closest('BUTTON')) return;
+        
+        // ПРЕДОТВРАЩЕНИЕ КОНФЛИКТА: останавливаем всплытие, чтобы клик по header
+        // не вызывал обработчики на родительской карточке (например, открытие попапа энергии)
+        e.stopPropagation();
+        
+        const card = header.closest('[class*="bg-white/"]');
+        if (!card) return;
+        
+        const body = card.querySelector('.fitness-card-body');
+        const chevron = header.querySelector('.fitness-card-chevron');
+        
+        if (body) {
+          const isCollapsed = body.classList.contains('collapsed');
+          
+          if (isCollapsed) {
+            // Разворачиваем
+            body.classList.remove('collapsed');
+            if (chevron) chevron.classList.remove('rotated');
+          } else {
+            // Сворачиваем
+            body.classList.add('collapsed');
+            if (chevron) chevron.classList.add('rotated');
+          }
+        }
+      });
+    });
+    
+    // РАЗВЕДЕНИЕ КЛИКОВ: для карточки энергии - открытие попапа только при клике по body (не по header)
+    const energyCard = document.getElementById('fitnessCaloriesCard');
+    if (energyCard && !energyCard.dataset.popupHandlerAdded) {
+      energyCard.dataset.popupHandlerAdded = 'true';
+      energyCard.addEventListener('click', (e) => {
+        // Если клик по header - это обрабатывает сворачивание, игнорируем
+        if (e.target.closest('.fitness-card-header')) return;
+        // Игнорировать клики по кнопкам
+        if (e.target.closest('button')) return;
+        // Открываем попап детализации энергии
+        if (typeof fitnessOpenEnergyDetails === 'function') {
+          fitnessOpenEnergyDetails();
+        }
+      });
+    }
+    
+    // Обновляем мини-данные в шапках
+    fitnessUpdateCardSummaries();
+  }
+  
+  // Обновление мини-данных в шапках карточек
+  function fitnessUpdateCardSummaries() {
+    const dateKey = fitnessGetDateKey ? fitnessGetDateKey() : document.getElementById('fitnessDate')?.value;
+    if (!dateKey) return;
+    
+    const dayData = FS.getDayData(dateKey);
+    const profile = FS.getFitnessProfile();
+    const summary = FS.getCaloriesSummary(profile, dayData);
+    
+    // 1. Энергия тела - мини-шкала баланса
+    fitnessUpdateEnergyMiniSummary(dayData, summary);
+    
+    // 2. Активность - мини-строка и полоски
+    fitnessUpdateActivityMiniSummary(dayData, summary);
+    
+    // 3. Поддержка тела - мини-строка
+    fitnessUpdateSupportMiniSummary(dayData);
+  }
+  
+  // Обновление мини-шапки Энергии
+  function fitnessUpdateEnergyMiniSummary(dayData, summary) {
+    const energyBalance = summary?.balance || 0;
+    const MAX_ABS_BALANCE = 1000;
+    const balancePercent = Math.min(100, Math.abs(energyBalance) / MAX_ABS_BALANCE * 100);
+    const balanceFill = document.getElementById('energyMiniBalanceFill');
+    const balanceText = document.getElementById('energyMiniBalanceText');
+    
+    if (balanceFill && balanceText) {
+      // Цвет: зелёный при дефиците (баланс < 0), красный при профиците (баланс > 0)
+      const isDeficit = energyBalance <= 0;
+      balanceFill.className = 'fitness-mini-balance-fill ' + (isDeficit ? 'bg-green-400' : 'bg-red-400');
+      
+      // Позиционирование: от центра влево или вправо
+      if (energyBalance === 0) {
+        balanceFill.style.left = '50%';
+        balanceFill.style.width = '0%';
+      } else if (isDeficit) {
+        // Дефицит - влево от центра
+        balanceFill.style.left = (50 - balancePercent) + '%';
+        balanceFill.style.width = balancePercent + '%';
+      } else {
+        // Профицит - вправо от центра
+        balanceFill.style.left = '50%';
+        balanceFill.style.width = balancePercent + '%';
+      }
+      
+      // Текст: "-350 ккал" или "+200 ккал"
+      const sign = energyBalance > 0 ? '+' : '';
+      balanceText.textContent = sign + energyBalance;
+      balanceText.className = 'text-[10px] font-medium ' + (isDeficit ? 'text-green-300' : 'text-red-300');
+    }
+  }
+  
+  // Обновление мини-шапки Активности
+  function fitnessUpdateActivityMiniSummary(dayData, summary) {
+    const activities = dayData?.activities || [];
+    const totals = { gym: 0, cardio: 0, home: 0, steps: 0, count: 0 };
+    
+    activities.forEach(a => {
+      if (a.kind === 'gym' || a.kind === 'strength') {
+        totals.gym += a.calories || 0;
+        totals.count++;
+      } else if (a.kind === 'cardio_indoor' || a.kind === 'cardio_outdoor' || a.kind === 'cardio') {
+        totals.cardio += a.calories || 0;
+        totals.count++;
+      } else if (a.kind === 'home' || a.kind === 'home_exercise') {
+        totals.home += a.calories || 0;
+        totals.count++;
+      } else if (a.kind === 'steps') {
+        totals.steps += a.calories || 0;
+        totals.count++;
+      }
+    });
+    
+    const totalActivityCal = totals.gym + totals.cardio + totals.home + totals.steps;
+    
+    // Мини-строка
+    const activitySummary = document.getElementById('activityMiniSummary');
+    if (activitySummary) {
+      activitySummary.textContent = totals.count + ' активностей · ' + totalActivityCal + ' ккал';
+    }
+    
+    // Мини-полоски (пропорционально калориям)
+    const maxCal = Math.max(totals.gym, totals.cardio, totals.home, totals.steps, 1);
+    const stripWidth = 40; // макс ширина в px
+    
+    const updateStrip = (id, cal) => {
+      const el = document.getElementById(id);
+      if (el && cal > 0) {
+        el.style.width = (cal / maxCal * stripWidth) + 'px';
+      } else if (el) {
+        el.style.width = '0px';
+      }
+    };
+    
+    updateStrip('miniStripGym', totals.gym);
+    updateStrip('miniStripCardio', totals.cardio);
+    updateStrip('miniStripHome', totals.home);
+    updateStrip('miniStripSteps', totals.steps);
+  }
+  
+  // Обновление мини-шапки Поддержки тела
+  function fitnessUpdateSupportMiniSummary(dayData) {
+    const dateKey = fitnessGetDateKey ? fitnessGetDateKey() : document.getElementById('fitnessDate')?.value;
+    if (!dateKey) return;
+    
+    // Еда
+    const eaten = (dayData?.foods || []).reduce((sum, f) => sum + (f.calories || 0), 0);
+    
+    // Вода
+    const waterData = FS.getWaterData(dateKey);
+    const waterCurrent = (waterData?.currentMl || 0) / 1000;
+    const waterTarget = ((waterData?.targetMl || 2000)) / 1000;
+    
+    // БАДы
+    const supplements = FS.getAllSupplements();
+    let suppTaken = 0, suppTotal = 0;
+    
+    // Считаем БАДы на сегодня
+    supplements.forEach(s => {
+      if (s.daily) {
+        const inInterval = FS.isDateInDailyInterval(s, dateKey);
+        if (inInterval) {
+          suppTotal++;
+          const intakes = FS.getSupplementIntakesForDay(s.id, dateKey);
+          if (intakes && intakes.some(i => i.checked)) suppTaken++;
+        }
+      }
+    });
+    
+    const supportSummary = document.getElementById('supportMiniSummary');
+    if (supportSummary) {
+      // Еда
+      let text = 'Еда: ' + eaten + ' ккал';
+      
+      // Вода (подсвечиваем если выполнена)
+      const waterClass = waterCurrent >= waterTarget ? 'text-emerald-300' : '';
+      text += ' · Вода: <span class="' + waterClass + '">' + waterCurrent.toFixed(1) + ' / ' + waterTarget.toFixed(1) + ' л</span>';
+      
+      // БАДы
+      if (suppTotal > 0) {
+        const suppClass = suppTaken >= suppTotal ? 'text-emerald-300' : (suppTaken < suppTotal ? 'text-amber-300' : '');
+        text += ' · БАДы: <span class="' + suppClass + '">' + suppTaken + ' / ' + suppTotal + '</span>';
+      } else {
+        text += ' · БАДы: 0 / 0';
+      }
+      
+      supportSummary.innerHTML = text;
+    }
+  }
+  
+  // Вызов инициализации при загрузке и при изменении данных
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(fitnessInitCollapsibleCards, 100);
+    });
+  } else {
+    setTimeout(fitnessInitCollapsibleCards, 100);
+  }
+
+
 }); // конец DOMContentLoaded
