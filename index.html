@@ -107,6 +107,36 @@
     .fitness-card-body * {
       pointer-events: auto;
     }
+    /* Оптимизация текста в шапках */
+    .fitness-card-header {
+      flex-wrap: wrap;
+    }
+    .fitness-card-header .flex.items-center.gap-3 {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    /* Мини-текст в шапках - не ломать строки */
+    .fitness-card-header .text-\[10px\] {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Мини-полоски - компактно */
+    #activityMiniStrips {
+      gap: 2px;
+    }
+    /* Сворачивание по умолчанию - добавить класс collapsed */
+    .fitness-card-body.collapsed {
+      max-height: 0;
+      opacity: 0;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    /* Стили для кнопки загрузки фото */
+    #fitnessPhotoUpload:checked + div {
+      display: flex;
+    }
   </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-500 to-purple-600 min-h-screen p-4 text-white">
@@ -534,7 +564,16 @@
 
 
       <!-- Основной дашборд фитнеса -->
-      <div id="fitnessDashboard" class="hidden space-y-6">
+      <div id="fitnessDashboard" class="hidden space-y-4">
+        <!-- Кнопка Назад внутри дашборда -->
+        <div class="flex justify-start">
+          <button
+            id="fitnessBackInDashboard"
+            class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-medium transition"
+          >
+            ← Назад
+          </button>
+        </div>
         <!-- Верхний контейнер: Настройка тела + Дата -->
         <div class="flex items-center justify-between bg-white/15 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3">
           <button
@@ -551,16 +590,25 @@
           </div>
         </div>
 
-        <div class="pt-2">
-          <!-- GYM-календарь скрыт, доступен через GYM модуль -->
-          <!-- <button id="gymCalendarOpenBtn" class="px-3 py-2 rounded-xl bg-white/10 text-sm">Календарь</button> -->
-        </div>
+        <!-- GYM-календарь скрыт, доступен через GYM модуль -->
+        <!-- <button id="gymCalendarOpenBtn" class="px-3 py-2 rounded-xl bg-white/10 text-sm">Календарь</button> -->
         
         <!-- Верхняя строка: аватар-квадрат + справа график и бар -->
         <div class="flex items-start gap-3">
           <!-- Квадратный аватар -->
-          <div class="w-24 h-32 rounded-2xl overflow-hidden border border-white/50 shrink-0">
+          <div class="w-24 h-32 rounded-2xl overflow-hidden border border-white/50 shrink-0 relative group">
             <img id="fitnessAvatar" class="w-full h-full object-cover" src="" alt="">
+            <!-- Кнопка загрузки фото при наведении -->
+            <label class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+              <span class="text-xl mb-1">📷</span>
+              <span class="text-[10px] text-center px-1">Добавить фото</span>
+              <input type="file" id="fitnessPhotoUpload" accept="image/*" class="hidden">
+            </label>
+            <!-- Заглушка если нет фото -->
+            <div id="fitnessAvatarPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center bg-white/10 hidden">
+              <span class="text-2xl opacity-50">📷</span>
+              <span class="text-[10px] opacity-50 mt-1">Фото</span>
+            </div>
           </div>
 
           <!-- Справа график и бар -->
@@ -601,36 +649,36 @@
                 <span>Профицит</span>
               </div>
             </div>
-          </div>
+          </div>       
         </div>
         
         <div id="fitnessCaloriesCard" class="bg-white/20 backdrop-blur-xl rounded-2xl p-4 w-full space-y-3">
           <!-- Заголовок + статус дня (шапка-триггер) -->
           <div class="fitness-card-header flex items-center justify-between mb-1" data-card="energy">
-            <div class="flex items-center gap-3">
-              <div>
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="min-w-0">
                 <div class="text-[11px] uppercase tracking-wide opacity-70">Энергия тела</div>
                 <div class="text-sm font-semibold opacity-90">Сводка дня</div>
               </div>
               <!-- Мини-шкала баланса в шапке -->
-              <div class="flex items-center gap-1.5 ml-2">
+              <div class="flex items-center gap-1 shrink-0">
                 <div class="fitness-mini-balance-track">
                   <div class="fitness-mini-balance-center"></div>
                   <div class="fitness-mini-balance-fill bg-green-400" id="energyMiniBalanceFill"></div>
                 </div>
-                <span class="text-[10px] font-medium" id="energyMiniBalanceText">0</span>
+                <span class="text-[10px] font-medium whitespace-nowrap" id="energyMiniBalanceText">0</span>
               </div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 shrink-0">
               <!-- Статус дня -->
-              <span class="text-[11px] px-2 py-1 rounded-full bg-emerald-400/20 text-emerald-100" id="energyStatusBadge">
-                день в плюс к цели
+              <span class="text-[11px] px-2 py-1 rounded-full bg-emerald-400/20 text-emerald-100 whitespace-nowrap" id="energyStatusBadge">
+                день в плюс
               </span>
               <!-- Chevron -->
-              <span class="fitness-card-chevron text-xs opacity-70">˅</span>
+              <span class="fitness-card-chevron text-xs opacity-70 shrink-0">˅</span>
             </div>
           </div>
-          
+
           <!-- Тело карточки -->
           <div class="fitness-card-body">
             <!-- Основные цифры -->
@@ -668,38 +716,38 @@
                 <div class="mt-1">нейтральный · вес ~ без изменений</div>
               </div>
             </div>
-          </div>       
+          </div>
         </div>
         
         <!-- Активность -->
         <div class="bg-white/15 backdrop-blur-md border border-white/10 rounded-2xl p-4" id="fitnessActivityBlock">
           <!-- Шапка-триггер -->
           <div class="fitness-card-header flex items-center justify-between mb-3" data-card="activity">
-            <div class="flex items-center gap-3">
-              <div>
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="min-w-0">
                 <h3 class="font-semibold">Активность</h3>
                 <!-- Мини-строка: N активностей · A ккал -->
-                <div class="text-[10px] opacity-70 mt-0.5" id="activityMiniSummary">
-                  0 активностей · 0 ккал
+                <div class="text-[10px] opacity-70 mt-0.5 whitespace-nowrap" id="activityMiniSummary">
+                  0 акт. · 0 ккал
                 </div>
               </div>
               <!-- Мини-полоски по типам -->
-              <div class="flex items-center gap-1 ml-2" id="activityMiniStrips">
+              <div class="flex items-center gap-0.5 shrink-0" id="activityMiniStrips">
                 <div class="fitness-mini-strip w-0 bg-gradient-to-r from-fuchsia-400 to-orange-400" id="miniStripGym" style="width: 0px"></div>
                 <div class="fitness-mini-strip w-0 bg-gradient-to-r from-cyan-400 to-emerald-400" id="miniStripCardio" style="width: 0px"></div>
                 <div class="fitness-mini-strip w-0 bg-gradient-to-r from-amber-300 to-orange-400" id="miniStripHome" style="width: 0px"></div>
                 <div class="fitness-mini-strip w-0 bg-gradient-to-r from-amber-300 to-amber-500" id="miniStripSteps" style="width: 0px"></div>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="text-[11px] px-2 py-1 rounded-full bg-white/15 opacity-80">
-                расход энергии за день
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-[11px] px-2 py-1 rounded-full bg-white/15 opacity-80 whitespace-nowrap">
+                расход энергии
               </span>
               <!-- Chevron -->
-              <span class="fitness-card-chevron text-xs opacity-70">˅</span>
+              <span class="fitness-card-chevron text-xs opacity-70 shrink-0">˅</span>
             </div>
           </div>
-          
+
           <!-- Тело карточки -->
           <div class="fitness-card-body">
             <!-- Рабочий день -->
@@ -841,7 +889,7 @@
 
             <!-- Лента активностей -->
             <ul id="fitnessActivityList" class="space-y-2 text-xs mt-3"></ul>
-          </div>       
+          </div>
         </div>
         
 
@@ -851,19 +899,21 @@
         <div class="bg-white/15 backdrop-blur-md border border-white/10 rounded-2xl p-4 space-y-4">
           <!-- Шапка-триггер -->
           <div class="fitness-card-header flex items-center justify-between mb-1" data-card="support">
-            <div>
-              <h3 class="font-semibold">Поддержка тела</h3>
-              <!-- Мини-строка-сводка -->
-              <div class="text-[10px] opacity-70 mt-0.5" id="supportMiniSummary">
-                Еда: 0 ккал · Вода: 0.0 / 2.0 л · БАДы: 0 / 0
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="min-w-0">
+                <h3 class="font-semibold">Поддержка тела</h3>
+                <!-- Мини-строка-сводка -->
+                <div class="text-[10px] opacity-70 mt-0.5 truncate max-w-[180px]" id="supportMiniSummary">
+                  Еда: 0 ккал · Вода: 0.0/2.0л · БАДы: 0/0
+                </div>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="text-[11px] px-2 py-1 rounded-full bg-white/15 opacity-80">
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-[11px] px-2 py-1 rounded-full bg-white/15 opacity-80 whitespace-nowrap">
                 питание · вода · БАДы
               </span>
               <!-- Chevron -->
-              <span class="fitness-card-chevron text-xs opacity-70">˅</span>
+              <span class="fitness-card-chevron text-xs opacity-70 shrink-0">˅</span>
             </div>
           </div>
 

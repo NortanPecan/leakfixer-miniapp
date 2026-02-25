@@ -5552,10 +5552,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const totalActivityCal = totals.gym + totals.cardio + totals.home + totals.steps;
     
-    // Мини-строка
+    // Мини-строка (сокращённо)
     const activitySummary = document.getElementById('activityMiniSummary');
     if (activitySummary) {
-      activitySummary.textContent = totals.count + ' активностей · ' + totalActivityCal + ' ккал';
+      activitySummary.textContent = totals.count + ' акт. · ' + totalActivityCal + ' ккал';
     }
     
     // Мини-полоски (пропорционально калориям)
@@ -5635,6 +5635,121 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     setTimeout(fitnessInitCollapsibleCards, 100);
   }
+
+  // ========== СВОРАЧИВАНИЕ ПО УМОЛЧАНИЮ ==========
+  // Добавляем класс collapsed ко всем карточкам при инициализации
+  function fitnessCollapseAllCards() {
+    document.querySelectorAll('.fitness-card-body').forEach(body => {
+      body.classList.add('collapsed');
+    });
+    document.querySelectorAll('.fitness-card-chevron').forEach(chev => {
+      chev.classList.add('rotated');
+    });
+  }
+
+  // Вызываем сразу после инициализации
+  setTimeout(fitnessCollapseAllCards, 150);
+
+  // ========== КНОПКА "НАЗАД" ВНУТРИ ДАШБОРДА ==========
+  const fitnessBackInDashboard = document.getElementById('fitnessBackInDashboard');
+  if (fitnessBackInDashboard) {
+    fitnessBackInDashboard.addEventListener('click', () => {
+      // Используем тот же обработчик, что и для системной кнопки назад
+      if (typeof fitnessBack === 'function') {
+        fitnessBack();
+      } else if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.BackButton.onClick(() => {
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            Telegram.WebApp.close();
+          }
+        });
+        Telegram.WebApp.BackButton.show();
+      } else {
+        // Фоллбек - просто назад по истории или закрыть
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          const fitnessScreen = document.getElementById('fitnessScreen');
+          if (fitnessScreen) fitnessScreen.classList.add('hidden');
+        }
+      }
+    });
+  }
+
+  // ========== ЗАГРУЗКА ФОТО ==========
+  const fitnessPhotoUpload = document.getElementById('fitnessPhotoUpload');
+  const fitnessAvatar = document.getElementById('fitnessAvatar');
+  const fitnessAvatarPlaceholder = document.getElementById('fitnessAvatarPlaceholder');
+  
+  if (fitnessPhotoUpload) {
+    fitnessPhotoUpload.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      // Проверяем, что это изображение
+      if (!file.type.startsWith('image/')) {
+        showAlert('Пожалуйста, выберите изображение');
+        return;
+      }
+      
+      // Читаем файл как Data URL
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target.result;
+        
+        // Сохраняем в localStorage (или в FS если есть)
+        const dateKey = typeof fitnessGetDateKey === 'function' ? fitnessGetDateKey() : null;
+        const photoKey = dateKey ? `fitness_photo_${dateKey}` : 'fitness_photo_current';
+        
+        try {
+          localStorage.setItem(photoKey, dataUrl);
+        } catch (err) {
+          console.warn('Не удалось сохранить фото:', err);
+        }
+        
+        // Показываем фото
+        if (fitnessAvatar) {
+          fitnessAvatar.src = dataUrl;
+          fitnessAvatar.classList.remove('hidden');
+        }
+        if (fitnessAvatarPlaceholder) {
+          fitnessAvatarPlaceholder.classList.add('hidden');
+        }
+        
+        showAlert('Фото сохранено!');
+      };
+      reader.onerror = () => {
+        showAlert('Ошибка при чтении файла');
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  
+  // Загружаем сохранённое фото при инициализации
+  function fitnessLoadSavedPhoto() {
+    const dateKey = typeof fitnessGetDateKey === 'function' ? fitnessGetDateKey() : null;
+    const photoKey = dateKey ? `fitness_photo_${dateKey}` : 'fitness_photo_current';
+    
+    try {
+      const savedPhoto = localStorage.getItem(photoKey);
+      if (savedPhoto && fitnessAvatar) {
+        fitnessAvatar.src = savedPhoto;
+        fitnessAvatar.classList.remove('hidden');
+        if (fitnessAvatarPlaceholder) {
+          fitnessAvatarPlaceholder.classList.add('hidden');
+        }
+      } else if (fitnessAvatarPlaceholder) {
+        fitnessAvatarPlaceholder.classList.remove('hidden');
+      }
+    } catch (err) {
+      console.warn('Не удалось загрузить фото:', err);
+    }
+  }
+  
+  // Вызываем при загрузке дашборда
+  setTimeout(fitnessLoadSavedPhoto, 200);
 
 
 }); // конец DOMContentLoaded
