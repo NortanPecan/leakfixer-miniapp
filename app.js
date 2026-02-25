@@ -1905,62 +1905,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Инициализация даты по умолчанию = сегодня
-  if (fitnessEl.weightDate) {
-    const today = FS.formatDateKey(new Date()); // YYYY-MM-DD
-    fitnessEl.weightDate.value = today;
-  }
-
-  if (fitnessEl.weightSave) {
-    fitnessEl.weightSave.addEventListener('click', async () => {
-      if (!window.FitnessSync || !window.currentAppUserId) {
-        if (fitnessEl.weightStatus) fitnessEl.weightStatus.textContent = 'Нет связи с сервером';
-        return;
-      }
-
-      const dateKey = fitnessEl.weightDate?.value;
-      const raw = fitnessEl.weightValue?.value;
-
-      if (!dateKey) {
-        if (fitnessEl.weightStatus) fitnessEl.weightStatus.textContent = 'Выберите дату';
-        return;
-      }
-      if (!raw) {
-        if (fitnessEl.weightStatus) fitnessEl.weightStatus.textContent = 'Введите вес';
-        return;
-      }
-
-      const weight = parseFloat(raw.replace(',', '.'));
-      if (Number.isNaN(weight) || weight <= 0) {
-        if (fitnessEl.weightStatus) fitnessEl.weightStatus.textContent = 'Некорректный вес';
-        return;
-      }
-
-      try {
-        // NEW: Save with current time (creates new measurement)
-        const currentTime = FS.formatTimeHM(new Date());
-        await window.FitnessSync.saveWeightMeasurement(dateKey, weight, currentTime);
-
-        // Update local profile (for calculations)
-        const profile = FS.getFitnessProfile();
-        profile.weight = weight;
-        FS.setFitnessProfile(profile);
-
-        // Clear chart cache to refresh
-        weightChartDataCache = null;
-
-        if (fitnessEl.weightStatus) {
-          fitnessEl.weightStatus.textContent = `Сохранено для ${dateKey}`;
-        }
-        
-        // Refresh dashboard
-        fitnessRenderDashboard();
-      } catch (e) {
-        console.error(e);
-        if (fitnessEl.weightStatus) fitnessEl.weightStatus.textContent = 'Ошибка сохранения';
-      }
-    });
-  }
+  // Note: Old weight input block removed. Weight is now managed through the weight tracker UI only.
 
   fitnessEl.backBtn?.addEventListener('click', () => {
     fitnessEl.screen?.classList.add('hidden');
