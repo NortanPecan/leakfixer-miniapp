@@ -978,6 +978,8 @@ document.addEventListener('DOMContentLoaded', () => {
       html += '<div class="flex gap-1">';
       html += '<button type="button" class="supp-edit-norm text-xs opacity-70" data-id="' + supp.id + '">норма</button>';
       html += '<button type="button" class="supp-history text-xs opacity-70" data-id="' + supp.id + '">история</button>';
+      // NEW: Button to remove supplement from this specific day
+      html += '<button type="button" class="supp-remove-from-day text-xs opacity-70 text-red-300" data-id="' + supp.id + '" title="Убрать из этого дня">×</button>';
       html += '</div></div>';
       
       html += '<p class="text-xs opacity-70 mb-2">' + supp.standardDailyDose + ' ' + unitLabel + '/день' + (supp.daily ? ' (ежедневно)' : '') + '</p>';
@@ -987,10 +989,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const doseClass = intake.edited ? 'text-yellow-300' : '';
         const checkedClass = intake.checked ? 'opacity-100' : 'opacity-50';
         
+        // CRITICAL: Determine if checkbox should be disabled (future dates)
+        const isFuture = FS.isFutureDate(dateKey);
+        const checkboxDisabled = isFuture ? ' disabled' : '';
+        const checkboxTitle = isFuture ? ' title="Нельзя отметить приём в будущем"' : '';
+
         html += '<div class="flex items-center gap-2 py-1 border-b border-white/5 last:border-0">';
-        // CRITICAL: Checkbox is enabled immediately, time will be set on first check
-        html += '<input type="checkbox" class="supp-intake-check rounded" data-supp-id="' + supp.id + '" data-intake-id="' + intake.id + '"' + (intake.checked ? ' checked' : '') + '>';
-        
+        // CRITICAL: Checkbox disabled for future dates - planning only, no actual taking
+        html += '<input type="checkbox" class="supp-intake-check rounded' + (isFuture ? ' opacity-50 cursor-not-allowed' : '') + '" data-supp-id="' + supp.id + '" data-intake-id="' + intake.id + '"' + (intake.checked ? ' checked' : '') + checkboxDisabled + checkboxTitle + '>';
+
         // Show time if set (from checkbox click), otherwise show placeholder
         if (intake.time) {
           html += '<span class="text-xs opacity-70 w-12">' + intake.time + '</span>';
@@ -1018,20 +1025,52 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add new supplement button
     html += '<button type="button" id="addNewSupplement" class="w-full py-2 rounded-xl bg-green-500/30 text-sm">+ Добавить БАД</button>';
     
+    // DEV/DEBUG: Clear history button (hidden in production, shown for debugging)
+    html += '<button type="button" id="clearSupplementsHistory" class="w-full py-1 mt-2 rounded-xl bg-red-500/20 text-xs text-red-300 opacity-50 hover:opacity-100">🗑 Очистить всю историю БАДов</button>';
+
     fitnessEl.supplementsTracking.innerHTML = html;
     
     // Attach event listeners
     document.getElementById('addNewSupplement')?.addEventListener('click', () => fitnessOpenSupplementProfileModal());
     document.getElementById('addFirstSupplement')?.addEventListener('click', () => fitnessOpenSupplementProfileModal());
     
+    // DEV/DEBUG: Clear history button handler
+    document.getElementById('clearSupplementsHistory')?.addEventListener('click', () => {
+      if (confirm('⚠️ ВНИМАНИЕ!\n\nЭто удалит ВСЮ историю приёмов БАДов за все даты.\nСами БАДы (названия, нормы, настройки) останутся.\n\nПродолжить?')) {
+        const success = FS.clearAllSupplementsHistory();
+        if (success) {
+          alert('История БАДов очищена. Список БАДов сохранён.');
+          fitnessRenderSupplementsTracking();
+        } else {
+          alert('Ошибка при очистке истории.');
+        }
+      }
+    });
+
     // Checkbox handlers
     document.querySelectorAll('.supp-intake-check').forEach(cb => {
       cb.addEventListener('change', () => {
         const suppId = cb.dataset.suppId;
         const intakeId = cb.dataset.intakeId;
+
+        // CRITICAL: Block checkbox changes for future dates
+        if (FS.isFutureDate(dateKey)) {
+          console.log('[Supplements UI] Blocked checkbox change for future date:', dateKey);
+          cb.checked = !cb.checked; // Revert the change
+          alert('Нельзя отметить приём БАДа в будущем дне. Можно только планировать (менять дозу/время).');
+          return;
+        }
+  
         // CRITICAL: toggleSupplementIntakeChecked sets time only on first check (when time is empty)
         // It preserves existing time on subsequent toggles
-        FS.toggleSupplementIntakeChecked(suppId, dateKey, intakeId);
+        const result = FS.toggleSupplementIntakeChecked(suppId, dateKey, intakeId);
+
+        // If result is null, the operation was blocked (e.g., future date in logic layer)
+        if (result === null) {
+          cb.checked = !cb.checked; // Revert UI
+          return;
+        }
+  
         fitnessRenderSupplementsTracking(); // Re-render to show updated time
       });
     });
@@ -1066,8 +1105,22 @@ document.addEventListener('DOMContentLoaded', () => {
         fitnessOpenSupplementHistoryModal(btn.dataset.id);
       });
     });
-  }
 
+    // NEW: Remove from day handlers
+    document.querySelectorAll('.supp-remove-from-day').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const suppId = btn.dataset.id;
+        const supp = FS.getSupplementById(suppId);
+        if (!supp) return;
+
+        if (confirm('Убрать "' + supp.name + '" из этого дня?\n\nВсе приёмы за эту дату будут удалены, но сам БАД останется в профиле.')) {
+          FS.removeAllSupplementIntakesForDay(suppId, dateKey);
+          fitnessRenderSupplementsTracking(); // Re-render - supplement will disappear from this day
+        }
+      });
+    });
+  }
+  
   // NEW: Open modal to add/edit supplement profile
   function fitnessOpenSupplementProfileModal(editId) {
     const existing = editId ? FS.getSupplementById(editId) : null;
@@ -1198,8 +1251,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const dose = Number(doseInput.value);
         const time = document.getElementById('intakeEditTime')?.value;
         
-        if (!isNaN(dose) && dose >= 0) {
-          FS.updateSupplementIntake(suppId, dateKey, intakeId, { dose, time });
+        // CRITICAL: If dose is 0, delete the intake instead of updating
+        if (dose === 0) {
+          if (confirm('Доза = 0. Удалить этот приём?')) {
+            FS.removeSupplementIntake(suppId, dateKey, intakeId);
+            fitnessCloseModal();
+            fitnessRenderSupplementsTracking();
+          }
+          return;
+        }
+  
+        if (!isNaN(dose) && dose > 0) {
+          const result = FS.updateSupplementIntake(suppId, dateKey, intakeId, { dose, time });
+          // If result is null, intake was deleted (shouldn't happen with dose > 0, but handle anyway)
           fitnessCloseModal();
           fitnessRenderSupplementsTracking();
         }

@@ -382,7 +382,48 @@ function getSupplementIntakesForDay(supplementId, dateKey) {
  * @param {string} dateKey - "YYYY-MM-DD"
  * @param {string} intakeId
  * @returns {SupplementIntake|undefined} updated intake */
+/** Compare two date keys (YYYY-MM-DD format)
+ * @param {string} dateKey1
+ * @param {string} dateKey2
+ * @returns {number} -1 if date1 < date2, 0 if equal, 1 if date1 > date2 */
+function compareDateKeys(dateKey1, dateKey2) {
+  if (dateKey1 < dateKey2) return -1;
+  if (dateKey1 > dateKey2) return 1;
+  return 0;
+}
+
+/** Check if dateKey is in the future relative to today
+ * @param {string} dateKey - "YYYY-MM-DD"
+ * @returns {boolean} */
+function isFutureDate(dateKey) {
+  const todayKey = formatDateKey(new Date());
+  return compareDateKeys(dateKey, todayKey) > 0;
+}
+
+/** Check if dateKey is today
+ * @param {string} dateKey - "YYYY-MM-DD"
+ * @returns {boolean} */
+function isToday(dateKey) {
+  const todayKey = formatDateKey(new Date());
+  return dateKey === todayKey;
+}
+
+/** Check if dateKey is in the past relative to today
+ * @param {string} dateKey - "YYYY-MM-DD"
+ * @returns {boolean} */
+function isPastDate(dateKey) {
+  const todayKey = formatDateKey(new Date());
+  return compareDateKeys(dateKey, todayKey) < 0;
+}
+
 function toggleSupplementIntakeChecked(supplementId, dateKey, intakeId) {
+  // CRITICAL: Prevent marking as checked in future dates
+  // Future dates allow only planning (editing dose/structure), not marking as taken
+  if (isFutureDate(dateKey)) {
+    console.log('[Supplements] Cannot mark intake as checked in future date:', dateKey);
+    return null; // Signal to UI that operation was blocked
+  }
+
   const profile = loadSupplementsProfile();
   const supplement = profile.supplements.find(s => s.id === supplementId);
   if (!supplement) return undefined;
@@ -390,17 +431,17 @@ function toggleSupplementIntakeChecked(supplementId, dateKey, intakeId) {
   const dayIntakes = getOrCreateDayIntakes(supplement, dateKey);
   const intake = dayIntakes.intakes.find(i => i.id === intakeId);
   if (!intake) return undefined;
-  
+
   // Toggle checked
   intake.checked = !intake.checked;
-  
+
   // CRITICAL: Set time ONLY if checking AND time is empty (first check only)
   // If time already exists (from previous check), don't change it on re-checks
   if (intake.checked && !intake.time) {
     intake.time = formatTimeHM(new Date());
   }
   // Note: If unchecking, we keep the time - user can see when it was taken
-  
+
   saveSupplementsProfile(profile);
   return intake;
 }
@@ -410,7 +451,7 @@ function toggleSupplementIntakeChecked(supplementId, dateKey, intakeId) {
  * @param {string} dateKey - "YYYY-MM-DD"
  * @param {string} intakeId
  * @param {Partial<SupplementIntake>} updates - dose, time, checked
- * @returns {SupplementIntake|undefined} updated intake */
+ * @returns {SupplementIntake|undefined|null} updated intake, undefined if not found, null if deleted */
 function updateSupplementIntake(supplementId, dateKey, intakeId, updates) {
   const profile = loadSupplementsProfile();
   const supplement = profile.supplements.find(s => s.id === supplementId);
@@ -420,6 +461,17 @@ function updateSupplementIntake(supplementId, dateKey, intakeId, updates) {
   const intake = dayIntakes.intakes.find(i => i.id === intakeId);
   if (!intake) return undefined;
   
+  // CRITICAL: If dose is 0 or explicitly marked for deletion, remove this intake
+  if (updates.dose === 0 || updates.dose === '0' || updates._delete === true) {
+    const idx = dayIntakes.intakes.findIndex(i => i.id === intakeId);
+    if (idx >= 0) {
+      dayIntakes.intakes.splice(idx, 1);
+      saveSupplementsProfile(profile);
+      return null; // Signal that intake was deleted
+    }
+    return undefined;
+  }
+
   // Apply updates - only update provided fields, leave others unchanged
   if (updates.dose !== undefined) {
     intake.dose = updates.dose;
@@ -475,7 +527,7 @@ function removeSupplementIntake(supplementId, dateKey, intakeId) {
   const profile = loadSupplementsProfile();
   const supplement = profile.supplements.find(s => s.id === supplementId);
   if (!supplement) return false;
-  
+
   const dayIntakes = supplement.history?.find(h => h.date === dateKey);
   if (!dayIntakes) return false;
   
@@ -484,6 +536,47 @@ function removeSupplementIntake(supplementId, dateKey, intakeId) {
   
   dayIntakes.intakes.splice(idx, 1);
   saveSupplementsProfile(profile);
+  return true;
+}
+
+/** Remove ALL intakes for a supplement on a specific date (clear day)
+ * This removes the supplement from this day's view without deleting the supplement itself
+ * @param {string} supplementId
+ * @param {string} dateKey - "YYYY-MM-DD"
+ * @returns {boolean} success */
+function removeAllSupplementIntakesForDay(supplementId, dateKey) {
+  const profile = loadSupplementsProfile();
+  const supplement = profile.supplements.find(s => s.id === supplementId);
+  if (!supplement) return false;
+
+  const dayIntakes = supplement.history?.find(h => h.date === dateKey);
+  if (!dayIntakes) return false;
+
+  // Clear all intakes for this day
+  dayIntakes.intakes = [];
+
+  // For non-daily supplements, we can optionally remove the day entry entirely
+  // But keeping empty day entry is fine - it will be filtered out by getSupplementIntakesForDay
+
+  saveSupplementsProfile(profile);
+  return true;
+}
+
+/** Clear ALL history for ALL supplements (keep supplement profiles)
+ * This removes all intake records but preserves supplement settings
+ * @returns {boolean} success */
+function clearAllSupplementsHistory() {
+  const profile = loadSupplementsProfile();
+  if (!profile || !profile.supplements) return false;
+
+  // Clear history for each supplement but keep the supplement itself
+  for (const supplement of profile.supplements) {
+    supplement.history = [];
+    supplement.updatedAt = new Date().toISOString();
+  }
+
+  saveSupplementsProfile(profile);
+  console.log('[Supplements] All history cleared, supplements preserved:', profile.supplements.length);
   return true;
 }
 
@@ -1101,8 +1194,14 @@ window.FitnessState = {
   updateSupplementIntake,
   addSupplementIntake,
   removeSupplementIntake,
+  removeAllSupplementIntakesForDay, // NEW: Remove all intakes for a day
+  clearAllSupplementsHistory, // NEW: Clear all history (dev/debug)
   createSupplement,
   updateSupplement,
   deleteSupplement,
   getTotalDoseForDay,
+  // NEW: Date comparison helpers
+  isFutureDate,
+  isToday,
+  isPastDate,
 };
