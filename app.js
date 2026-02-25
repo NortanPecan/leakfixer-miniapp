@@ -884,6 +884,181 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessRenderWeightChart();
     fitnessRenderSupplementsTracking();
     fitnessRenderWorkDay();
+    
+    // Инициализация сворачиваемых карточек
+    fitnessInitCollapsibleCards();
+    // Обновление мини-данных в шапках
+    fitnessUpdateCardSummaries();
+  }
+
+  // ========== СВОРАЧИВАЕМЫЕ КАРТОЧКИ ==========
+  
+  // Инициализация обработчиков кликов для сворачиваемых карточек
+  function fitnessInitCollapsibleCards() {
+    const headers = document.querySelectorAll('.fitness-card-header');
+    
+    headers.forEach(header => {
+      // Проверяем, не добавлен ли уже обработчик
+      if (header.dataset.collapseInitialized) return;
+      header.dataset.collapseInitialized = 'true';
+      
+      header.addEventListener('click', (e) => {
+        // Не сворачивать при клике на кнопки внутри шапки
+        if (e.target.tagName === 'BUTTON' || e.target.closest('BUTTON')) return;
+        
+        const card = header.closest('[class*="bg-white/"]');
+        if (!card) return;
+        
+        const body = card.querySelector('.fitness-card-body');
+        const chevron = header.querySelector('.fitness-card-chevron');
+        
+        if (body) {
+          const isCollapsed = body.classList.contains('collapsed');
+          
+          if (isCollapsed) {
+            // Разворачиваем
+            body.classList.remove('collapsed');
+            if (chevron) chevron.classList.remove('rotated');
+          } else {
+            // Сворачиваем
+            body.classList.add('collapsed');
+            if (chevron) chevron.classList.add('rotated');
+          }
+        }
+      });
+    });
+  }
+  
+  // Обновление мини-данных в шапках всех карточек
+  function fitnessUpdateCardSummaries() {
+    fitnessUpdateEnergyMiniSummary();
+    fitnessUpdateActivityMiniSummary();
+    fitnessUpdateSupportMiniSummary();
+  }
+  
+  // Мини-шкала баланса в шапке "Энергия тела"
+  function fitnessUpdateEnergyMiniSummary() {
+    const dateKey = fitnessGetDateKey();
+    const dayData = FS.getDayData(dateKey);
+    const summary = FS.getCaloriesSummary(dayData);
+    
+    const miniFill = document.getElementById('energyMiniBalanceFill');
+    const miniText = document.getElementById('energyMiniBalanceText');
+    
+    if (miniFill && miniText) {
+      const balance = summary.balance || 0;
+      const MAX_ABS_BALANCE = 1000; // Максимальный отображаемый баланс
+      
+      // Нормализуем: 0 = центр, -1000 = левый край, +1000 = правый край
+      const normalizedBalance = Math.max(-MAX_ABS_BALANCE, Math.min(MAX_ABS_BALANCE, balance));
+      const percentFromCenter = (normalizedBalance / MAX_ABS_BALANCE) * 50; // 0-50%
+      
+      if (balance <= 0) {
+        // Дефицит - заполнение влево от центра
+        miniFill.style.left = (50 - percentFromCenter) + '%';
+        miniFill.style.width = percentFromCenter + '%';
+        miniFill.className = 'fitness-mini-balance-fill bg-green-400';
+      } else {
+        // Профицит - заполнение вправо от центра
+        miniFill.style.left = '50%';
+        miniFill.style.width = percentFromCenter + '%';
+        miniFill.className = 'fitness-mini-balance-fill bg-red-400';
+      }
+      
+      // Текст
+      const sign = balance >= 0 ? '+' : '';
+      miniText.textContent = sign + balance;
+      miniText.className = 'text-[10px] font-medium ' + (balance >= 0 ? 'text-red-300' : 'text-green-300');
+    }
+  }
+  
+  // Мини-строка и полоски в шапке "Активность"
+  function fitnessUpdateActivityMiniSummary() {
+    const dateKey = fitnessGetDateKey();
+    const dayData = FS.getDayData(dateKey);
+    const activities = dayData.activities || [];
+    
+    // Подсчёт по типам
+    const totals = {
+      gym: { calories: 0 },
+      cardio: { calories: 0 },
+      home: { calories: 0 },
+      steps: { calories: 0 }
+    };
+    
+    activities.forEach(a => {
+      if (a.kind === 'gym' || a.kind === 'strength') {
+        totals.gym.calories += a.calories || 0;
+      } else if (a.kind === 'cardio_indoor' || a.kind === 'cardio_outdoor' || a.kind === 'cardio') {
+        totals.cardio.calories += a.calories || 0;
+      } else if (a.kind === 'home' || a.kind === 'home_exercise') {
+        totals.home.calories += a.calories || 0;
+      } else if (a.kind === 'steps') {
+        totals.steps.calories += a.calories || 0;
+      }
+    });
+    
+    // Общее количество
+    const totalCalories = totals.gym.calories + totals.cardio.calories + totals.home.calories + totals.steps.calories;
+    const totalSessions = activities.length;
+    
+    // Обновляем текст
+    const summaryEl = document.getElementById('activityMiniSummary');
+    if (summaryEl) {
+      summaryEl.textContent = `${totalSessions} активностей · ${totalCalories} ккал`;
+    }
+    
+    // Обновляем мини-полоски
+    const maxCalories = Math.max(totalCalories, 1); // избегаем деления на 0
+    
+    const stripGym = document.getElementById('miniStripGym');
+    const stripCardio = document.getElementById('miniStripCardio');
+    const stripHome = document.getElementById('miniStripHome');
+    const stripSteps = document.getElementById('miniStripSteps');
+    
+    if (stripGym) stripGym.style.width = (totals.gym.calories / maxCalories * 60) + 'px';
+    if (stripCardio) stripCardio.style.width = (totals.cardio.calories / maxCalories * 60) + 'px';
+    if (stripHome) stripHome.style.width = (totals.home.calories / maxCalories * 60) + 'px';
+    if (stripSteps) stripSteps.style.width = (totals.steps.calories / maxCalories * 60) + 'px';
+  }
+  
+  // Мини-строка в шапке "Поддержка тела"
+  function fitnessUpdateSupportMiniSummary() {
+    const dateKey = fitnessGetDateKey();
+    const dayData = FS.getDayData(dateKey);
+    const profile = FS.getFitnessProfile();
+    
+    // Еда
+    const foods = dayData.foods || [];
+    const totalEaten = foods.reduce((sum, f) => sum + (f.calories || 0), 0);
+    
+    // Вода
+    const waterData = FS.getWaterData(dateKey);
+    const waterCurrent = (waterData.currentMl || 0) / 1000;
+    const waterTarget = (waterData.targetMl || profile.waterBaselineMl || 2000) / 1000;
+    
+    // БАДы
+    const supplements = FS.getAllSupplements();
+    let suppTaken = 0;
+    let suppPlanned = 0;
+    
+    supplements.forEach(supp => {
+      if (supp.daily && FS.isDateInDailyInterval(supp, dateKey)) {
+        suppPlanned++;
+        const intakes = FS.getSupplementIntakesForDay(supp.id, dateKey);
+        const checkedCount = intakes.filter(i => i.checked).length;
+        if (checkedCount > 0) suppTaken++;
+      }
+    });
+    
+    // Обновляем текст
+    const summaryEl = document.getElementById('supportMiniSummary');
+    if (summaryEl) {
+      const waterClass = waterCurrent >= waterTarget ? 'text-emerald-300' : 'text-white';
+      const suppClass = suppTaken >= suppPlanned && suppPlanned > 0 ? 'text-emerald-300' : (suppTaken < suppPlanned ? 'text-amber-300' : 'text-white');
+      
+      summaryEl.innerHTML = `Еда: ${totalEaten} ккал · <span class="${waterClass}">Вода: ${waterCurrent.toFixed(1)} / ${waterTarget.toFixed(1)} л</span> · <span class="${suppClass}">БАДы: ${suppTaken} / ${suppPlanned}</span>`;
+    }
   }
 
   // ========== WEIGHT DETAIL SCREEN ==========
@@ -980,7 +1155,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         document.getElementById('weightTrend').textContent = '—';
       }
-      
+  
       // Render chart
       const chartContainer = document.getElementById('weightDetailChart');
       if (chartData.length === 0) {
@@ -1028,7 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error loading weight detail data:', e);
     }
   }
-
+  
   window.fitnessOpenAddWeightModal = function() {
     const now = new Date();
     const today = FS.formatDateKey(now);

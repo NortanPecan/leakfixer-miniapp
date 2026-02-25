@@ -45,6 +45,63 @@
       filter: invert(1);
     }
 
+    /* Стили для сворачиваемых карточек */
+    .fitness-card-header {
+      cursor: pointer;
+      user-select: none;
+    }
+    .fitness-card-header:hover {
+      opacity: 0.9;
+    }
+    .fitness-card-body {
+      overflow: hidden;
+      transition: max-height 0.3s ease-out, opacity 0.2s ease-out, margin 0.3s ease-out;
+      max-height: 500px;
+      opacity: 1;
+    }
+    .fitness-card-body.collapsed {
+      max-height: 0;
+      opacity: 0;
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+    .fitness-card-chevron {
+      transition: transform 0.3s ease;
+    }
+    .fitness-card-chevron.rotated {
+      transform: rotate(180deg);
+    }
+    /* Мини-шкала баланса в шапке */
+    .fitness-mini-balance-track {
+      position: relative;
+      width: 60px;
+      height: 6px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .fitness-mini-balance-center {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(255,255,255,0.5);
+      transform: translateX(-50%);
+    }
+    .fitness-mini-balance-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transition: left 0.3s ease, width 0.3s ease;
+    }
+    /* Мини-полоски активности */
+    .fitness-mini-strip {
+      height: 4px;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
   </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-500 to-purple-600 min-h-screen p-4 text-white">
@@ -543,203 +600,243 @@
         </div>
         
         <div id="fitnessCaloriesCard" class="bg-white/20 backdrop-blur-xl rounded-2xl p-4 w-full space-y-3">
-          <!-- Заголовок + статус дня -->
-          <div class="flex items-center justify-between mb-1">
-            <div>
-              <div class="text-[11px] uppercase tracking-wide opacity-70">Энергия тела</div>
-              <div class="text-sm font-semibold opacity-90">Сводка дня</div>
+          <!-- Заголовок + статус дня (шапка-триггер) -->
+          <div class="fitness-card-header flex items-center justify-between mb-1" data-card="energy">
+            <div class="flex items-center gap-3">
+              <div>
+                <div class="text-[11px] uppercase tracking-wide opacity-70">Энергия тела</div>
+                <div class="text-sm font-semibold opacity-90">Сводка дня</div>
+              </div>
+              <!-- Мини-шкала баланса в шапке -->
+              <div class="flex items-center gap-1.5 ml-2">
+                <div class="fitness-mini-balance-track">
+                  <div class="fitness-mini-balance-center"></div>
+                  <div class="fitness-mini-balance-fill bg-green-400" id="energyMiniBalanceFill"></div>
+                </div>
+                <span class="text-[10px] font-medium" id="energyMiniBalanceText">0</span>
+              </div>
             </div>
-            <!-- Статус дня (потом менять логикой) -->
-            <span class="text-[11px] px-2 py-1 rounded-full bg-emerald-400/20 text-emerald-100">
-              день в плюс к цели
-            </span>
+            <div class="flex items-center gap-2">
+              <!-- Статус дня -->
+              <span class="text-[11px] px-2 py-1 rounded-full bg-emerald-400/20 text-emerald-100" id="energyStatusBadge">
+                день в плюс к цели
+              </span>
+              <!-- Chevron -->
+              <span class="fitness-card-chevron text-xs opacity-70">˅</span>
+            </div>
           </div>
+          
+          <!-- Тело карточки -->
+          <div class="fitness-card-body">
+            <!-- Основные цифры -->
+            <div class="grid grid-cols-3 gap-2 text-xs">
+              <div class="bg-white/10 rounded-xl px-2 py-2 flex flex-col justify-between">
+                <div class="opacity-70">Съели</div>
+                <div class="text-sm font-semibold">
+                  <span id="fitnessCalEaten">0</span> ккал
+                </div>
+              </div>
+              <div class="bg-white/10 rounded-xl px-2 py-2 flex flex-col justify-between">
+                <div class="opacity-70">Сожгли</div>
+                <div class="text-sm font-semibold">
+                  <span id="fitnessCalBurned">0</span> ккал
+                </div>
+              </div>
+              <div class="bg-white/10 rounded-xl px-2 py-2 flex flex-col justify-between">
+                <div class="opacity-70">Баланс</div>
+                <div class="text-sm font-semibold">
+                  <span id="fitnessBalance">0</span> ккал
+                </div>
+              </div>
+            </div>
         
-          <!-- Основные цифры -->
-          <div class="grid grid-cols-3 gap-2 text-xs">
-            <div class="bg-white/10 rounded-xl px-2 py-2 flex flex-col justify-between">
-              <div class="opacity-70">Съели</div>
-              <div class="text-sm font-semibold">
-                <span id="fitnessCalEaten">0</span> ккал
+            <!-- Блок цели/отклонения + тренд дня -->
+            <div class="flex items-start justify-between text-[11px] opacity-80 border-t border-white/10 pt-2 mt-3">
+              <div class="pr-2">
+                <div>Цель: дефицит 500 ккал</div>
+                <div class="mt-1">
+                  Отклонение от цели: <span class="font-semibold">+0 ккал</span>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="font-semibold">Тренд дня</div>
+                <div class="mt-1">нейтральный · вес ~ без изменений</div>
               </div>
             </div>
-            <div class="bg-white/10 rounded-xl px-2 py-2 flex flex-col justify-between">
-              <div class="opacity-70">Сожгли</div>
-              <div class="text-sm font-semibold">
-                <span id="fitnessCalBurned">0</span> ккал
-              </div>
-            </div>
-            <div class="bg-white/10 rounded-xl px-2 py-2 flex flex-col justify-between">
-              <div class="opacity-70">Баланс</div>
-              <div class="text-sm font-semibold">
-                <span id="fitnessBalance">0</span> ккал
-              </div>
-            </div>
-          </div>
-        
-          <!-- Блок цели/отклонения + тренд дня -->
-          <div class="flex items-start justify-between text-[11px] opacity-80 border-t border-white/10 pt-2">
-            <div class="pr-2">
-              <div>Цель: дефицит 500 ккал</div>
-              <div class="mt-1">
-                Отклонение от цели: <span class="font-semibold">+0 ккал</span>
-              </div>
-            </div>
-            <div class="text-right">
-              <div class="font-semibold">Тренд дня</div>
-              <div class="mt-1">нейтральный · вес ~ без изменений</div>
-            </div>
-          </div>
+          </div>       
         </div>
         
         <!-- Активность -->
         <div class="bg-white/15 backdrop-blur-md border border-white/10 rounded-2xl p-4" id="fitnessActivityBlock">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="font-semibold">Активность</h3>
-            <span class="text-[11px] px-2 py-1 rounded-full bg-white/15 opacity-80">
-              расход энергии за день
-            </span>
-          </div>
-
-          <!-- Рабочий день -->
-          <div class="mb-4 pb-3 border-b border-white/10">
-            <div class="flex items-center justify-between mb-2">
+          <!-- Шапка-триггер -->
+          <div class="fitness-card-header flex items-center justify-between mb-3" data-card="activity">
+            <div class="flex items-center gap-3">
               <div>
-                <div class="text-xs font-medium">Рабочий день</div>
-                <div class="text-[11px] opacity-70">Как прошёл день по работе</div>
+                <h3 class="font-semibold">Активность</h3>
+                <!-- Мини-строка: N активностей · A ккал -->
+                <div class="text-[10px] opacity-70 mt-0.5" id="activityMiniSummary">
+                  0 активностей · 0 ккал
+                </div>
               </div>
-              <div class="text-[11px] font-medium" id="fitnessWorkDayLabel">Обычный</div>
+              <!-- Мини-полоски по типам -->
+              <div class="flex items-center gap-1 ml-2" id="activityMiniStrips">
+                <div class="fitness-mini-strip w-0 bg-gradient-to-r from-fuchsia-400 to-orange-400" id="miniStripGym" style="width: 0px"></div>
+                <div class="fitness-mini-strip w-0 bg-gradient-to-r from-cyan-400 to-emerald-400" id="miniStripCardio" style="width: 0px"></div>
+                <div class="fitness-mini-strip w-0 bg-gradient-to-r from-amber-300 to-orange-400" id="miniStripHome" style="width: 0px"></div>
+                <div class="fitness-mini-strip w-0 bg-gradient-to-r from-amber-300 to-amber-500" id="miniStripSteps" style="width: 0px"></div>
+              </div>
             </div>
-            <div class="flex gap-1 flex-wrap">
-              <button
-                type="button"
-                class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]"
-                data-workday="none"
-              >
-                Не работал
-              </button>
-              <button
-                type="button"
-                class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]"
-                data-workday="low"
-              >
-                Больше сидел
-              </button>
-              <button
-                type="button"
-                class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]"
-                data-workday="normal"
-              >
-                Обычный
-              </button>
-              <button
-                type="button"
-                class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]"
-                data-workday="high"
-              >
-                Очень активный
-              </button>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] px-2 py-1 rounded-full bg-white/15 opacity-80">
+                расход энергии за день
+              </span>
+              <!-- Chevron -->
+              <span class="fitness-card-chevron text-xs opacity-70">˅</span>
             </div>
           </div>
-
-          <!-- Мини‑итог по активности (реальные данные) -->
-          <div class="mb-3 text-xs opacity-80 flex justify-between">
-            <span>Сожжено за день: <span id="fitnessActivityBurnedTotal">0</span> ккал</span>
-            <span>Сессий: <span id="fitnessActivitySessions">0</span></span>
-          </div>
-
-          <!-- Быстрые кнопки -->
-          <div class="grid grid-cols-3 gap-2 mb-3">
-            <button type="button" data-quick-activity="gym" data-duration="45" class="fitness-quick-activity-btn py-2 rounded-xl bg-indigo-500/30 hover:bg-indigo-500/50 text-[10px] font-medium transition">
-              + Силовая 45 мин
-            </button>
-            <button type="button" data-quick-activity="cardio" data-duration="30" class="fitness-quick-activity-btn py-2 rounded-xl bg-emerald-500/30 hover:bg-emerald-500/50 text-[10px] font-medium transition">
-              + Кардио 30 мин
-            </button>
-            <button type="button" data-quick-activity="home" data-duration="15" class="fitness-quick-activity-btn py-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/50 text-[10px] font-medium transition">
-              + Домашка 15 мин
-            </button>
-          </div>
-
-          <div class="space-y-2 text-xs">
-            <!-- Силовая тренировка (связана с GYM) -->
-            <button type="button" data-activity="gym" id="activityGymBtn" class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5">
-                  <span>🏋️</span>
-                  <span class="font-medium">Силовая тренировка</span>
-                  <span id="activityGymLinked" class="hidden text-[9px] bg-indigo-500/50 px-1.5 py-0.5 rounded">🔗 GYM</span>
+          
+          <!-- Тело карточки -->
+          <div class="fitness-card-body">
+            <!-- Рабочий день -->
+            <div class="mb-4 pb-3 border-b border-white/10">
+              <div class="flex items-center justify-between mb-2">
+                <div>
+                  <div class="text-xs font-medium">Рабочий день</div>
+                  <div class="text-[11px] opacity-70">Как прошёл день по работе</div>
                 </div>
-                <span class="opacity-75 text-[11px]" id="activityGymStats">0 мин · 0 ккал</span>
+                <div class="text-[11px] font-medium" id="fitnessWorkDayLabel">Обычный</div>
               </div>
-              <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-fuchsia-400 to-orange-400 transition-all duration-500" id="activityGymBar" style="width: 0%"></div>
-                <div class="absolute left-0 top-0 bottom-0 w-full" style="background: linear-gradient(90deg, transparent 0%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 50.5%, transparent 50.5%);"></div>
+              <div class="flex gap-1 flex-wrap">
+                <button
+                  type="button"
+                  class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]"
+                  data-workday="none"
+                >
+                  Не работал
+                </button>
+                <button
+                  type="button"
+                  class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]"
+                  data-workday="low"
+                >
+                  Больше сидел
+                </button>
+                <button
+                  type="button"
+                  class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]"
+                  data-workday="normal"
+                >
+                  Обычный
+                </button>
+                <button
+                  type="button"
+                  class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]"
+                  data-workday="high"
+                >
+                  Очень активный
+                </button>
               </div>
-            </button>
+            </div>
 
-            <!-- Кардио в зале -->
-            <button type="button" data-activity="cardio_indoor" id="activityCardioIndoorBtn" class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5">
-                  <span>🚴</span>
-                  <span class="font-medium">Кардио в зале</span>
+            <!-- Мини‑итог по активности (реальные данные) -->
+            <div class="mb-3 text-xs opacity-80 flex justify-between">
+              <span>Сожжено за день: <span id="fitnessActivityBurnedTotal">0</span> ккал</span>
+              <span>Сессий: <span id="fitnessActivitySessions">0</span></span>
+            </div>
+
+            <!-- Быстрые кнопки -->
+            <div class="grid grid-cols-3 gap-2 mb-3">
+              <button type="button" data-quick-activity="gym" data-duration="45" class="fitness-quick-activity-btn py-2 rounded-xl bg-indigo-500/30 hover:bg-indigo-500/50 text-[10px] font-medium transition">
+                + Силовая 45 мин
+              </button>
+              <button type="button" data-quick-activity="cardio" data-duration="30" class="fitness-quick-activity-btn py-2 rounded-xl bg-emerald-500/30 hover:bg-emerald-500/50 text-[10px] font-medium transition">
+                + Кардио 30 мин
+              </button>
+              <button type="button" data-quick-activity="home" data-duration="15" class="fitness-quick-activity-btn py-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/50 text-[10px] font-medium transition">
+                + Домашка 15 мин
+              </button>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <!-- Силовая тренировка (связана с GYM) -->
+              <button type="button" data-activity="gym" id="activityGymBtn" class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5">
+                    <span>🏋️</span>
+                    <span class="font-medium">Силовая тренировка</span>
+                    <span id="activityGymLinked" class="hidden text-[9px] bg-indigo-500/50 px-1.5 py-0.5 rounded">🔗 GYM</span>
+                  </div>
+                  <span class="opacity-75 text-[11px]" id="activityGymStats">0 мин · 0 ккал</span>
                 </div>
-                <span class="opacity-75 text-[11px]" id="activityCardioIndoorStats">0 мин · 0 ккал</span>
-              </div>
-              <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-500" id="activityCardioIndoorBar" style="width: 0%"></div>
-                <div class="absolute left-0 top-0 bottom-0 w-full" style="background: linear-gradient(90deg, transparent 0%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 50.5%, transparent 50.5%);"></div>
-              </div>
-            </button>
-
-            <!-- Кардио на улице -->
-            <button type="button" data-activity="cardio_outdoor" id="activityCardioOutdoorBtn" class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5">
-                  <span>🏃</span>
-                  <span class="font-medium">Аэробная на улице</span>
+                <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-fuchsia-400 to-orange-400 transition-all duration-500" id="activityGymBar" style="width: 0%"></div>
+                  <div class="absolute left-0 top-0 bottom-0 w-full" style="background: linear-gradient(90deg, transparent 0%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 50.5%, transparent 50.5%);"></div>
                 </div>
-                <span class="opacity-75 text-[11px]" id="activityCardioOutdoorStats">0 мин · 0 ккал</span>
-              </div>
-              <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-emerald-400 to-sky-400 transition-all duration-500" id="activityCardioOutdoorBar" style="width: 0%"></div>
-                <div class="absolute left-0 top-0 bottom-0 w-full" style="background: linear-gradient(90deg, transparent 0%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 50.5%, transparent 50.5%);"></div>
-              </div>
-            </button>
+              </button>
 
-            <!-- Домашние тренировки -->
-            <button type="button" data-activity="home" id="activityHomeBtn" class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5">
-                  <span>🏠</span>
-                  <span class="font-medium">Домашние упражнения</span>
+              <!-- Кардио в зале -->
+              <button type="button" data-activity="cardio_indoor" id="activityCardioIndoorBtn" class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5">
+                    <span>🚴</span>
+                    <span class="font-medium">Кардио в зале</span>
+                  </div>
+                  <span class="opacity-75 text-[11px]" id="activityCardioIndoorStats">0 мин · 0 ккал</span>
                 </div>
-                <span class="opacity-75 text-[11px]" id="activityHomeStats">0 мин · 0 ккал</span>
-              </div>
-              <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-amber-300 to-orange-400 transition-all duration-500" id="activityHomeBar" style="width: 0%"></div>
-                <div class="absolute left-0 top-0 bottom-0 w-full" style="background: linear-gradient(90deg, transparent 0%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 50.5%, transparent 50.5%);"></div>
-              </div>
-            </button>
-
-            <!-- Шаги за день -->
-            <button type="button" data-activity="steps" id="activityStepsBtn" class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5">
-                  <span>🚶</span>
-                  <span class="font-medium">Шаги за день</span>
+                <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-500" id="activityCardioIndoorBar" style="width: 0%"></div>
+                  <div class="absolute left-0 top-0 bottom-0 w-full" style="background: linear-gradient(90deg, transparent 0%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 50.5%, transparent 50.5%);"></div>
                 </div>
-                <span class="opacity-75 text-[11px]" id="activityStepsStats">0 / 8 000 шагов</span>
-              </div>
-              <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-amber-300 to-amber-500 transition-all duration-500" id="activityStepsBar" style="width: 0%"></div>
-              </div>
-            </button>
-          </div>
+              </button>
 
-          <!-- Лента активностей -->
-          <ul id="fitnessActivityList" class="space-y-2 text-xs mt-3"></ul>
+              <!-- Кардио на улице -->
+              <button type="button" data-activity="cardio_outdoor" id="activityCardioOutdoorBtn" class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5">
+                    <span>🏃</span>
+                    <span class="font-medium">Аэробная на улице</span>
+                  </div>
+                  <span class="opacity-75 text-[11px]" id="activityCardioOutdoorStats">0 мин · 0 ккал</span>
+                </div>
+                <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-emerald-400 to-sky-400 transition-all duration-500" id="activityCardioOutdoorBar" style="width: 0%"></div>
+                  <div class="absolute left-0 top-0 bottom-0 w-full" style="background: linear-gradient(90deg, transparent 0%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 50.5%, transparent 50.5%);"></div>
+                </div>
+              </button>
+
+              <!-- Домашние тренировки -->
+              <button type="button" data-activity="home" id="activityHomeBtn" class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5">
+                    <span>🏠</span>
+                    <span class="font-medium">Домашние упражнения</span>
+                  </div>
+                  <span class="opacity-75 text-[11px]" id="activityHomeStats">0 мин · 0 ккал</span>
+                </div>
+                <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-amber-300 to-orange-400 transition-all duration-500" id="activityHomeBar" style="width: 0%"></div>
+                  <div class="absolute left-0 top-0 bottom-0 w-full" style="background: linear-gradient(90deg, transparent 0%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 50.5%, transparent 50.5%);"></div>
+                </div>
+              </button>
+
+              <!-- Шаги за день -->
+              <button type="button" data-activity="steps" id="activityStepsBtn" class="fitness-activity-btn w-full text-left p-3 rounded-xl bg-white/15 hover:bg-white/25 transition flex flex-col gap-1">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5">
+                    <span>🚶</span>
+                    <span class="font-medium">Шаги за день</span>
+                  </div>
+                  <span class="opacity-75 text-[11px]" id="activityStepsStats">0 / 8 000 шагов</span>
+                </div>
+                <div class="relative h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-amber-300 to-amber-500 transition-all duration-500" id="activityStepsBar" style="width: 0%"></div>
+                </div>
+              </button>
+            </div>
+
+            <!-- Лента активностей -->
+            <ul id="fitnessActivityList" class="space-y-2 text-xs mt-3"></ul>
+          </div>       
         </div>
         
 
@@ -747,15 +844,28 @@
 
         <!-- Поддержка тела: Еда, Вода, БАДы -->
         <div class="bg-white/15 backdrop-blur-md border border-white/10 rounded-2xl p-4 space-y-4">
-          <div class="flex items-center justify-between mb-1">
-            <h3 class="font-semibold">Поддержка тела</h3>
-            <span class="text-[11px] px-2 py-1 rounded-full bg-white/15 opacity-80">
-              питание · вода · БАДы
-            </span>
+          <!-- Шапка-триггер -->
+          <div class="fitness-card-header flex items-center justify-between mb-1" data-card="support">
+            <div>
+              <h3 class="font-semibold">Поддержка тела</h3>
+              <!-- Мини-строка-сводка -->
+              <div class="text-[10px] opacity-70 mt-0.5" id="supportMiniSummary">
+                Еда: 0 ккал · Вода: 0.0 / 2.0 л · БАДы: 0 / 0
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] px-2 py-1 rounded-full bg-white/15 opacity-80">
+                питание · вода · БАДы
+              </span>
+              <!-- Chevron -->
+              <span class="fitness-card-chevron text-xs opacity-70">˅</span>
+            </div>
           </div>
 
-          <!-- Еда -->
-          <div class="bg-white/10 rounded-xl p-3">
+          <!-- Тело карточки -->
+          <div class="fitness-card-body">
+            <!-- Еда -->
+            <div class="bg-white/10 rounded-xl p-3">
             <div class="flex items-center justify-between mb-2">
               <h4 class="font-semibold text-sm">Еда</h4>
               <!-- сюда позже можно добавить мини-сводку по ккал -->
@@ -817,11 +927,12 @@
               </button>
             </div>
           </div>
-          
+
           <!-- NEW: БАДы - расширенный трекинг (сегодня + план) -->
           <div id="fitnessSupplementsTracking" class="bg-white/10 rounded-xl p-3">
             <!-- Сюда JS рендерит новый интерфейс БАДов -->
-          </div>       
+          </div>
+          </div>
       </div>
                   <!-- Общий модальный слой для фитнес-форм (еда, БАДы, активность) -->
         <div
