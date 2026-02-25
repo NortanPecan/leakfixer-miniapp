@@ -640,9 +640,8 @@ function createSupplement({ name, unit, daily, dailyStartDate, dailyEndDate, sta
     updatedAt: nowISO,
   };
   
-  // Create initial intake(s) for the start date WITHOUT time - user must check the box to set time
-  // For daily: use dailyStartDate, for non-daily: use today
-  const initialDate = daily ? finalDailyStartDate : todayKey;
+  // Create initial intake(s) for today WITHOUT time - user must check the box to set time
+  // This ensures checkbox works immediately but time is only set on user interaction
   const initialIntakes = [];
 
   if (templateIntakes && templateIntakes.length > 0) {
@@ -668,7 +667,7 @@ function createSupplement({ name, unit, daily, dailyStartDate, dailyEndDate, sta
   }
 
   supplement.history = [{
-    date: initialDate,
+    date: todayKey,
     intakes: initialIntakes,
   }];
 

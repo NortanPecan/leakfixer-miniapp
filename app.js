@@ -951,7 +951,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateKey = fitnessGetDateKey();
     const supplements = FS.getAllSupplements();
     
-    // Render supplements for dateKey
+    // DEBUG: Log render start
+    console.log('[Supplements] render for dateKey:', dateKey, 'supplements count:', supplements.length);
+    console.log('[Supplements] supplements data:', supplements.map(s => ({
+      id: s.id,
+      name: s.name,
+      daily: s.daily,
+      dailyStartDate: s.dailyStartDate,
+      dailyEndDate: s.dailyEndDate,
+      historyDates: s.history?.map(h => h.date) || []
+    })));
     
     if (supplements.length === 0) {
       fitnessEl.supplementsTracking.innerHTML = `
@@ -987,10 +996,8 @@ document.addEventListener('DOMContentLoaded', () => {
           // Within interval: show (plan will be generated if needed)
           shouldShow = true;
         } else {
-          // Outside interval: for dates AFTER end date, show only if has intakes
-          // For dates BEFORE start date, NEVER show (even with intakes - should not happen)
-          const afterEndDate = supp.dailyEndDate && dateKey > supp.dailyEndDate;
-          shouldShow = afterEndDate && intakes.length > 0;
+          // Outside interval: only show if there are actual intakes (manual entries)
+          shouldShow = intakes.length > 0;
         }
       } else {
         // Non-daily supplements: only show if there are intakes for this specific date
