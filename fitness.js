@@ -47,13 +47,6 @@
  * @property {string} time
  * @property {'manual'|'auto'} source
 ...
- * @typedef {Object} SupplementEntry
- * @property {string} id
- * @property {string} name
- * @property {string} dose
- * @property {boolean} taken
- * @property {string} time
-
  * @typedef {Object} WaterData
  * @property {number} targetMl
  * @property {number} currentMl
@@ -62,7 +55,6 @@
  * @property {ActivityEntry[]} activities
  * @property {FoodEntry[]} foods
  * @property {WaterData} [water]
- * @property {SupplementEntry[]} supplements
  * @property {'low'|'normal'|'high'|undefined} [workDay]
  *
  * @typedef {Object} CaloriesSummary
@@ -83,13 +75,6 @@
  * @property {string} macrosText
  * @property {string} timeText
  * @property {'manual'|'auto'} source
- *
- * @typedef {Object} SupplementListItem
- * @property {string} id
- * @property {string} name
- * @property {string} dose
- * @property {boolean} taken
- * @property {string} timeText
  */
 
 // ===================== SUPPLEMENTS TRACKING TYPES =====================
@@ -190,7 +175,7 @@ function saveAllFitnessData(data) {
 
 /** @returns {FitnessDayData} */
 function createEmptyDayData() {
-  return { activities: [], foods: [], water: undefined, supplements: [], workDay: undefined };
+  return { activities: [], foods: [], water: undefined, workDay: undefined };
 }
 
 /** Get water data for a day with defaults from profile
@@ -623,6 +608,17 @@ function clearAllSupplementsHistory() {
   return true;
 }
 
+/** COMPLETELY RESET supplements - delete ALL supplements and their history
+ * Use this to clean up old data when migrating to new system
+ * @returns {boolean} success */
+function resetAllSupplements() {
+  const id = window.currentAppUserId || 'anon';
+  const key = `${SUPPLEMENTS_PROFILE_KEY}_${id}`;
+  localStorage.removeItem(key);
+  console.log('[Supplements] COMPLETE RESET - all supplements deleted');
+  return true;
+}
+
 /** Add new supplement to profile
  * @param {Object} params
  * @param {string} params.name
@@ -892,19 +888,6 @@ function getFoodListViewModel(foods) {
 }
 
 
-/** @param {SupplementEntry[]} supplements
- *  @returns {SupplementListItem[]} */
-function getSupplementListViewModel(supplements) {
-  return (supplements || []).map((s) => ({
-    id: s.id,
-    name: s.name,
-    dose: s.dose,
-    taken: s.taken,
-    timeText: s.time || '',
-  }));
-}
-
-
 /** @param {number} waterMl
  *  @returns {string} e.g. "1.5" */
 function formatWaterLiters(waterMl) {
@@ -937,18 +920,6 @@ function mergeFood(foods, entry, editId) {
   return list;
 }
 
-/** @param {SupplementEntry[]} supplements
- *  @param {SupplementEntry} entry
- *  @param {string} [editId]
- *  @returns {SupplementEntry[]} */
-function mergeSupplement(supplements, entry, editId) {
-  const list = [...(supplements || [])];
-  const idx = editId ? list.findIndex((s) => s.id === editId) : -1;
-  if (idx >= 0) list[idx] = entry;
-  else list.push(entry);
-  return list;
-}
-
 /** @param {ActivityEntry[]} activities
  *  @param {string} id
  *  @returns {ActivityEntry[]} */
@@ -961,13 +932,6 @@ function removeActivityById(activities, id) {
  *  @returns {FoodEntry[]} */
 function removeFoodById(foods, id) {
   return (foods || []).filter((f) => f.id !== id);
-}
-
-/** @param {SupplementEntry[]} supplements
- *  @param {string} id
- *  @returns {SupplementEntry[]} */
-function removeSupplementById(supplements, id) {
-  return (supplements || []).filter((s) => s.id !== id);
 }
 
 // ─── Pure: water tracking helpers ─────────────────────────────────────────
@@ -1128,21 +1092,6 @@ function buildFoodEntry(form, editId) {
 }
 
 
-/** @param {{ name?: string, dose?: string, taken?: boolean }} form
- *  @param {string} [editId]
- *  @returns {SupplementEntry} */
-function buildSupplementEntry(form, editId) {
-  const time = form.time && String(form.time).trim() ? String(form.time).trim() : formatTimeHM(new Date());
-  return {
-    id: editId || generateId(),
-    name: String(form.name || '').trim(),
-    dose: String(form.dose || '').trim(),
-    taken: !!form.taken,
-    time,
-  };
-}
-
-
 // ─── Public API ───────────────────────────────────────────────────────────
 
 // ─── API Ninjas Nutrition integration ───────────────────────────────────
@@ -1214,14 +1163,11 @@ window.FitnessState = {
   getActivityLabel,
   getActivityListViewModel,
   getFoodListViewModel,
-  getSupplementListViewModel,
   formatWaterLiters,
   mergeActivity,
   mergeFood,
-  mergeSupplement,
   removeActivityById,
   removeFoodById,
-  removeSupplementById,
   // UPDATED: water helpers
   adjustWater,
   getWaterStatus,
@@ -1230,14 +1176,13 @@ window.FitnessState = {
   parseProfileFromValues,
   buildActivityEntry,
   buildFoodEntry,
-  buildSupplementEntry,
   BALANCE_GREEN_MAX,
   BALANCE_RED_THRESHOLD,
   getWorkActivityMultiplier,
   // NEW: API Ninjas integration
   fetchNutritionForInput,
   onFoodSubmit,
-  // NEW: Supplements tracking
+  // NEW: Supplements tracking (NEW SYSTEM ONLY)
   loadSupplementsProfile,
   saveSupplementsProfile,
   getAllSupplements,
@@ -1247,8 +1192,9 @@ window.FitnessState = {
   updateSupplementIntake,
   addSupplementIntake,
   removeSupplementIntake,
-  removeAllSupplementIntakesForDay, // NEW: Remove all intakes for a day
-  clearAllSupplementsHistory, // NEW: Clear all history (dev/debug)
+  removeAllSupplementIntakesForDay,
+  clearAllSupplementsHistory,
+  resetAllSupplements, // DEV: Complete reset of all supplements
   createSupplement,
   updateSupplement,
   deleteSupplement,

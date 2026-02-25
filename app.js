@@ -1088,6 +1088,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // DEV/DEBUG: Clear history button (hidden in production, shown for debugging)
     html += '<button type="button" id="clearSupplementsHistory" class="w-full py-1 mt-2 rounded-xl bg-red-500/20 text-xs text-red-300 opacity-50 hover:opacity-100">🗑 Очистить всю историю БАДов</button>';
+    // DEV/DEBUG: COMPLETE RESET button - deletes ALL supplements
+    html += '<button type="button" id="resetAllSupplements" class="w-full py-1 mt-1 rounded-xl bg-red-900/40 text-xs text-red-400 opacity-50 hover:opacity-100">⚠️ УДАЛИТЬ ВСЕ БАДЫ</button>';
 
     fitnessEl.supplementsTracking.innerHTML = html;
     
@@ -1108,6 +1110,19 @@ document.addEventListener('DOMContentLoaded', () => {
           fitnessRenderSupplementsTracking();
         } else {
           alert('Ошибка при очистке истории.');
+        }
+      }
+    });
+
+    // DEV/DEBUG: COMPLETE RESET handler - deletes ALL supplements
+    document.getElementById('resetAllSupplements')?.addEventListener('click', () => {
+      if (confirm('☠️ ПОЛНЫЙ СБРОС\n\nЭто удалит ВСЕ БАДЫ и их историю безвозвратно!\n\nВосстановить будет невозможно.\n\nПродолжить?')) {
+        if (confirm('Вы точно уверены? ВСЕ данные о БАДах будут удалены!')) {
+          console.log('[Supplements] COMPLETE RESET');
+          FS.resetAllSupplements();
+          alert('Все БАДы удалены.');
+          fitnessEl.supplementsTracking.innerHTML = '';
+          fitnessRenderSupplementsTracking();
         }
       }
     });
