@@ -1129,7 +1129,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fitnessEl.modalOverlay.querySelector('#gymChoiceCancel')?.addEventListener('click', fitnessCloseModal);
       fitnessEl.modalOverlay.querySelector('#gymChoiceModule')?.addEventListener('click', () => {
         fitnessCloseModal();
-        showGymScreen();
+        gymOpenPeriodsScreen();
       });
       fitnessEl.modalOverlay.querySelector('#gymChoiceSimple')?.addEventListener('click', () => {
         fitnessCloseModal();
