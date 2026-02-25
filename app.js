@@ -712,13 +712,19 @@ document.addEventListener('DOMContentLoaded', () => {
       weightChartDataTimestamp = now;
       
       if (!chartData || chartData.length === 0) {
+        // Show "Add weight" button when no data exists
         chartContainer.innerHTML = `
-          <div class="flex flex-col items-center justify-center h-full text-xs opacity-70">
-            <span class="mb-1">📊</span>
-            <span>Пока нет данных по весу</span>
-            <span class="text-[10px] mt-1">Добавьте первое измерение</span>
+          <div class="flex flex-col items-center justify-center h-full">
+            <span class="text-xs opacity-70 mb-2">📊 Пока нет данных по весу</span>
+            <button type="button" id="weightChartAddBtn" class="px-4 py-2 rounded-xl bg-green-500 hover:bg-green-600 text-sm font-medium">
+              + Добавить вес
+            </button>
           </div>
         `;
+        // Attach click handler to the button
+        document.getElementById('weightChartAddBtn')?.addEventListener('click', () => {
+          fitnessOpenAddWeightModal();
+        });
         return;
       }
       
