@@ -252,20 +252,7 @@ function loadSupplementsProfile() {
   try {
     const raw = localStorage.getItem(getSupplementsStorageKey());
     if (raw) {
-      const profile = JSON.parse(raw);
-      // CRITICAL: Migrate old supplements without dailyStartDate/dailyEndDate
-      if (profile.supplements) {
-        for (const supp of profile.supplements) {
-          if (supp.daily && !supp.dailyStartDate) {
-            // Set default start date to createdAt or today for old supplements
-            supp.dailyStartDate = supp.createdAt 
-              ? formatDateKey(new Date(supp.createdAt)) 
-              : formatDateKey(new Date());
-            console.log('[Supplements] Migrated old supplement:', supp.name, 'dailyStartDate:', supp.dailyStartDate);
-          }
-        }
-      }
-      return profile;
+      return JSON.parse(raw);
     }
   } catch (e) {
     console.error('loadSupplementsProfile error:', e);
