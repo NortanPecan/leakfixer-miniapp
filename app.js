@@ -526,6 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
         FS.updateDayData(k, { activities: next });
         fitnessRenderActivityList();
         fitnessRenderCalories();
+        fitnessRenderActivityBlock();
       });
     });
   }
@@ -793,6 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessRenderDate();
     fitnessRenderCalories();
     fitnessRenderActivityList();
+    fitnessRenderActivityBlock();
     fitnessRenderFoodList();
     fitnessRenderWater();
     fitnessRenderWeightChart();
@@ -830,7 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
     html += '<div id="weightDetailChart" class="h-40 bg-white/5 rounded-xl relative overflow-hidden">';
     html += '<div class="flex items-center justify-center h-full text-xs opacity-50">Загрузка...</div>';
     html += '</div>';
-    
+
     // Add button
     html += '<button type="button" id="weightAddBtn" class="w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 font-semibold text-sm">+ Добавить вес</button>';
     
@@ -865,7 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
       loadWeightDetailData(30);
     });
   };
-  
+
   async function loadWeightDetailData(days) {
     if (!window.FitnessSync || !window.currentAppUserId) return;
     
@@ -914,7 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </svg>
         `;
       }
-      
+  
       // Render history list
       const listContainer = document.getElementById('weightHistoryList');
       if (history.length === 0) {
@@ -942,7 +944,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error loading weight detail data:', e);
     }
   }
-
+  
   window.fitnessOpenAddWeightModal = function() {
     const now = new Date();
     const today = FS.formatDateKey(now);
@@ -1083,7 +1085,174 @@ document.addEventListener('DOMContentLoaded', () => {
     return { steps: g('fmSteps') };
   }
 
+  // ========== NEW ACTIVITY SYSTEM ==========
+  
+  // Open specialized modal based on activity kind
   function fitnessOpenActivityModal(editId, forceKind) {
+    const dayData = FS.getDayData(fitnessGetDateKey());
+    const existing = editId ? (dayData.activities || []).find((a) => a.id === editId) : null;
+    const kind = forceKind || existing?.kind || 'gym';
+    
+    // For 'gym' kind, check if we should open GYM screen or simple form
+    if (kind === 'gym' || kind === 'strength') {
+      if (!editId) {
+        // New gym activity - offer choice between GYM module or simple form
+        fitnessOpenGymChoiceModal(editId);
+      } else {
+        // Edit existing - use simple form
+        fitnessOpenGymActivityModal(editId, existing);
+      }
+    } else if (kind === 'cardio_indoor' || (kind === 'cardio' && !existing?.isOutdoor)) {
+      fitnessOpenCardioModal(editId, existing, false);
+    } else if (kind === 'cardio_outdoor' || (kind === 'cardio' && existing?.isOutdoor)) {
+      fitnessOpenCardioModal(editId, existing, true);
+    } else if (kind === 'home' || kind === 'home_exercise') {
+      fitnessOpenHomeModal(editId, existing);
+    } else if (kind === 'steps') {
+      fitnessOpenStepsModal(editId, existing);
+    } else {
+      // Fallback to old modal
+      fitnessOpenLegacyActivityModal(editId, forceKind);
+    }
+  }
+  
+  // Choice modal for gym: use GYM module or simple form
+  function fitnessOpenGymChoiceModal(editId) {
+    let html = '<h3 class="font-semibold mb-4">Добавить силовую тренировку</h3>';
+    html += '<div class="space-y-3">';
+    html += '<button type="button" id="gymChoiceModule" class="w-full py-4 rounded-xl bg-indigo-500 hover:bg-indigo-600 font-semibold">🏋️ Открыть GYM (план тренировок)</button>';
+    html += '<button type="button" id="gymChoiceSimple" class="w-full py-4 rounded-xl bg-white/15 hover:bg-white/25">⏱️ Быстрая запись (только время)</button>';
+    html += '</div>';
+    html += '<div class="mt-4"><button type="button" id="gymChoiceCancel" class="w-full py-3 rounded-xl bg-white/10">Отмена</button></div>';
+    
+    fitnessOpenModal(html, () => {
+      fitnessEl.modalOverlay.querySelector('#gymChoiceCancel')?.addEventListener('click', fitnessCloseModal);
+      fitnessEl.modalOverlay.querySelector('#gymChoiceModule')?.addEventListener('click', () => {
+        fitnessCloseModal();
+        showGymScreen();
+      });
+      fitnessEl.modalOverlay.querySelector('#gymChoiceSimple')?.addEventListener('click', () => {
+        fitnessCloseModal();
+        fitnessOpenGymActivityModal(editId, null);
+      });
+    });
+  }
+  
+  // Simple gym activity modal
+  function fitnessOpenGymActivityModal(editId, existing) {
+    const modal = document.getElementById('gymActivityModalOverlay');
+    if (!modal) {
+      // Fallback to legacy if modal not found
+      fitnessOpenLegacyActivityModal(editId, 'gym');
+      return;
+    }
+
+    document.getElementById('gymActivityEditId').value = editId || '';
+    document.getElementById('gymActivityDuration').value = existing?.durationMinutes || 45;
+    document.getElementById('gymActivityIntensity').value = existing?.intensity || 'moderate';
+    
+    // Calculate initial calories
+    fitnessUpdateGymCaloriesPreview();
+    
+    modal.classList.remove('hidden');
+  }
+  
+  // Cardio modal (indoor/outdoor)
+  function fitnessOpenCardioModal(editId, existing, isOutdoor) {
+    const modal = document.getElementById('cardioModalOverlay');
+    if (!modal) {
+      fitnessOpenLegacyActivityModal(editId, isOutdoor ? 'cardio' : 'cardio');
+      return;
+    }
+  
+    const title = document.getElementById('cardioModalTitle');
+    const typeSelect = document.getElementById('cardioTypeSelect');
+    
+    title.textContent = isOutdoor ? 'Аэробная на улице' : 'Кардио в зале';
+    document.getElementById('cardioEditId').value = editId || '';
+    document.getElementById('cardioIsOutdoor').value = isOutdoor ? 'true' : 'false';
+    document.getElementById('cardioDuration').value = existing?.durationMinutes || 30;
+    document.getElementById('cardioDistance').value = existing?.distanceKm || '';
+    
+    // Fill type options
+    if (window.ActivityCalories) {
+      const types = window.ActivityCalories.getCardioTypes(isOutdoor);
+      typeSelect.innerHTML = types.map(t => 
+        `<option value="${t.key}" ${existing?.cardioType === t.key ? 'selected' : ''}>${t.label} (MET: ${t.met})</option>`
+      ).join('');
+    }
+    
+    fitnessUpdateCardioCaloriesPreview();
+    modal.classList.remove('hidden');
+  }
+  
+  // Home exercise modal
+  function fitnessOpenHomeModal(editId, existing) {
+    const modal = document.getElementById('homeModalOverlay');
+    if (!modal) {
+      fitnessOpenLegacyActivityModal(editId, 'home');
+      return;
+    }
+  
+    document.getElementById('homeEditId').value = editId || '';
+    document.getElementById('homeDuration').value = existing?.durationMinutes || 15;
+    document.getElementById('homeRepetitions').value = existing?.repetitions || 20;
+    
+    // Fill exercise options
+    if (window.ActivityCalories) {
+      const types = window.ActivityCalories.getHomeExerciseTypes();
+      const select = document.getElementById('homeExerciseTypeSelect');
+      select.innerHTML = types.map(t => 
+        `<option value="${t.key}" ${existing?.exerciseType === t.key ? 'selected' : ''}>${t.label}</option>`
+      ).join('');
+      
+      // Handle input type toggle
+      select.onchange = () => {
+        const selected = types.find(t => t.key === select.value);
+        const useReps = document.getElementById('homeUseReps');
+        const durationField = document.getElementById('homeDurationField');
+        const repsField = document.getElementById('homeRepsField');
+        
+        if (selected?.inputType === 'time') {
+          useReps.checked = false;
+          useReps.disabled = true;
+          durationField.classList.remove('hidden');
+          repsField.classList.add('hidden');
+        } else if (selected?.inputType === 'reps') {
+          useReps.checked = true;
+          useReps.disabled = true;
+          durationField.classList.add('hidden');
+          repsField.classList.remove('hidden');
+        } else {
+          useReps.disabled = false;
+        }
+        fitnessUpdateHomeCaloriesPreview();
+      };
+      select.onchange();
+    }
+  
+    fitnessUpdateHomeCaloriesPreview();
+    modal.classList.remove('hidden');
+  }
+  
+  // Steps modal
+  function fitnessOpenStepsModal(editId, existing) {
+    const modal = document.getElementById('stepsModalOverlay');
+    if (!modal) {
+      fitnessOpenLegacyActivityModal(editId, 'steps');
+      return;
+    }
+    
+    document.getElementById('stepsEditId').value = editId || '';
+    document.getElementById('stepsCount').value = existing?.steps || 5000;
+    document.getElementById('stepsIntensity').value = existing?.intensity || 'normal';
+    
+    fitnessUpdateStepsCaloriesPreview();
+    modal.classList.remove('hidden');
+  }
+  
+  // Legacy modal for fallback
+  function fitnessOpenLegacyActivityModal(editId, forceKind) {
     const dayData = FS.getDayData(fitnessGetDateKey());
     const existing = editId ? (dayData.activities || []).find((a) => a.id === editId) : null;
     const kind = forceKind || existing?.kind || 'gym';
@@ -1119,6 +1288,174 @@ document.addEventListener('DOMContentLoaded', () => {
         fitnessRenderCalories();
       });
     });
+  }
+  
+  // Preview calculators
+  function fitnessUpdateGymCaloriesPreview() {
+    if (!window.ActivityCalories) return;
+    const duration = parseInt(document.getElementById('gymActivityDuration')?.value) || 45;
+    const intensity = document.getElementById('gymActivityIntensity')?.value || 'moderate';
+    const calories = window.ActivityCalories.calculateSimpleStrengthCalories(duration, intensity);
+    document.getElementById('gymActivityCaloriesEstimate').textContent = calories;
+  }
+  
+  function fitnessUpdateCardioCaloriesPreview() {
+    if (!window.ActivityCalories) return;
+    const type = document.getElementById('cardioTypeSelect')?.value || 'WALKING_TREADMILL';
+    const duration = parseInt(document.getElementById('cardioDuration')?.value) || 30;
+    const distance = parseFloat(document.getElementById('cardioDistance')?.value) || null;
+    const isOutdoor = document.getElementById('cardioIsOutdoor')?.value === 'true';
+    const result = window.ActivityCalories.calculateCardioCalories({ type, durationMinutes: duration, distanceKm: distance, isOutdoor });
+    document.getElementById('cardioCaloriesEstimate').textContent = result.calories;
+  }
+  
+  function fitnessUpdateHomeCaloriesPreview() {
+    if (!window.ActivityCalories) return;
+    const type = document.getElementById('homeExerciseTypeSelect')?.value || 'PUSHUPS_MODERATE';
+    const duration = parseInt(document.getElementById('homeDuration')?.value) || null;
+    const reps = parseInt(document.getElementById('homeRepetitions')?.value) || null;
+    const useReps = document.getElementById('homeUseReps')?.checked;
+    
+    const result = window.ActivityCalories.calculateHomeExerciseCalories({
+      exerciseType: type,
+      durationMinutes: useReps ? null : duration,
+      repetitions: useReps ? reps : null
+    });
+    document.getElementById('homeCaloriesEstimate').textContent = result.calories;
+  }
+  
+  function fitnessUpdateStepsCaloriesPreview() {
+    if (!window.ActivityCalories) return;
+    const steps = parseInt(document.getElementById('stepsCount')?.value) || 0;
+    const intensity = document.getElementById('stepsIntensity')?.value || 'normal';
+    const result = window.ActivityCalories.calculateStepsCalories(steps, intensity);
+    document.getElementById('stepsCaloriesEstimate').textContent = result.calories;
+  }
+  
+  // Activity Block Rendering with real progress bars
+  function fitnessRenderActivityBlock() {
+    const dateKey = fitnessGetDateKey();
+    const dayData = FS.getDayData(dateKey);
+    const activities = dayData.activities || [];
+    
+    // Calculate totals by type
+    const totals = {
+      gym: { duration: 0, calories: 0, count: 0 },
+      cardio_indoor: { duration: 0, calories: 0, count: 0 },
+      cardio_outdoor: { duration: 0, calories: 0, count: 0 },
+      home: { duration: 0, calories: 0, count: 0 },
+      steps: { steps: 0, calories: 0, count: 0 }
+    };
+    
+    activities.forEach(a => {
+      if (a.kind === 'gym' || a.kind === 'strength') {
+        totals.gym.duration += a.durationMinutes || 0;
+        totals.gym.calories += a.calories || 0;
+        totals.gym.count++;
+      } else if (a.kind === 'cardio_indoor') {
+        totals.cardio_indoor.duration += a.durationMinutes || 0;
+        totals.cardio_indoor.calories += a.calories || 0;
+        totals.cardio_indoor.count++;
+      } else if (a.kind === 'cardio_outdoor' || (a.kind === 'cardio' && a.isOutdoor)) {
+        totals.cardio_outdoor.duration += a.durationMinutes || 0;
+        totals.cardio_outdoor.calories += a.calories || 0;
+        totals.cardio_outdoor.count++;
+      } else if (a.kind === 'home' || a.kind === 'home_exercise') {
+        totals.home.duration += a.durationMinutes || 0;
+        totals.home.calories += a.calories || 0;
+        totals.home.count++;
+      } else if (a.kind === 'steps') {
+        totals.steps.steps += a.steps || 0;
+        totals.steps.calories += a.calories || 0;
+        totals.steps.count++;
+      }
+    });
+    
+    // Check GYM connection
+    if (window.ActivityCalories) {
+      const gymWorkouts = window.ActivityCalories.getGymWorkoutsForDate(dateKey);
+      if (gymWorkouts.length > 0) {
+        document.getElementById('activityGymLinked')?.classList.remove('hidden');
+        // Add GYM workout data to totals
+        gymWorkouts.forEach(w => {
+          totals.gym.duration += w.durationMinutes || 45;
+          totals.gym.count++;
+        });
+      } else {
+        document.getElementById('activityGymLinked')?.classList.add('hidden');
+      }
+    }
+    
+    // Update stats and progress bars
+    const goals = window.ActivityCalories?.ACTIVITY_GOALS || {
+      GYM_MINUTES: 45, CARDIO_MINUTES: 30, STEPS: 8000, HOME_MINUTES: 20
+    };
+    
+    // Gym
+    document.getElementById('activityGymStats').textContent = 
+      `${totals.gym.duration} мин · ${totals.gym.calories} ккал`;
+    const gymPercent = Math.min(100, Math.round((totals.gym.duration / goals.GYM_MINUTES) * 100));
+    document.getElementById('activityGymBar').style.width = `${gymPercent}%`;
+    
+    // Cardio Indoor
+    document.getElementById('activityCardioIndoorStats').textContent = 
+      `${totals.cardio_indoor.duration} мин · ${totals.cardio_indoor.calories} ккал`;
+    const cardioInPercent = Math.min(100, Math.round((totals.cardio_indoor.duration / goals.CARDIO_MINUTES) * 100));
+    document.getElementById('activityCardioIndoorBar').style.width = `${cardioInPercent}%`;
+    
+    // Cardio Outdoor
+    document.getElementById('activityCardioOutdoorStats').textContent = 
+      `${totals.cardio_outdoor.duration} мин · ${totals.cardio_outdoor.calories} ккал`;
+    const cardioOutPercent = Math.min(100, Math.round((totals.cardio_outdoor.duration / goals.CARDIO_MINUTES) * 100));
+    document.getElementById('activityCardioOutdoorBar').style.width = `${cardioOutPercent}%`;
+    
+    // Home
+    document.getElementById('activityHomeStats').textContent = 
+      `${totals.home.duration} мин · ${totals.home.calories} ккал`;
+    const homePercent = Math.min(100, Math.round((totals.home.duration / goals.HOME_MINUTES) * 100));
+    document.getElementById('activityHomeBar').style.width = `${homePercent}%`;
+    
+    // Steps
+    document.getElementById('activityStepsStats').textContent = 
+      `${totals.steps.steps.toLocaleString()} / ${goals.STEPS.toLocaleString()} шагов`;
+    const stepsPercent = Math.min(100, Math.round((totals.steps.steps / goals.STEPS) * 100));
+    document.getElementById('activityStepsBar').style.width = `${stepsPercent}%`;
+    
+    // Update summary
+    const totalCalories = totals.gym.calories + totals.cardio_indoor.calories + 
+                         totals.cardio_outdoor.calories + totals.home.calories + totals.steps.calories;
+    const totalSessions = totals.gym.count + totals.cardio_indoor.count + 
+                         totals.cardio_outdoor.count + totals.home.count + totals.steps.count;
+    
+    document.getElementById('fitnessActivityBurnedTotal').textContent = totalCalories;
+    document.getElementById('fitnessActivitySessions').textContent = totalSessions;
+  }
+  
+  // Quick activity buttons
+  function fitnessAddQuickActivity(kind, duration) {
+    const k = fitnessGetDateKey();
+    const formValues = { durationMinutes: duration };
+    
+    if (kind === 'cardio') {
+      formValues.cardioType = 'RUNNING_TREADMILL_SLOW';
+      formValues.isOutdoor = false;
+    } else if (kind === 'home') {
+      formValues.exerciseType = 'PUSHUPS_MODERATE';
+    } else {
+      formValues.intensity = 'moderate';
+    }
+    
+    const entry = FS.buildActivityEntry(kind, formValues, null);
+    const dayData = FS.getDayData(k);
+    const next = FS.mergeActivity(dayData.activities, entry, null);
+    FS.updateDayData(k, { activities: next });
+    
+    fitnessRenderActivityList();
+    fitnessRenderCalories();
+    fitnessRenderActivityBlock();
+    
+    // Open edit modal for fine-tuning
+    fitnessOpenActivityModal(entry.id, entry.kind);
   }
 
   function fitnessOpenFoodModal(editId) {
@@ -1966,7 +2303,122 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => { fitnessOpenActivityModal(null, btn.dataset.activity); });
   });
 
+  // Quick activity buttons
+  document.querySelectorAll('.fitness-quick-activity-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const kind = btn.dataset.quickActivity;
+      const duration = parseInt(btn.dataset.duration) || 30;
+      fitnessAddQuickActivity(kind, duration);
+    });
+  });
+
+  // Gym Activity Modal
+  document.getElementById('gymActivityForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const editId = document.getElementById('gymActivityEditId')?.value;
+    const formValues = {
+      durationMinutes: parseInt(document.getElementById('gymActivityDuration')?.value) || 45,
+      intensity: document.getElementById('gymActivityIntensity')?.value || 'moderate'
+    };    
+    const k = fitnessGetDateKey();
+    const dayData = FS.getDayData(k);
+    const entry = FS.buildActivityEntry('gym', formValues, editId || null);
+    const next = FS.mergeActivity(dayData.activities, entry, editId || null);
+    FS.updateDayData(k, { activities: next });
+    document.getElementById('gymActivityModalOverlay')?.classList.add('hidden');
+    fitnessRenderActivityList();
+    fitnessRenderCalories();
+    fitnessRenderActivityBlock();
+  });
+  document.getElementById('gymActivityCancelBtn')?.addEventListener('click', () => {
+    document.getElementById('gymActivityModalOverlay')?.classList.add('hidden');
+  });
+  document.getElementById('gymActivityDuration')?.addEventListener('input', fitnessUpdateGymCaloriesPreview);
+  document.getElementById('gymActivityIntensity')?.addEventListener('change', fitnessUpdateGymCaloriesPreview);
+
+  // Cardio Modal
+  document.getElementById('cardioForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const editId = document.getElementById('cardioEditId')?.value;
+    const isOutdoor = document.getElementById('cardioIsOutdoor')?.value === 'true';
+    const formValues = {
+      cardioType: document.getElementById('cardioTypeSelect')?.value,
+      durationMinutes: parseInt(document.getElementById('cardioDuration')?.value) || 30,
+      distanceKm: parseFloat(document.getElementById('cardioDistance')?.value) || null
+    };    
+    const k = fitnessGetDateKey();
+    const dayData = FS.getDayData(k);
+    const kind = isOutdoor ? 'cardio_outdoor' : 'cardio_indoor';
+    const entry = FS.buildActivityEntry(kind, formValues, editId || null);
+    const next = FS.mergeActivity(dayData.activities, entry, editId || null);
+    FS.updateDayData(k, { activities: next });
+    document.getElementById('cardioModalOverlay')?.classList.add('hidden');
+    fitnessRenderActivityList();
+    fitnessRenderCalories();
+    fitnessRenderActivityBlock();
+  });
+  document.getElementById('cardioCancelBtn')?.addEventListener('click', () => {
+    document.getElementById('cardioModalOverlay')?.classList.add('hidden');
+  });
+  document.getElementById('cardioDuration')?.addEventListener('input', fitnessUpdateCardioCaloriesPreview);
+  document.getElementById('cardioDistance')?.addEventListener('input', fitnessUpdateCardioCaloriesPreview);
+  document.getElementById('cardioTypeSelect')?.addEventListener('change', fitnessUpdateCardioCaloriesPreview);
   
+  // Home Exercise Modal
+  document.getElementById('homeExerciseForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const editId = document.getElementById('homeEditId')?.value;
+    const useReps = document.getElementById('homeUseReps')?.checked;
+    const formValues = {
+      exerciseType: document.getElementById('homeExerciseTypeSelect')?.value,
+      durationMinutes: useReps ? null : (parseInt(document.getElementById('homeDuration')?.value) || 15),
+      repetitions: useReps ? (parseInt(document.getElementById('homeRepetitions')?.value) || 20) : null
+    };
+    const k = fitnessGetDateKey();
+    const dayData = FS.getDayData(k);
+    const entry = FS.buildActivityEntry('home_exercise', formValues, editId || null);
+    const next = FS.mergeActivity(dayData.activities, entry, editId || null);
+    FS.updateDayData(k, { activities: next });
+    document.getElementById('homeModalOverlay')?.classList.add('hidden');
+    fitnessRenderActivityList();
+    fitnessRenderCalories();
+    fitnessRenderActivityBlock();
+  });
+  document.getElementById('homeCancelBtn')?.addEventListener('click', () => {
+    document.getElementById('homeModalOverlay')?.classList.add('hidden');
+  });
+  document.getElementById('homeDuration')?.addEventListener('input', fitnessUpdateHomeCaloriesPreview);
+  document.getElementById('homeRepetitions')?.addEventListener('input', fitnessUpdateHomeCaloriesPreview);
+  document.getElementById('homeUseReps')?.addEventListener('change', () => {
+    const useReps = document.getElementById('homeUseReps')?.checked;
+    document.getElementById('homeDurationField')?.classList.toggle('hidden', useReps);
+    document.getElementById('homeRepsField')?.classList.toggle('hidden', !useReps);
+    fitnessUpdateHomeCaloriesPreview();
+  });
+
+  // Steps Modal
+  document.getElementById('stepsForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const editId = document.getElementById('stepsEditId')?.value;
+    const formValues = {
+      steps: parseInt(document.getElementById('stepsCount')?.value) || 0,
+      intensity: document.getElementById('stepsIntensity')?.value || 'normal'
+    };
+    const k = fitnessGetDateKey();
+    const dayData = FS.getDayData(k);
+    const entry = FS.buildActivityEntry('steps', formValues, editId || null);
+    const next = FS.mergeActivity(dayData.activities, entry, editId || null);
+    FS.updateDayData(k, { activities: next });
+    document.getElementById('stepsModalOverlay')?.classList.add('hidden');
+    fitnessRenderActivityList();
+    fitnessRenderCalories();
+    fitnessRenderActivityBlock();
+  });
+  document.getElementById('stepsCancelBtn')?.addEventListener('click', () => {
+    document.getElementById('stepsModalOverlay')?.classList.add('hidden');
+  });
+  document.getElementById('stepsCount')?.addEventListener('input', fitnessUpdateStepsCaloriesPreview);
+  document.getElementById('stepsIntensity')?.addEventListener('change', fitnessUpdateStepsCaloriesPreview);
 
   fitnessEl.foodAdd?.addEventListener('click', () => fitnessOpenFoodModal(null));
 

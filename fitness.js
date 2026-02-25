@@ -13,28 +13,51 @@
  * @property {number} [targetWeight] - kg
  * @property {'sedentary'|'mixed'|'physical'|'variable'} [workProfile]
  *
- * @typedef {'gym'|'cardio'|'steps'} ActivityKind
- * @typedef {'low'|'medium'|'high'} GymIntensity
+ * @typedef {'gym'|'strength'|'cardio'|'cardio_indoor'|'cardio_outdoor'|'home'|'home_exercise'|'steps'|'daily'} ActivityKind
+ * @typedef {'light'|'medium'|'high'} GymIntensity
  * @typedef {'run'|'walk'|'bike'|'other'} CardioType
  *
  * @typedef {Object} GymEntry
  * @property {string} id
- * @property {'gym'} kind
+ * @property {'gym'|'strength'} kind
  * @property {number} durationMinutes
- * @property {GymIntensity} intensity
+ * @property {GymIntensity} [intensity]
+ * @property {Object} [gymData] - linked GYM workout data
+ * @property {string} [gymData.periodId]
+ * @property {number} [gymData.cycleIndex]
+ * @property {number} [gymData.dayIndex]
+ * @property {number} [calories] - pre-calculated calories
  *
  * @typedef {Object} CardioEntry
  * @property {string} id
- * @property {'cardio'} kind
+ * @property {'cardio'|'cardio_indoor'|'cardio_outdoor'} kind
  * @property {number} durationMinutes
- * @property {CardioType} type
+ * @property {string} [cardioType] - MET key from ActivityCalories
+ * @property {number} [distanceKm]
+ * @property {number} [calories] - pre-calculated calories
+ *
+ * @typedef {Object} HomeExerciseEntry
+ * @property {string} id
+ * @property {'home'|'home_exercise'} kind
+ * @property {string} exerciseType - MET key from ActivityCalories
+ * @property {number} [durationMinutes] - for time-based exercises
+ * @property {number} [repetitions] - for rep-based exercises
+ * @property {number} [calories] - pre-calculated calories
  *
  * @typedef {Object} StepsEntry
  * @property {string} id
  * @property {'steps'} kind
  * @property {number} steps
+ * @property {number} [calories] - pre-calculated calories
  *
- * @typedef {GymEntry|CardioEntry|StepsEntry} ActivityEntry
+ * @typedef {Object} DailyActivityEntry
+ * @property {string} id
+ * @property {'daily'} kind
+ * @property {string} activityType
+ * @property {number} durationMinutes
+ * @property {number} [calories]
+ *
+ * @typedef {GymEntry|CardioEntry|HomeExerciseEntry|StepsEntry|DailyActivityEntry} ActivityEntry
  *
  * @typedef {Object} FoodEntry
  * @property {string} id
@@ -768,18 +791,32 @@ function calculateBaseMetabolism(profile) {
 }
 
 /**
- * Activity calories placeholder. Replace with MET-based calc later.
+ * Activity calories calculation using MET-based formulas from ActivityCalories module.
+ * Falls back to old calculation if ActivityCalories not loaded.
  * @param {ActivityEntry[]} activities
  * @returns {number}
  */
 function calculateActivityCalories(activities) {
+  // Use new ActivityCalories module if available
+  if (window.ActivityCalories && window.ActivityCalories.calculateActivityCaloriesUniversal) {
+    let total = 0;
+    for (const a of activities || []) {
+      total += window.ActivityCalories.calculateActivityCaloriesUniversal(a);
+    }
+    return Math.round(total);
+  }
+  
+  // Fallback to old simple calculation
   const GYM_FACTOR = 8;
   const CARDIO_FACTOR = 10;
   const STEPS_FACTOR = 0.04;
   let total = 0;
-  for (const a of activities) {
+  for (const a of activities || []) {
     if (a.kind === 'gym') total += (a.durationMinutes || 0) * GYM_FACTOR;
     if (a.kind === 'cardio') total += (a.durationMinutes || 0) * CARDIO_FACTOR;
+    if (a.kind === 'cardio_indoor') total += (a.durationMinutes || 0) * CARDIO_FACTOR;
+    if (a.kind === 'cardio_outdoor') total += (a.durationMinutes || 0) * CARDIO_FACTOR;
+    if (a.kind === 'home' || a.kind === 'home_exercise') total += (a.durationMinutes || 0) * 5;
     if (a.kind === 'steps') total += (a.steps || 0) * STEPS_FACTOR;
   }
   return Math.round(total);
@@ -843,9 +880,104 @@ function getWorkActivityMultiplier(profile, dayData) {
 /** @param {ActivityEntry} a
  *  @returns {string} */
 function getActivityLabel(a) {
-  if (a.kind === 'gym') return `Спортзал ${a.durationMinutes} мин (${a.intensity || '-'})`;
-  if (a.kind === 'cardio') return `Аэробная ${a.durationMinutes} мин (${a.type || '-'})`;
-  if (a.kind === 'steps') return `Шаги: ${a.steps}`;
+  if (!a) return '';
+  
+  // Силовая тренировка
+  if (a.kind === 'gym' || a.kind === 'strength') {
+    const calories = a.calories ? ` · ${a.calories} ккал` : '';
+    if (a.gymData) {
+      return `Силовая тренировка${a.durationMinutes ? ` ${a.durationMinutes} мин` : ''}${calories}`;
+    }
+    return `Силовая ${a.durationMinutes} мин${calories}`;
+  }
+  
+  // Кардио (зал)
+  if (a.kind === 'cardio' || a.kind === 'cardio_indoor') {
+    const calories = a.calories ? ` · ${a.calories} ккал` : '';
+    const typeLabels = {
+      'WALKING_TREADMILL': 'Ходьба на дорожке',
+      'RUNNING_TREADMILL_SLOW': 'Бег на дорожке',
+      'RUNNING_TREADMILL_FAST': 'Бег на дорожке (быстрый)',
+      'ELLIPTICAL_LIGHT': 'Эллипс',
+      'ELLIPTICAL_MODERATE': 'Эллипс',
+      'ELLIPTICAL_VIGOROUS': 'Эллипс (интенсивно)',
+      'STATIONARY_BIKE_LIGHT': 'Велотренажёр',
+      'STATIONARY_BIKE_MODERATE': 'Велотренажёр',
+      'STATIONARY_BIKE_VIGOROUS': 'Велотренажёр (интенсивно)',
+      'ROWING_LIGHT': 'Гребной тренажёр',
+      'ROWING_MODERATE': 'Гребной тренажёр',
+      'ROWING_VIGOROUS': 'Гребной тренажёр (интенсивно)',
+      'STEPPER': 'Степпер',
+    };
+    const typeLabel = typeLabels[a.cardioType] || 'Кардио (зал)';
+    return `${typeLabel} ${a.durationMinutes} мин${calories}`;
+  }
+  
+  // Кардио (улица)
+  if (a.kind === 'cardio_outdoor') {
+    const calories = a.calories ? ` · ${a.calories} ккал` : '';
+    const typeLabels = {
+      'WALKING_LEISURE': 'Прогулочная ходьба',
+      'WALKING_BRISK': 'Быстрая ходьба',
+      'WALKING_RACE': 'Спортивная ходьба',
+      'RUNNING_SLOW': 'Бег (медленный)',
+      'RUNNING_MODERATE': 'Бег (средний)',
+      'RUNNING_FAST': 'Бег (быстрый)',
+      'RUNNING_SPRINT': 'Бег (спринт)',
+      'CYCLING_LEISURE': 'Велосипед (прогулка)',
+      'CYCLING_MODERATE': 'Велосипед',
+      'CYCLING_FAST': 'Велосипед (быстрый)',
+      'CYCLING_RACE': 'Велосипед (гонка)',
+      'SWIMMING_LEISURE': 'Плавание',
+      'SWIMMING_MODERATE': 'Плавание',
+      'SWIMMING_VIGOROUS': 'Плавание (интенсивно)',
+      'SKIING_CROSS_COUNTRY': 'Лыжи классика',
+      'SKIING_SKATING': 'Лыжи коньком',
+    };
+    const typeLabel = typeLabels[a.cardioType] || 'Кардио (улица)';
+    const distance = a.distanceKm ? ` · ${a.distanceKm} км` : '';
+    return `${typeLabel} ${a.durationMinutes} мин${distance}${calories}`;
+  }
+  
+  // Домашние упражнения
+  if (a.kind === 'home' || a.kind === 'home_exercise') {
+    const calories = a.calories ? ` · ${a.calories} ккал` : '';
+    const typeLabels = {
+      'PUSHUPS_MODERATE': 'Отжимания',
+      'PUSHUPS_VIGOROUS': 'Отжимания (интенсивно)',
+      'SQUATS_BODYWEIGHT': 'Приседания',
+      'SQUATS_WEIGHTED': 'Приседания с весом',
+      'LUNGES': 'Выпады',
+      'CRUNCHES': 'Скручивания',
+      'LEG_RAISES': 'Подъёмы ног',
+      'PLANK': 'Планка',
+      'BURPEES': 'Бёрпи',
+      'JUMPING_JACKS': 'Джампинг джек',
+      'MOUNTAIN_CLIMBERS': 'Альпинист',
+      'HIGH_KNEES': 'Бег с высокими коленями',
+      'SHADOW_BOXING': 'Бокс с тенью',
+      'YOGA_LIGHT': 'Йога',
+      'YOGA_MODERATE': 'Йога',
+      'PILATES': 'Пилатес',
+      'STRETCHING': 'Растяжка',
+    };
+    const typeLabel = typeLabels[a.exerciseType] || 'Домашняя тренировка';
+    const duration = a.durationMinutes ? ` ${a.durationMinutes} мин` : '';
+    const reps = a.repetitions ? ` ${a.repetitions} повт.` : '';
+    return `${typeLabel}${duration}${reps}${calories}`;
+  }
+  
+  // Шаги
+  if (a.kind === 'steps') {
+    const calories = a.calories ? ` · ${a.calories} ккал` : '';
+    return `Шаги: ${a.steps?.toLocaleString() || 0}${calories}`;
+  }
+  
+  // Повседневная активность
+  if (a.kind === 'daily') {
+    return `Активность: ${a.activityType || 'другое'} ${a.durationMinutes} мин`;
+  }
+  
   return '';
 }
 
@@ -1032,28 +1164,129 @@ function parseProfileFromValues(values) {
  */
 function buildActivityEntry(kind, form, editId) {
   const id = editId || generateId();
-  if (kind === 'gym') {
+  
+  // Силовая тренировка (GYM)
+  if (kind === 'gym' || kind === 'strength') {
     const intensity = ['low', 'medium', 'high'].includes(form.intensity) ? form.intensity : 'medium';
-    return {
+    const entry = {
       id,
       kind: 'gym',
-      durationMinutes: Number(form.durationMinutes) || 0,
+      durationMinutes: Number(form.durationMinutes) || 45,
       intensity,
     };
+    // Если есть связь с GYM-модулем
+    if (form.gymData) {
+      entry.gymData = form.gymData;
+    }
+    // Рассчитываем калории если есть ActivityCalories
+    if (window.ActivityCalories) {
+      if (entry.gymData && entry.gymData.exercises) {
+        entry.calories = window.ActivityCalories.calculateStrengthCalories(entry.gymData).calories;
+      } else {
+        entry.calories = window.ActivityCalories.calculateSimpleStrengthCalories(entry.durationMinutes, intensity);
+      }
+    }
+    return entry;
   }
-  if (kind === 'cardio') {
-    const type = ['run', 'walk', 'bike', 'other'].includes(form.type) ? form.type : 'other';
+
+  // Кардио (зал)
+  if (kind === 'cardio' || kind === 'cardio_indoor') {
+    const entry = {
+      id,
+      kind: 'cardio_indoor',
+      durationMinutes: Number(form.durationMinutes) || 30,
+      cardioType: form.cardioType || 'WALKING_TREADMILL',
+    };
+    if (form.distanceKm) {
+      entry.distanceKm = Number(form.distanceKm);
+    }
+    if (window.ActivityCalories) {
+      const calc = window.ActivityCalories.calculateCardioCalories({
+        type: entry.cardioType,
+        durationMinutes: entry.durationMinutes,
+        distanceKm: entry.distanceKm,
+        isOutdoor: false,
+      });
+      entry.calories = calc.calories;
+    }
+    return entry;
+  }
+  
+  // Кардио (улица)
+  if (kind === 'cardio_outdoor') {
+    const entry = {
+      id,
+      kind: 'cardio_outdoor',
+      durationMinutes: Number(form.durationMinutes) || 30,
+      cardioType: form.cardioType || 'WALKING_LEISURE',
+    };
+    if (form.distanceKm) {
+      entry.distanceKm = Number(form.distanceKm);
+    }
+    if (window.ActivityCalories) {
+      const calc = window.ActivityCalories.calculateCardioCalories({
+        type: entry.cardioType,
+        durationMinutes: entry.durationMinutes,
+        distanceKm: entry.distanceKm,
+        isOutdoor: true,
+      });
+      entry.calories = calc.calories;
+    }
+    return entry;
+  }
+  
+  // Домашние упражнения
+  if (kind === 'home' || kind === 'home_exercise') {
+    const entry = {
+      id,
+      kind: 'home_exercise',
+      exerciseType: form.exerciseType || 'PUSHUPS_MODERATE',
+    };
+    if (form.durationMinutes) {
+      entry.durationMinutes = Number(form.durationMinutes);
+    }
+    if (form.repetitions) {
+      entry.repetitions = Number(form.repetitions);
+    }
+    if (window.ActivityCalories) {
+      const calc = window.ActivityCalories.calculateHomeExerciseCalories({
+        exerciseType: entry.exerciseType,
+        durationMinutes: entry.durationMinutes,
+        repetitions: entry.repetitions,
+      });
+      entry.calories = calc.calories;
+    }
+    return entry;
+  }
+  
+  // Шаги
+  if (kind === 'steps') {
+    const entry = {
+      id,
+      kind: 'steps',
+      steps: Number(form.steps) || 0,
+    };
+    if (window.ActivityCalories) {
+      entry.calories = window.ActivityCalories.calculateStepsCalories(entry.steps).calories;
+    }
+    return entry;
+  }
+  
+  // Повседневная активность
+  if (kind === 'daily') {
     return {
       id,
-      kind: 'cardio',
+      kind: 'daily',
+      activityType: form.activityType || 'other',
       durationMinutes: Number(form.durationMinutes) || 0,
-      type,
     };
   }
+  
+  // Fallback
   return {
     id,
     kind: 'steps',
-    steps: Number(form.steps) || 0,
+    steps: 0,
   };
 }
 
