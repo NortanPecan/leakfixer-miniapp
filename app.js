@@ -945,8 +945,22 @@ document.addEventListener('DOMContentLoaded', () => {
   function fitnessRenderSupplementsTracking() {
     if (!fitnessEl.supplementsTracking) return;
     
+    // CRITICAL: Hard reset - clear DOM completely before rendering
+    fitnessEl.supplementsTracking.innerHTML = '';
+
     const dateKey = fitnessGetDateKey();
     const supplements = FS.getAllSupplements();
+    
+    // DEBUG: Log render start
+    console.log('[Supplements] render for dateKey:', dateKey, 'supplements count:', supplements.length);
+    console.log('[Supplements] supplements data:', supplements.map(s => ({
+      id: s.id,
+      name: s.name,
+      daily: s.daily,
+      dailyStartDate: s.dailyStartDate,
+      dailyEndDate: s.dailyEndDate,
+      historyDates: s.history?.map(h => h.date) || []
+    })));
     
     if (supplements.length === 0) {
       fitnessEl.supplementsTracking.innerHTML = `
@@ -961,6 +975,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
     let html = '';
     
+    let visibleCount = 0;
+
     for (const supp of supplements) {
       const intakes = FS.getSupplementIntakesForDay(supp.id, dateKey);
       const totalDose = FS.getTotalDoseForDay(intakes);
@@ -988,9 +1004,22 @@ document.addEventListener('DOMContentLoaded', () => {
         shouldShow = intakes.length > 0;
       }
 
+      // DEBUG: Log render decision
+      console.log('[Supplements] checking:', supp.name,
+        'daily:', supp.daily,
+        'dailyStartDate:', supp.dailyStartDate,
+        'dailyEndDate:', supp.dailyEndDate,
+        'inInterval:', supp.daily ? FS.isDateInDailyInterval(supp, dateKey) : 'N/A',
+        'intakes.length:', intakes.length,
+        'shouldShow:', shouldShow
+      );
+  
       if (!shouldShow) {
         continue; // Skip this supplement for this date
       }
+
+      visibleCount++;
+      console.log('[Supplements] WILL RENDER card for:', supp.name, 'dateKey:', dateKey, 'intakes:', intakes);
 
       html += '<div class="bg-white/5 rounded-xl p-3 mb-3">';
       html += '<div class="flex items-center justify-between mb-2">';
@@ -1042,8 +1071,12 @@ document.addEventListener('DOMContentLoaded', () => {
       html += '</div>';
     }
     
+    // DEBUG: Log final count
+    console.log('[Supplements] visibleCount:', visibleCount, 'dateKey:', dateKey);
+
     // CRITICAL: If no supplements to show for this date, display placeholder
-    if (html === '') {
+    if (html === '' || visibleCount === 0) {
+      console.log('[Supplements] showing EMPTY placeholder for dateKey:', dateKey);
       html += '<div class="text-center py-6 opacity-70">';
       html += '<p class="text-sm mb-3">Нет БАДов для этой даты</p>';
       html += '<button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Добавить БАД</button>';
@@ -1065,9 +1098,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // DEV/DEBUG: Clear history button handler
     document.getElementById('clearSupplementsHistory')?.addEventListener('click', () => {
       if (confirm('⚠️ ВНИМАНИЕ!\n\nЭто удалит ВСЮ историю приёмов БАДов за все даты.\nСами БАДы (названия, нормы, настройки) останутся.\n\nПродолжить?')) {
+        console.log('[Supplements] BEFORE clear:', FS.getAllSupplements());
         const success = FS.clearAllSupplementsHistory();
+        console.log('[Supplements] AFTER clear:', FS.getAllSupplements());
         if (success) {
           alert('История БАДов очищена. Список БАДов сохранён.');
+          // CRITICAL: Force re-render after clearing
+          fitnessEl.supplementsTracking.innerHTML = '';
           fitnessRenderSupplementsTracking();
         } else {
           alert('Ошибка при очистке истории.');
