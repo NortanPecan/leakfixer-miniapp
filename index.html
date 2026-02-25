@@ -176,6 +176,18 @@
         <input type="number" id="fitnessAge" placeholder="Возраст (лет)" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
         <input type="number" id="fitnessTargetWeight" placeholder="Целевой вес (кг)" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
 
+        <!-- Замеры тела -->
+        <div class="space-y-2 pt-2 border-t border-white/10">
+          <div class="text-sm font-medium">Замеры тела (см)</div>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="number" id="fitnessWaist" placeholder="Талия (см)" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
+            <input type="number" id="fitnessHips" placeholder="Бёдра (см)" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
+            <input type="number" id="fitnessChest" placeholder="Грудь (см)" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
+            <input type="number" id="fitnessBicep" placeholder="Бицепс (см)" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
+            <input type="number" id="fitnessThigh" placeholder="Бедро (см)" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70">
+          </div>
+        </div>
+
         <!-- Новый блок: тип рабочего дня -->
         <div class="space-y-2 pt-2 border-t border-white/10">
           <div class="text-sm font-medium">Тип рабочего дня</div>
@@ -293,7 +305,7 @@
             <div class="text-[10px] text-slate-300 mt-1">
               Например, 3 = три основных тренировки, которые повторяются в каждом цикле.
             </div>
-          </div>          
+          </div>
 
           <div>
             <div class="text-xs text-slate-300 mb-1">Сколько циклов в периоде</div>
@@ -461,22 +473,26 @@
 
       <!-- Основной дашборд фитнеса -->
       <div id="fitnessDashboard" class="hidden space-y-6">
-        <!-- Заголовок и доступ к настройкам -->
-        <div class="flex items-center justify-between">
-          <div class="text-sm opacity-80">Фитнес-профиль</div>
+        <!-- Верхний контейнер: Настройка тела + Дата -->
+        <div class="flex items-center justify-between bg-white/10 rounded-xl px-4 py-3">
           <button
             type="button"
             id="fitnessProfileEdit"
-            class="text-xs px-2 py-1 rounded-full bg-white/20 hover:bg-white/30"
+            class="text-xs px-3 py-2 rounded-full bg-white/20 hover:bg-white/30 font-medium"
           >
-            Настройки тела
+            ⚙️ Настройка тела
           </button>
+          <div class="flex items-center gap-3">
+            <button id="fitnessDatePrev" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-lg">‹</button>
+            <span id="fitnessDateLabel" class="text-sm font-medium min-w-[120px] text-center">—</span>
+            <button id="fitnessDateNext" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-lg">›</button>
+          </div>
         </div>
 
         <div class="pt-2">
           <button id="gymCalendarOpenBtn" class="px-3 py-2 rounded-xl bg-white/10 text-sm">Календарь</button>
         </div>
-
+        
         <!-- Верхняя строка: аватар-квадрат + справа график и бар -->
         <div class="flex items-start gap-3">
           <!-- Квадратный аватар -->
@@ -575,50 +591,6 @@
           </div>
         </div>
         
-        <!-- Блок «День по работе» -->
-        <div class="bg-white/10 rounded-xl px-4 py-3 text-xs flex items-center justify-between">
-          <div>
-            <div class="opacity-70">День по работе</div>
-            <div class="font-medium" id="fitnessWorkDayLabel">
-              Как обычно
-            </div>
-          </div>
-          <div class="flex gap-1">
-            <button
-              type="button"
-              class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25"
-              data-workday="low"
-            >
-              Больше сидел
-            </button>
-            <button
-              type="button"
-              class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25"
-              data-workday="normal"
-            >
-              Обычный
-            </button>
-            <button
-              type="button"
-              class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25"
-              data-workday="high"
-            >
-              Очень активный
-            </button>
-          </div>
-        </div>
-      
-        <button id="gymBtn" class="w-full bg-indigo-500 hover:bg-indigo-600 py-3 rounded-xl font-semibold text-lg mt-3">
-          💪 Тренировка в зале
-        </button>
-
-        <!-- Выбор даты -->
-        <div class="flex items-center justify-between bg-white/10 rounded-xl px-4 py-3">
-          <button type="button" id="fitnessDatePrev" class="p-2 rounded-lg hover:bg-white/20">‹</button>
-          <span id="fitnessDateLabel" class="font-medium">—</span>
-          <button type="button" id="fitnessDateNext" class="p-2 rounded-lg hover:bg-white/20">›</button>
-        </div>
-
         <!-- Активность -->
         <div class="bg-white/10 rounded-xl p-4" id="fitnessActivityBlock">
           <div class="flex items-center justify-between mb-3">
@@ -626,6 +598,47 @@
             <span class="text-[11px] px-2 py-1 rounded-full bg-white/15 opacity-80">
               расход энергии за день
             </span>
+          </div>
+
+          <!-- Рабочий день -->
+          <div class="mb-4 pb-3 border-b border-white/10">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <div class="text-xs font-medium">Рабочий день</div>
+                <div class="text-[11px] opacity-70">Как прошёл день по работе</div>
+              </div>
+              <div class="text-[11px] font-medium" id="fitnessWorkDayLabel">Обычный</div>
+            </div>
+            <div class="flex gap-1 flex-wrap">
+              <button
+                type="button"
+                class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]"
+                data-workday="none"
+              >
+                Не работал
+              </button>
+              <button
+                type="button"
+                class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]"
+                data-workday="low"
+              >
+                Больше сидел
+              </button>
+              <button
+                type="button"
+                class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]"
+                data-workday="normal"
+              >
+                Обычный
+              </button>
+              <button
+                type="button"
+                class="fitness-workday-btn px-2 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[11px]"
+                data-workday="high"
+              >
+                Очень активный
+              </button>
+            </div>
           </div>
 
           <!-- Мини‑итог по активности (реальные данные) -->
@@ -727,7 +740,7 @@
           <!-- Лента активностей -->
           <ul id="fitnessActivityList" class="space-y-2 text-xs mt-3"></ul>
         </div>
-
+        
 
 
 
@@ -811,7 +824,7 @@
             <!-- Сюда JS рендерит новый интерфейс БАДов -->
           </div>
         </div>
-
+        
       </div>
                   <!-- Общий модальный слой для фитнес-форм (еда, БАДы, активность) -->
         <div
@@ -845,7 +858,7 @@
           Назад
         </button>
       </div>
-    
+        
       <!-- если нет периодов -->
       <div
         id="gymNoPeriodsState"
@@ -899,7 +912,7 @@
           Назад
         </button>
       </div>
-
+        
       <!-- Верхняя панель -->
       <div class="flex flex-col gap-2">
         <div class="flex gap-2 items-center">
@@ -924,7 +937,7 @@
           </div>
         </div>
       </div>
-
+        
       <!-- Контейнер для групп и упражнений -->
       <div
         id="gymGroupsContainer"
@@ -1119,5 +1132,60 @@
   <script src="./activity-calories.js"></script>
   <script src="./fitness.js"></script>  
   <script src="./fitness-sync.js"></script>
+
+  <!-- Модальное окно: Детализация Энергии тела -->
+  <div id="energyDetailsModalOverlay" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-40">
+    <div class="w-full max-w-md bg-slate-900 rounded-3xl p-4 border-t border-white/10 max-h-[80vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Детализация энергии</h3>
+        <button id="energyDetailsCloseBtn" class="text-2xl opacity-70 hover:opacity-100">×</button>
+      </div>
+
+      <!-- Съели -->
+      <div class="mb-4">
+        <div class="text-sm font-medium mb-2 flex justify-between">
+          <span>Съели</span>
+          <span id="energyDetailsEatenTotal">0 ккал</span>
+        </div>
+        <div id="energyDetailsEatenList" class="space-y-1 text-xs">
+          <!-- JS заполнит список еды -->
+        </div>
+      </div>
+
+      <!-- Сожгли -->
+      <div class="mb-4 border-t border-white/10 pt-3">
+        <div class="text-sm font-medium mb-2 flex justify-between">
+          <span>Сожгли</span>
+          <span id="energyDetailsBurnedTotal">0 ккал</span>
+        </div>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between bg-white/5 rounded-lg px-3 py-2">
+            <span class="opacity-70">Метаболизм в покое</span>
+            <span id="energyDetailsBaseRest">0 ккал</span>
+          </div>
+          <div class="flex justify-between bg-white/5 rounded-lg px-3 py-2">
+            <span class="opacity-70">Работа (<span id="energyDetailsWorkProfile">-</span>, <span id="energyDetailsWorkDay">-</span>)</span>
+            <span id="energyDetailsWork">0 ккал</span>
+          </div>
+          <div class="flex justify-between bg-white/5 rounded-lg px-3 py-2">
+            <span class="opacity-70">Активность</span>
+            <span id="energyDetailsActivity">0 ккал</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Баланс -->
+      <div class="border-t border-white/10 pt-3">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-semibold">Баланс</span>
+          <span id="energyDetailsBalance" class="text-lg font-bold">0 ккал</span>
+        </div>
+        <p id="energyDetailsBalanceText" class="text-xs opacity-70 mt-1 text-center">
+          Нейтральный баланс
+        </p>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

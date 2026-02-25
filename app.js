@@ -487,6 +487,56 @@ document.addEventListener('DOMContentLoaded', () => {
     if (v === 'normal') text = 'Обычный день';
     if (v === 'high') text = 'Очень активный день';
     fitnessEl.workDayLabel.textContent = text;
+  // Открыть детализацию энергии
+  function fitnessOpenEnergyDetails() {
+    const profile = FS.getFitnessProfile();
+    const dayData = FS.getDayData(fitnessGetDateKey());
+    const summary = FS.getCaloriesSummary(profile, dayData);
+    
+    // Заполняем модальное окно
+    document.getElementById('energyDetailsEatenTotal').textContent = summary.eaten + ' ккал';
+    document.getElementById('energyDetailsBurnedTotal').textContent = summary.burned + ' ккал';
+    document.getElementById('energyDetailsBalance').textContent = summary.balance + ' ккал';
+    document.getElementById('energyDetailsBaseRest').textContent = summary.baseRest + ' ккал';
+    
+    // Работа (разница между с работой и без)
+    const baseWithWork = Math.round(summary.baseRest * summary.workMultiplier);
+    document.getElementById('energyDetailsWork').textContent = (baseWithWork - summary.baseRest) + ' ккал';
+    document.getElementById('energyDetailsActivity').textContent = summary.activityCal + ' ккал';
+    
+    // Тип работы и дня
+    const workProfileLabels = { sedentary: 'Сидячая', mixed: 'На ногах', physical: 'Физическая', variable: 'Меняется' };
+    const workDayLabels = { none: 'Не работал', low: 'Больше сидел', normal: 'Обычный', high: 'Очень активный' };
+    document.getElementById('energyDetailsWorkProfile').textContent = workProfileLabels[profile.workProfile] || '-';
+    document.getElementById('energyDetailsWorkDay').textContent = workDayLabels[dayData.workDay] || 'Обычный';
+    
+    // Список еды
+    const eatenList = document.getElementById('energyDetailsEatenList');
+    if (dayData.foods && dayData.foods.length > 0) {
+      eatenList.innerHTML = dayData.foods.map(function(f) { 
+        return '<div class="flex justify-between bg-white/5 rounded px-2 py-1"><span>' + (f.name || 'Еда') + '</span><span>' + (f.calories || 0) + ' ккал</span></div>';
+      }).join('');
+    } else {
+      eatenList.innerHTML = '<div class="opacity-50 text-center py-2">Нет записей о приёмах пищи</div>';
+    }
+    
+    // Текст баланса
+    const balanceText = document.getElementById('energyDetailsBalanceText');
+    if (summary.balance > 0) {
+      balanceText.textContent = 'Профицит — возможен набор веса';
+      balanceText.className = 'text-xs text-red-300 mt-1 text-center';
+    } else if (summary.balance < 0) {
+      balanceText.textContent = 'Дефицит — возможна потеря веса';
+      balanceText.className = 'text-xs text-green-300 mt-1 text-center';
+    } else {
+      balanceText.textContent = 'Нейтральный баланс';
+      balanceText.className = 'text-xs opacity-70 mt-1 text-center';
+    }
+    
+    // Показываем модальное окно
+    document.getElementById('energyDetailsModalOverlay').classList.remove('hidden');
+  }
+
     // АВТОСОХРАНЕНИЕ
     if (window.FitnessSync && window.currentAppUserId) {
         const dateKey = fitnessGetDateKey();
@@ -2421,6 +2471,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('stepsIntensity')?.addEventListener('change', fitnessUpdateStepsCaloriesPreview);
 
   fitnessEl.foodAdd?.addEventListener('click', () => fitnessOpenFoodModal(null));
+
+  // Клик на карточку энергии — открыть детализацию
+  document.getElementById('fitnessCaloriesCard')?.addEventListener('click', function(e) {
+    // Не открывать если клик по кнопкам внутри карточки
+    if (e.target.closest('button')) return;
+    fitnessOpenEnergyDetails();
+  });
+
+  // Закрытие модального окна энергии
+  document.getElementById('energyDetailsCloseBtn')?.addEventListener('click', function() {
+    document.getElementById('energyDetailsModalOverlay')?.classList.add('hidden');
+  });
+  document.getElementById('energyDetailsModalOverlay')?.addEventListener('click', function(e) {
+    if (e.target.id === 'energyDetailsModalOverlay') {
+      document.getElementById('energyDetailsModalOverlay')?.classList.add('hidden');
+    }
+  });
 
   // UPDATED: Water button handlers - use new fitnessAdjustWater
   document.querySelectorAll('.fitness-water-btn').forEach((btn) => {

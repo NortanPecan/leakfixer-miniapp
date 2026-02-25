@@ -6,12 +6,20 @@
  * merge*, remove*ById, build*Entry as pure helpers; replace getDayData/updateDayData with
  * React state or API calls.
  *
+ * @typedef {Object} BodyMeasurements
+ * @property {number} [waist] - талия (см)
+ * @property {number} [hips] - бёдра (см)
+ * @property {number} [chest] - грудь (см)
+ * @property {number} [bicep] - бицепс (см)
+ * @property {number} [thigh] - бедро (см)
+ *
  * @typedef {Object} ProfileFitnessSettings
  * @property {number} [weight] - kg
  * @property {number} [height] - cm
  * @property {number} [age] - years
  * @property {number} [targetWeight] - kg
  * @property {'sedentary'|'mixed'|'physical'|'variable'} [workProfile]
+ * @property {BodyMeasurements} [measurements] - замеры тела
  *
  * @typedef {'gym'|'strength'|'cardio'|'cardio_indoor'|'cardio_outdoor'|'home'|'home_exercise'|'steps'|'daily'} ActivityKind
  * @typedef {'light'|'medium'|'high'} GymIntensity
@@ -865,9 +873,15 @@ function getWorkActivityMultiplier(profile, dayData) {
   if (profile.workProfile === 'physical') base = 1.6;
   if (profile.workProfile === 'variable' || !profile.workProfile) base = 1.3;
 
-  // дневная поправка
-  if (dayData.workDay === 'low') base -= 0.1;
-  if (dayData.workDay === 'high') base += 0.1;
+  // дневная поправка (none = без дополнительной корректировки)
+  if (dayData.workDay === 'none') {
+    // Без изменений - только базовый множитель
+  } else if (dayData.workDay === 'low') {
+    base -= 0.1;
+  } else if (dayData.workDay === 'high') {
+    base += 0.1;
+  }
+  // 'normal' или undefined - тоже без изменений
 
   if (base < 1.1) base = 1.1;
   if (base > 1.8) base = 1.8;
@@ -1150,6 +1164,17 @@ function parseProfileFromValues(values) {
   const allowedWork = ['sedentary', 'mixed', 'physical', 'variable'];
   if (values.workProfile && allowedWork.includes(values.workProfile)) {
     profile.workProfile = /** @type {'sedentary'|'mixed'|'physical'|'variable'} */ (values.workProfile);
+  }
+
+  // Measurements (body measurements)
+  const measurements = {};
+  if (values.waist != null && values.waist !== '') measurements.waist = Number(values.waist);
+  if (values.hips != null && values.hips !== '') measurements.hips = Number(values.hips);
+  if (values.chest != null && values.chest !== '') measurements.chest = Number(values.chest);
+  if (values.bicep != null && values.bicep !== '') measurements.bicep = Number(values.bicep);
+  if (values.thigh != null && values.thigh !== '') measurements.thigh = Number(values.thigh);
+  if (Object.keys(measurements).length > 0) {
+    profile.measurements = measurements;
   }
 
   return profile;
