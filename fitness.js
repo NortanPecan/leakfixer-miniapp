@@ -859,6 +859,11 @@ function getCaloriesSummary(profile, dayData) {
     burned,
     balance,
     balanceColor: getBalanceColor(balance),
+    // Дополнительные поля для детализации
+    baseRest,
+    baseWithWork,
+    activityCal,
+    workMultiplier,
   };
 }
 

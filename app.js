@@ -463,10 +463,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const profile = FS.getFitnessProfile();
     const dayData = FS.getDayData(fitnessGetDateKey());
     const summary = FS.getCaloriesSummary(profile, dayData);
-    fitnessEl.calEaten.textContent = summary.eaten;
-    fitnessEl.calBurned.textContent = summary.burned;
-    fitnessEl.balance.textContent = summary.balance;
+    fitnessEl.calEaten.textContent = summary.eaten || 0;
+    fitnessEl.calBurned.textContent = summary.burned || 0;
+    fitnessEl.balance.textContent = summary.balance || 0;
     fitnessEl.balance.className = 'font-semibold ' + (summary.balanceColor === 'green' ? 'text-green-300' : summary.balanceColor === 'red' ? 'text-red-300' : '');
+    
+    // Обновление бара баланса (под графиком веса)
+    const balanceBarFill = document.getElementById('fitnessCalorieBalanceFill');
+    if (balanceBarFill) {
+      const MAX_ABS_BALANCE = 700;
+      const balance = summary.balance || 0;
+      const ratio = Math.min(Math.abs(balance) / MAX_ABS_BALANCE, 1);
+      
+      let leftPercent, widthPercent;
+      
+      if (balance === 0) {
+        leftPercent = 50;
+        widthPercent = 0;
+      } else if (balance < 0) {
+        leftPercent = 50 - (ratio * 50);
+        widthPercent = ratio * 50;
+      } else {
+        leftPercent = 50;
+        widthPercent = ratio * 50;
+      }
+      
+      balanceBarFill.style.left = leftPercent + '%';
+      balanceBarFill.style.width = widthPercent + '%';
+      
+      if (balance < 0) {
+        balanceBarFill.className = 'calorie-balance-bar-fill absolute top-0 bottom-0 bg-green-400 transition-all duration-300';
+      } else if (balance > 0) {
+        balanceBarFill.className = 'calorie-balance-bar-fill absolute top-0 bottom-0 bg-red-400 transition-all duration-300';
+      } else {
+        balanceBarFill.className = 'calorie-balance-bar-fill absolute top-0 bottom-0 bg-white/50 transition-all duration-300';
+      }
+    }
+    
     // АВТОСОХРАНЕНИЕ в Supabase
     if (window.FitnessSync && window.currentAppUserId) {
         const dateKey = fitnessGetDateKey();
@@ -495,21 +528,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const dayData = FS.getDayData(fitnessGetDateKey());
     const summary = FS.getCaloriesSummary(profile, dayData);
     
-    // Заполняем модальное окно
-    document.getElementById('energyDetailsEatenTotal').textContent = summary.eaten + ' ккал';
-    document.getElementById('energyDetailsBurnedTotal').textContent = summary.burned + ' ккал';
-    document.getElementById('energyDetailsBalance').textContent = summary.balance + ' ккал';
-    document.getElementById('energyDetailsBaseRest').textContent = summary.baseRest + ' ккал';
+    // Защита от undefined - используем значения по умолчанию
+    const eaten = summary.eaten || 0;
+    const burned = summary.burned || 0;
+    const balance = summary.balance || 0;
+    const baseRest = summary.baseRest || 0;
+    const baseWithWork = summary.baseWithWork || 0;
+    const activityCal = summary.activityCal || 0;
+    const workMultiplier = summary.workMultiplier || 1.2;
     
-    // Работа (разница между с работой и без)
-    const baseWithWork = Math.round(summary.baseRest * summary.workMultiplier);
-    document.getElementById('energyDetailsWork').textContent = (baseWithWork - summary.baseRest) + ' ккал';
-    document.getElementById('energyDetailsActivity').textContent = summary.activityCal + ' ккал';
+    // Расчёт калорий работы (с защитой от NaN)
+    const workKcal = Math.max(0, baseWithWork - baseRest);
+    
+    // Заполняем модальное окно
+    document.getElementById('energyDetailsEatenTotal').textContent = eaten + ' ккал';
+    document.getElementById('energyDetailsBurnedTotal').textContent = burned + ' ккал';
+    document.getElementById('energyDetailsBalance').textContent = balance + ' ккал';
+    document.getElementById('energyDetailsBaseRest').textContent = baseRest + ' ккал';
+    document.getElementById('energyDetailsWork').textContent = workKcal + ' ккал';
+    document.getElementById('energyDetailsActivity').textContent = activityCal + ' ккал';
     
     // Тип работы и дня
     const workProfileLabels = { sedentary: 'Сидячая', mixed: 'На ногах', physical: 'Физическая', variable: 'Меняется' };
     const workDayLabels = { none: 'Не работал', low: 'Больше сидел', normal: 'Обычный', high: 'Очень активный' };
-    document.getElementById('energyDetailsWorkProfile').textContent = workProfileLabels[profile.workProfile] || '-';
+    document.getElementById('energyDetailsWorkProfile').textContent = workProfileLabels[profile.workProfile] || '—';
     document.getElementById('energyDetailsWorkDay').textContent = workDayLabels[dayData.workDay] || 'Обычный';
     
     // Список еды
@@ -524,10 +566,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Текст баланса
     const balanceText = document.getElementById('energyDetailsBalanceText');
-    if (summary.balance > 0) {
+    if (balance > 0) {
       balanceText.textContent = 'Профицит — возможен набор веса';
       balanceText.className = 'text-xs text-red-300 mt-1 text-center';
-    } else if (summary.balance < 0) {
+    } else if (balance < 0) {
       balanceText.textContent = 'Дефицит — возможна потеря веса';
       balanceText.className = 'text-xs text-green-300 mt-1 text-center';
     } else {
@@ -572,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
-
+  
   function fitnessRenderFoodList() {
     if (!fitnessEl.foodList) return;
     const dayData = FS.getDayData(fitnessGetDateKey());
@@ -605,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
-
+    
   // UPDATED: New water tracking with status
   function fitnessRenderWater() {
     if (!fitnessEl.waterTotal) return;
@@ -740,7 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderWeightChartSVG(weightChartDataCache);
       return;
     }
-  
+
     // Show loading state
     chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Загрузка...</div>';
     
@@ -748,7 +790,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Нет данных</div>';
       return;
     }
-
+  
     try {
       const chartData = await window.FitnessSync.getWeightChartData(30);
       weightChartDataCache = chartData;
@@ -986,7 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error loading weight detail data:', e);
     }
   }
-  
+
   window.fitnessOpenAddWeightModal = function() {
     const now = new Date();
     const today = FS.formatDateKey(now);
@@ -1198,7 +1240,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     modal.classList.remove('hidden');
   }
-  
+
   // Cardio modal (indoor/outdoor)
   function fitnessOpenCardioModal(editId, existing, isOutdoor) {
     const modal = document.getElementById('cardioModalOverlay');
@@ -1206,7 +1248,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fitnessOpenLegacyActivityModal(editId, isOutdoor ? 'cardio' : 'cardio');
       return;
     }
-  
+
     const title = document.getElementById('cardioModalTitle');
     const typeSelect = document.getElementById('cardioTypeSelect');
     
