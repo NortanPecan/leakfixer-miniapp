@@ -683,6 +683,95 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Cache for weight chart data
+  let weightChartDataCache = null;
+  let weightChartDataTimestamp = 0;
+
+  async function fitnessRenderWeightChart() {
+    const chartContainer = document.getElementById('fitnessWeightChart');
+    if (!chartContainer) return;
+    
+    // Check cache (30 seconds)
+    const now = Date.now();
+    if (weightChartDataCache && (now - weightChartDataTimestamp < 30000)) {
+      renderWeightChartSVG(weightChartDataCache);
+      return;
+    }
+  
+    // Show loading state
+    chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Загрузка...</div>';
+    
+    if (!window.FitnessSync || !window.currentAppUserId) {
+      chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Нет данных</div>';
+      return;
+    }
+
+    try {
+      const chartData = await window.FitnessSync.getWeightChartData(30);
+      weightChartDataCache = chartData;
+      weightChartDataTimestamp = now;
+      
+      if (!chartData || chartData.length === 0) {
+        chartContainer.innerHTML = `
+          <div class="flex flex-col items-center justify-center h-full text-xs opacity-70">
+            <span class="mb-1">📊</span>
+            <span>Пока нет данных по весу</span>
+            <span class="text-[10px] mt-1">Добавьте первое измерение</span>
+          </div>
+        `;
+        return;
+      }
+      
+      renderWeightChartSVG(chartData);
+    } catch (e) {
+      console.error('Error loading weight chart:', e);
+      chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Ошибка загрузки</div>';
+    }
+  }
+  
+  function renderWeightChartSVG(chartData) {
+    const chartContainer = document.getElementById('fitnessWeightChart');
+    if (!chartContainer) return;
+    
+    const points = FS.generateWeightChartPoints(chartData, 100, 40, 4);
+    const currentWeight = chartData[chartData.length - 1]?.value || 0;
+    const previousWeight = chartData[chartData.length - 2]?.value || currentWeight;
+    const change = FS.formatWeightChange(currentWeight, previousWeight);
+    
+    chartContainer.innerHTML = `
+      <svg viewBox="0 0 100 40" class="w-full h-full" style="cursor: pointer;" onclick="fitnessOpenWeightDetailScreen()">
+        <defs>
+          <linearGradient id="weightGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:rgba(74,222,128,0.3)"/>
+            <stop offset="100%" style="stop-color:rgba(74,222,128,0)"/>
+          </linearGradient>
+        </defs>
+        <polyline
+          fill="none"
+          stroke="#4ade80"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          points="${points}"
+        />
+        ${chartData.map((item, i) => {
+          const x = 4 + (i / (chartData.length - 1 || 1)) * 92;
+          const minVal = Math.min(...chartData.map(d => d.value));
+          const maxVal = Math.max(...chartData.map(d => d.value));
+          const y = 4 + 32 - ((item.value - minVal) / (maxVal - minVal || 1)) * 32;
+          return `<circle cx="${x}" cy="${y}" r="1.5" fill="white" opacity="0.8"/>`;
+        }).join('')}
+      </svg>
+      <div class="absolute bottom-1 right-2 text-[10px] font-medium ${change.trend === 'down' ? 'text-green-400' : change.trend === 'up' ? 'text-red-400' : 'text-white'}">
+        ${change.text}
+      </div>
+      <div class="absolute top-1 left-2 text-[10px] opacity-70">
+        ${currentWeight > 0 ? currentWeight.toFixed(1) + ' кг' : '—'}
+      </div>
+    `;
+    chartContainer.style.position = 'relative';
+  }
+
   function fitnessRenderDashboard() {
     const photoEl = document.getElementById('profilePhoto');
     if (fitnessEl.avatar && photoEl?.src) fitnessEl.avatar.src = photoEl.src;
@@ -700,10 +789,274 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessRenderActivityList();
     fitnessRenderFoodList();
     fitnessRenderWater();
-    // NEW: Render new supplements tracking
+    fitnessRenderWeightChart();
     fitnessRenderSupplementsTracking();
     fitnessRenderWorkDay();
   }
+
+  // ========== WEIGHT DETAIL SCREEN ==========
+  
+  window.fitnessOpenWeightDetailScreen = async function() {
+    let html = '<div class="space-y-4">';
+    html += '<div class="flex items-center justify-between">';
+    html += '<h3 class="font-semibold text-lg">Вес</h3>';
+    html += '<button type="button" id="weightDetailClose" class="text-xs px-3 py-1 rounded-full bg-white/20">Закрыть</button>';
+    html += '</div>';
+    
+    // Period selector
+    html += '<div class="flex gap-2 text-xs">';
+    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="7">7 дней</button>';
+    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-green-500/50" data-days="30">30 дней</button>';
+    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="90">90 дн</button>';
+    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="365">Всё</button>';
+    html += '</div>';
+    
+    // Stats section
+    html += '<div class="bg-white/10 rounded-xl p-3">';
+    html += '<div class="grid grid-cols-3 gap-2 text-center text-xs">';
+    html += '<div><div class="opacity-70">Текущий</div><div id="weightCurrent" class="text-lg font-semibold mt-1">—</div></div>';
+    html += '<div><div class="opacity-70">Цель</div><div id="weightGoal" class="text-lg font-semibold mt-1">—</div></div>';
+    html += '<div><div class="opacity-70">Тренд</div><div id="weightTrend" class="text-lg font-semibold mt-1">—</div></div>';
+    html += '</div>';
+    html += '</div>';
+    
+    // Chart
+    html += '<div id="weightDetailChart" class="h-40 bg-white/5 rounded-xl relative overflow-hidden">';
+    html += '<div class="flex items-center justify-center h-full text-xs opacity-50">Загрузка...</div>';
+    html += '</div>';
+    
+    // Add button
+    html += '<button type="button" id="weightAddBtn" class="w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 font-semibold text-sm">+ Добавить вес</button>';
+    
+    // History list
+    html += '<div class="bg-white/10 rounded-xl p-3">';
+    html += '<h4 class="text-sm font-semibold mb-2">История</h4>';
+    html += '<div id="weightHistoryList" class="space-y-2 max-h-64 overflow-y-auto">';
+    html += '<div class="text-xs opacity-50 text-center py-4">Загрузка...</div>';
+    html += '</div>';
+    html += '</div>';
+    
+    html += '</div>';
+    
+    fitnessOpenModal(html, () => {
+      document.getElementById('weightDetailClose')?.addEventListener('click', fitnessCloseModal);
+      document.getElementById('weightAddBtn')?.addEventListener('click', () => fitnessOpenAddWeightModal());
+      
+      // Period buttons
+      document.querySelectorAll('.weight-period-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          document.querySelectorAll('.weight-period-btn').forEach(b => {
+            b.classList.remove('bg-green-500/50');
+            b.classList.add('bg-white/10');
+          });
+          btn.classList.remove('bg-white/10');
+          btn.classList.add('bg-green-500/50');
+          await loadWeightDetailData(parseInt(btn.dataset.days));
+        });
+      });
+      
+      // Load initial data (30 days)
+      loadWeightDetailData(30);
+    });
+  };
+  
+  async function loadWeightDetailData(days) {
+    if (!window.FitnessSync || !window.currentAppUserId) return;
+    
+    try {
+      // Get chart data
+      const chartData = await window.FitnessSync.getWeightChartData(days);
+      const history = await window.FitnessSync.getWeightHistory(days);
+      const profile = FS.getFitnessProfile();
+      
+      // Update stats
+      const currentWeight = history.length > 0 ? history[0].value : null;
+      const firstWeight = history.length > 1 ? history[history.length - 1].value : currentWeight;
+      const goalWeight = profile.targetWeight;
+      
+      document.getElementById('weightCurrent').textContent = currentWeight ? currentWeight.toFixed(1) + ' кг' : '—';
+      document.getElementById('weightGoal').textContent = goalWeight ? goalWeight.toFixed(1) + ' кг' : '—';
+      
+      if (currentWeight && firstWeight) {
+        const totalDiff = currentWeight - firstWeight;
+        const trendText = totalDiff < -0.1 ? '↓ ' + Math.abs(totalDiff).toFixed(1) + ' кг' : 
+                         totalDiff > 0.1 ? '↑ +' + totalDiff.toFixed(1) + ' кг' : '→ 0.0 кг';
+        const trendEl = document.getElementById('weightTrend');
+        trendEl.textContent = trendText;
+        trendEl.className = 'text-lg font-semibold mt-1 ' + 
+          (totalDiff < -0.1 ? 'text-green-400' : totalDiff > 0.1 ? 'text-red-400' : 'text-white');
+      } else {
+        document.getElementById('weightTrend').textContent = '—';
+      }
+      
+      // Render chart
+      const chartContainer = document.getElementById('weightDetailChart');
+      if (chartData.length === 0) {
+        chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Нет данных</div>';
+      } else {
+        const points = FS.generateWeightChartPoints(chartData, 100, 40, 4);
+        chartContainer.innerHTML = `
+          <svg viewBox="0 0 100 40" class="w-full h-full">
+            <polyline
+              fill="none"
+              stroke="#4ade80"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              points="${points}"
+            />
+          </svg>
+        `;
+      }
+      
+      // Render history list
+      const listContainer = document.getElementById('weightHistoryList');
+      if (history.length === 0) {
+        listContainer.innerHTML = '<div class="text-xs opacity-50 text-center py-4">Нет записей</div>';
+      } else {
+        listContainer.innerHTML = history.slice(0, 50).map(item => {
+          const date = new Date(item.measured_at);
+          const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+          const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+          return `
+            <div class="flex items-center justify-between py-2 border-b border-white/10 last:border-0 cursor-pointer hover:bg-white/5 rounded px-2" onclick="fitnessOpenEditWeightModal('${item.id}', ${item.value}, '${item.measured_at}')">
+              <div class="flex items-center gap-3">
+                <span class="text-xs opacity-70">${dateStr}</span>
+                <span class="text-xs opacity-50">${timeStr}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="font-medium">${item.value.toFixed(1)} кг</span>
+                <span class="text-xs opacity-50">✏</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    } catch (e) {
+      console.error('Error loading weight detail data:', e);
+    }
+  }
+
+  window.fitnessOpenAddWeightModal = function() {
+    const now = new Date();
+    const today = FS.formatDateKey(now);
+    const currentTime = FS.formatTimeHM(now);
+    const profile = FS.getFitnessProfile();
+    
+    let html = '<h3 class="font-semibold mb-4">Добавить вес</h3>';
+    html += '<div class="space-y-3">';
+    html += '<label class="block text-sm">Вес (кг)</label>';
+    html += '<input type="number" step="0.1" id="addWeightValue" class="w-full p-3 bg-white/30 rounded-xl text-white" placeholder="78.5" value="' + (profile.weight || '') + '">';
+    html += '<label class="block text-sm">Дата</label>';
+    html += '<input type="date" id="addWeightDate" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + today + '">';
+    html += '<label class="block text-sm">Время</label>';
+    html += '<input type="time" id="addWeightTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentTime + '">';
+    html += '</div>';
+    html += '<div class="flex gap-3 mt-4">';
+    html += '<button type="button" id="addWeightCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
+    html += '<button type="button" id="addWeightSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button>';
+    html += '</div>';
+    
+    fitnessOpenModal(html, () => {
+      document.getElementById('addWeightCancel')?.addEventListener('click', fitnessCloseModal);
+      document.getElementById('addWeightSave')?.addEventListener('click', async () => {
+        const weight = parseFloat(document.getElementById('addWeightValue')?.value);
+        const date = document.getElementById('addWeightDate')?.value;
+        const time = document.getElementById('addWeightTime')?.value;
+        
+        if (!weight || weight <= 0) {
+          alert('Введите корректный вес');
+          return;
+        }
+        
+        if (!window.FitnessSync || !window.currentAppUserId) {
+          alert('Нет связи с сервером');
+          return;
+        }
+        
+        try {
+          await window.FitnessSync.saveWeightMeasurement(date, weight, time);
+          
+          // Update local profile
+          const profile = FS.getFitnessProfile();
+          profile.weight = weight;
+          FS.setFitnessProfile(profile);
+          
+          // Clear chart cache
+          weightChartDataCache = null;
+          
+          fitnessCloseModal();
+          fitnessRenderDashboard();
+          
+          // Reopen detail screen with fresh data
+          setTimeout(() => window.fitnessOpenWeightDetailScreen(), 100);
+        } catch (e) {
+          console.error('Error saving weight:', e);
+          alert('Ошибка сохранения');
+        }
+      });
+    });
+  };
+  
+  window.fitnessOpenEditWeightModal = function(measurementId, currentWeight, measuredAt) {
+    const date = new Date(measuredAt);
+    const dateKey = FS.formatDateKey(date);
+    const timeStr = date.toTimeString().slice(0, 5);
+    
+    let html = '<h3 class="font-semibold mb-4">Изменить измерение</h3>';
+    html += '<div class="space-y-3">';
+    html += '<label class="block text-sm">Вес (кг)</label>';
+    html += '<input type="number" step="0.1" id="editWeightValue" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentWeight + '">';
+    html += '<label class="block text-sm">Дата</label>';
+    html += '<input type="date" id="editWeightDate" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + dateKey + '">';
+    html += '<label class="block text-sm">Время</label>';
+    html += '<input type="time" id="editWeightTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + timeStr + '">';
+    html += '</div>';
+    html += '<div class="flex gap-3 mt-4">';
+    html += '<button type="button" id="editWeightDelete" class="flex-1 py-3 rounded-xl bg-red-500/30 text-red-300">Удалить</button>';
+    html += '<button type="button" id="editWeightCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
+    html += '<button type="button" id="editWeightSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button>';
+    html += '</div>';
+    
+    fitnessOpenModal(html, () => {
+      document.getElementById('editWeightCancel')?.addEventListener('click', fitnessCloseModal);
+      document.getElementById('editWeightDelete')?.addEventListener('click', async () => {
+        if (!confirm('Удалить это измерение?')) return;
+        
+        try {
+          await window.FitnessSync.deleteWeightMeasurement(measurementId);
+          weightChartDataCache = null;
+          
+          fitnessCloseModal();
+          fitnessRenderDashboard();
+          setTimeout(() => window.fitnessOpenWeightDetailScreen(), 100);
+        } catch (e) {
+          alert('Ошибка удаления');
+        }
+      });
+      document.getElementById('editWeightSave')?.addEventListener('click', async () => {
+        const weight = parseFloat(document.getElementById('editWeightValue')?.value);
+        const date = document.getElementById('editWeightDate')?.value;
+        const time = document.getElementById('editWeightTime')?.value;
+        
+        if (!weight || weight <= 0) {
+          alert('Введите корректный вес');
+          return;
+        }
+        
+        try {
+          await window.FitnessSync.updateWeightMeasurement(measurementId, weight, date, time);
+          weightChartDataCache = null;
+          
+          fitnessCloseModal();
+          fitnessRenderDashboard();
+          setTimeout(() => window.fitnessOpenWeightDetailScreen(), 100);
+        } catch (e) {
+          alert('Ошибка сохранения');
+        }
+      });
+    });
+  };
   
 
   function fitnessCloseModal() {
@@ -938,7 +1291,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
-      
+
   // ===================== NEW SUPPLEMENTS TRACKING UI =====================
 
   // NEW: Render new supplements tracking (today's plan + intakes)
@@ -1584,16 +1937,24 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        await window.FitnessSync.saveWeightMeasurement(dateKey, weight);
+        // NEW: Save with current time (creates new measurement)
+        const currentTime = FS.formatTimeHM(new Date());
+        await window.FitnessSync.saveWeightMeasurement(dateKey, weight, currentTime);
 
-        // Обновляем локальный профиль (для расчётов калорий и т.п.)
+        // Update local profile (for calculations)
         const profile = FS.getFitnessProfile();
         profile.weight = weight;
         FS.setFitnessProfile(profile);
 
+        // Clear chart cache to refresh
+        weightChartDataCache = null;
+
         if (fitnessEl.weightStatus) {
           fitnessEl.weightStatus.textContent = `Сохранено для ${dateKey}`;
         }
+        
+        // Refresh dashboard
+        fitnessRenderDashboard();
       } catch (e) {
         console.error(e);
         if (fitnessEl.weightStatus) fitnessEl.weightStatus.textContent = 'Ошибка сохранения';

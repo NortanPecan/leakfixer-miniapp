@@ -262,76 +262,194 @@ class FitnessSync {
       }
     }
     /**
-     * Сохранить/исправить вес за конкретную дату.
-     * dateKey: 'YYYY-MM-DD', weight: число.
-     * Пишем измерение с measured_at = выбранная дата + текущее время,
-     * обновляем user_profile.current_weight и daily_state.data.weight для этой даты.
+     * Сохранить новое измерение веса.
+     * dateKey: 'YYYY-MM-DD', weight: число, time: 'HH:MM' (опционально).
+     * Создаёт новую запись в measurements. Не перезаписывает существующие.
      */
-    async saveWeightMeasurement(dateKey, weight) {
-        if (!this.appUserId || !dateKey || typeof weight !== 'number') return;
+    async saveWeightMeasurement(dateKey, weight, time = null) {
+        if (!this.appUserId || !dateKey || typeof weight !== 'number') return null;
         try {
-        const now = new Date();
-        const [y, m, d] = dateKey.split('-').map(Number);
-        // measured_at = выбранная дата + текущее время (часы/минуты сейчас)
-        const measuredAt = new Date(y, m - 1, d, now.getHours(), now.getMinutes(), now.getSeconds());
-        const measuredAtIso = measuredAt.toISOString();
+            const now = new Date();
+            const [y, m, d] = dateKey.split('-').map(Number);
+            
+            // Если время не указано - используем текущее
+            let measuredAt;
+            if (time) {
+                const [hours, minutes] = time.split(':').map(Number);
+                measuredAt = new Date(y, m - 1, d, hours, minutes, 0);
+            } else {
+                measuredAt = new Date(y, m - 1, d, now.getHours(), now.getMinutes(), now.getSeconds());
+            }
+            const measuredAtIso = measuredAt.toISOString();
 
-        // 1) логируем измерение в measurements (история)
-        await this.request('/rest/v1/measurements', {
-            method: 'POST',
-            body: JSON.stringify([{
-            app_user_id: this.appUserId,
-            measured_at: measuredAtIso,
-            type: 'weight',
-            value: weight,
-            text_value: null,
-            meta: { source: 'daily_input' },
-            }]),
-        });
+            // 1) Создаём новое измерение в measurements
+            const measurementRes = await this.request('/rest/v1/measurements', {
+                method: 'POST',
+                body: JSON.stringify([{
+                    app_user_id: this.appUserId,
+                    measured_at: measuredAtIso,
+                    type: 'weight',
+                    value: weight,
+                    text_value: null,
+                    meta: { source: 'weight_tracker', time: time || null },
+                }]),
+            });
+            const measurementData = await measurementRes.json();
+            const measurement = Array.isArray(measurementData) ? measurementData[0] : null;
 
-        // 2) обновляем актуальный вес в user_profile
-        await this.request('/rest/v1/user_profile', {
-            method: 'POST',
-            body: JSON.stringify({
-            app_user_id: this.appUserId,
-            current_weight: weight,
-            updated_at: new Date().toISOString(),
-            }),
-        });
+            // 2) Обновляем актуальный вес в user_profile (последнее измерение)
+            await this.request('/rest/v1/user_profile', {
+                method: 'POST',
+                body: JSON.stringify({
+                    app_user_id: this.appUserId,
+                    current_weight: weight,
+                    updated_at: new Date().toISOString(),
+                }),
+            });
 
-        // 3) обновляем daily_state.data.weight для этой даты (агрегат по дню)
-        const dateOnly = dateKey;
-        const dsRes = await this.request(
-            `/rest/v1/daily_state?app_user_id=eq.${this.appUserId}&date=eq.${dateOnly}`
-        );
-        const existingArr = await dsRes.json();
-        const existing = Array.isArray(existingArr) ? existingArr[0] : null;
-        const baseData = existing?.data || {};
-
-        const nextData = {
-            ...baseData,
-            weight: {
-            ...(baseData.weight || {}),
-            value: weight,
-            measured_at: measuredAtIso,
-            },
-        };
-
-        await this.request('/rest/v1/daily_state', {
-            method: 'POST',
-            body: JSON.stringify({
-            app_user_id: this.appUserId,
-            date: dateOnly,
-            mood: existing?.mood ?? null,
-            streak: existing?.streak ?? null,
-            notes: existing?.notes ?? null,
-            data: nextData,
-            updated_at: new Date().toISOString(),
-            }),
-        });
+            return measurement;
         } catch (e) {
-        console.error('saveWeightMeasurement error', e);
+            console.error('saveWeightMeasurement error', e);
+            return null;
         }
+    }    
+
+    /**
+     * Получить историю измерений веса за период.
+     * days: количество дней назад (по умолчанию 30).
+     * Возвращает массив измерений отсортированных по времени (новые первые).
+     */
+    async getWeightHistory(days = 30) {
+        if (!this.appUserId) return [];
+        try {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - days);
+            
+            const startIso = startDate.toISOString();
+            const endIso = endDate.toISOString();
+
+            const res = await this.request(
+                `/rest/v1/measurements?app_user_id=eq.${this.appUserId}&type=eq.weight&measured_at=gte.${startIso}&measured_at=lte.${endIso}&order=measured_at.desc`
+            );
+            const data = await res.json();
+            return Array.isArray(data) ? data : [];
+        } catch (e) {
+            console.error('getWeightHistory error', e);
+            return [];
+        }
+    }
+
+    /**
+     * Получить последнее измерение веса.
+     */
+    async getLastWeightMeasurement() {
+        if (!this.appUserId) return null;
+        try {
+            const res = await this.request(
+                `/rest/v1/measurements?app_user_id=eq.${this.appUserId}&type=eq.weight&order=measured_at.desc&limit=1`
+            );
+            const data = await res.json();
+            return Array.isArray(data) && data.length > 0 ? data[0] : null;
+        } catch (e) {
+            console.error('getLastWeightMeasurement error', e);
+            return null;
+        }
+    }
+
+    /**
+     * Обновить существующее измерение веса.
+     * measurementId: ID записи, weight: новое значение, dateKey/time: новые дата/время.
+     */
+    async updateWeightMeasurement(measurementId, weight, dateKey, time) {
+        if (!this.appUserId || !measurementId || typeof weight !== 'number') return null;
+        try {
+            const [y, m, d] = dateKey.split('-').map(Number);
+            const [hours, minutes] = time.split(':').map(Number);
+            const measuredAt = new Date(y, m - 1, d, hours, minutes, 0);
+            
+            const res = await this.request(`/rest/v1/measurements?id=eq.${measurementId}`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    value: weight,
+                    measured_at: measuredAt.toISOString(),
+                    meta: { source: 'weight_tracker', updated: true },
+                    updated_at: new Date().toISOString(),
+                }),
+            });
+            
+            // Обновляем current_weight если это было последнее измерение
+            const lastMeasurement = await this.getLastWeightMeasurement();
+            if (lastMeasurement && lastMeasurement.id === measurementId) {
+                await this.request('/rest/v1/user_profile', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        app_user_id: this.appUserId,
+                        current_weight: weight,
+                        updated_at: new Date().toISOString(),
+                    }),
+                });
+            }
+            
+            return await res.json();
+        } catch (e) {
+            console.error('updateWeightMeasurement error', e);
+            return null;
+        }
+    }
+
+    /**
+     * Удалить измерение веса.
+     */
+    async deleteWeightMeasurement(measurementId) {
+        if (!this.appUserId || !measurementId) return false;
+        try {
+            await this.request(`/rest/v1/measurements?id=eq.${measurementId}`, {
+                method: 'DELETE',
+            });
+            
+            // Обновляем current_weight на последнее оставшееся измерение
+            const lastMeasurement = await this.getLastWeightMeasurement();
+            if (lastMeasurement) {
+                await this.request('/rest/v1/user_profile', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        app_user_id: this.appUserId,
+                        current_weight: lastMeasurement.value,
+                        updated_at: new Date().toISOString(),
+                    }),
+                });
+            }
+            
+            return true;
+        } catch (e) {
+            console.error('deleteWeightMeasurement error', e);
+            return false;
+        }
+    }
+
+    /**
+     * Получить агрегированные данные по весу за период (для графика).
+     * Возвращает массив { date: 'YYYY-MM-DD', value: number } — средний вес за день.
+     */
+    async getWeightChartData(days = 30) {
+        const history = await this.getWeightHistory(days);
+        
+        // Группируем по датам
+        const byDate = {};
+        history.forEach(item => {
+            const date = item.measured_at.split('T')[0];
+            if (!byDate[date]) byDate[date] = [];
+            byDate[date].push(item.value);
+        });
+        
+        // Считаем среднее для каждой даты и сортируем
+        const result = Object.entries(byDate).map(([date, values]) => ({
+            date,
+            value: values.reduce((a, b) => a + b, 0) / values.length,
+        })).sort((a, b) => a.date.localeCompare(b.date));
+        
+        return result;
     }    
   }
   

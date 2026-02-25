@@ -1130,6 +1130,57 @@ async function onFoodSubmit(inputText, time = new Date()) {
   }
 }
 
+// ─── Weight tracking helpers ─────────────────────────────────────────────
+
+/** Calculate BMI
+ * @param {number} weightKg
+ * @param {number} heightCm
+ * @returns {number} BMI value
+ */
+function calculateBMI(weightKg, heightCm) {
+  if (!weightKg || !heightCm || heightCm <= 0) return 0;
+  const heightM = heightCm / 100;
+  return Number((weightKg / (heightM * heightM)).toFixed(1));
+}
+
+/** Format weight change with trend indicator
+ * @param {number} current
+ * @param {number} previous
+ * @returns {{text: string, trend: 'up'|'down'|'same', diff: number}}
+ */
+function formatWeightChange(current, previous) {
+  if (!previous || previous === 0) return { text: '—', trend: 'same', diff: 0 };
+  const diff = Number((current - previous).toFixed(1));
+  if (Math.abs(diff) < 0.1) return { text: '→ 0.0 кг', trend: 'same', diff: 0 };
+  if (diff > 0) return { text: `↗ +${diff} кг`, trend: 'up', diff };
+  return { text: `↘ ${diff} кг`, trend: 'down', diff };
+}
+
+/** Generate SVG polyline points for weight chart
+ * @param {{date: string, value: number}[]} chartData
+ * @param {number} width
+ * @param {number} height
+ * @param {number} padding
+ * @returns {string} points string for SVG polyline
+ */
+function generateWeightChartPoints(chartData, width = 100, height = 40, padding = 4) {
+  if (!chartData || chartData.length === 0) return '';
+  
+  const values = chartData.map(d => d.value);
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  const valRange = maxVal - minVal || 1;
+  
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+  
+  return chartData.map((item, index) => {
+    const x = padding + (index / (chartData.length - 1 || 1)) * chartWidth;
+    const y = padding + chartHeight - ((item.value - minVal) / valRange) * chartHeight;
+    return `${x},${y}`;
+  }).join(' ');
+}
+
 window.FitnessState = {
   getFitnessProfile,
   setFitnessProfile,
@@ -1169,6 +1220,10 @@ window.FitnessState = {
   // NEW: API Ninjas integration
   fetchNutritionForInput,
   onFoodSubmit,
+  // NEW: Weight tracking helpers
+  calculateBMI,
+  formatWeightChange,
+  generateWeightChartPoints,
   // NEW: Supplements tracking (NEW SYSTEM ONLY)
   loadSupplementsProfile,
   saveSupplementsProfile,
@@ -1181,7 +1236,7 @@ window.FitnessState = {
   removeSupplementIntake,
   removeAllSupplementIntakesForDay,
   clearAllSupplementsHistory,
-  resetAllSupplements, // DEV: Complete reset of all supplements
+  resetAllSupplements,
   createSupplement,
   updateSupplement,
   deleteSupplement,
