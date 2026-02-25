@@ -983,10 +983,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           await window.FitnessSync.saveWeightMeasurement(date, weight, time);
           
-          // Update local profile
-          const profile = FS.getFitnessProfile();
-          profile.weight = weight;
-          FS.setFitnessProfile(profile);
+          // NOTE: We intentionally do NOT call FS.setFitnessProfile() here
+          // because saveWeightMeasurement() already updates user_profile.current_weight.
+          // Calling setFitnessProfile would trigger saveProfile() which logs weight
+          // to measurements again, causing duplicates.
           
           // Clear chart cache
           weightChartDataCache = null;

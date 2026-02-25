@@ -85,17 +85,6 @@ class FitnessSync {
         // 2) логируем измерения (event log)
         const measurements = [];
   
-        if (typeof weight === 'number') {
-          measurements.push({
-            app_user_id: this.appUserId,
-            measured_at: now,
-            type: 'weight',
-            value: weight,
-            text_value: null,
-            meta: {},
-          });
-        }
-  
         if (typeof height === 'number') {
           measurements.push({
             app_user_id: this.appUserId,
