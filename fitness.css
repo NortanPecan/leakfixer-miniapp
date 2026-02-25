@@ -58,24 +58,36 @@
 
 /* ===== Тёмная тема (активируется через data-fitness-theme="dark" на html) ===== */
 html[data-fitness-theme="dark"] {
-  --fitness-bg-screen: linear-gradient(to bottom right, #0f172a, #1e293b);
+  /* Спокойный тёмный фон без ярких градиентов */
+  --fitness-bg-screen: linear-gradient(to bottom, #050816 0%, #0a0f1a 50%, #020617 100%);
   
-  --fitness-card-bg: rgba(15, 23, 42, 0.85);
-  --fitness-card-bg-hover: rgba(30, 41, 59, 0.9);
-  --fitness-card-bg-body: rgba(30, 41, 59, 0.6);
-  --fitness-card-bg-body-alt: rgba(30, 41, 59, 0.4);
+  /* Карточки - лёгкое стекло с хорошей читаемостью */
+  --fitness-card-bg: rgba(15, 23, 42, 0.65);
+  --fitness-card-bg-hover: rgba(30, 41, 59, 0.75);
+  --fitness-card-bg-body: rgba(30, 41, 59, 0.5);
+  --fitness-card-bg-body-alt: rgba(30, 41, 59, 0.35);
   
-  --fitness-card-border: rgba(148, 163, 184, 0.15);
-  --fitness-card-border-hover: rgba(148, 163, 184, 0.25);
+  /* Границы - заметные, но не агрессивные */
+  --fitness-card-border: rgba(148, 163, 184, 0.12);
+  --fitness-card-border-hover: rgba(148, 163, 184, 0.22);
   
+  /* Текст */
   --fitness-text-primary: #e2e8f0;
   --fitness-text-secondary: #94a3b8;
   --fitness-text-muted: #64748b;
   
+  /* Баланс бар */
   --fitness-balance-track: rgba(148, 163, 184, 0.2);
   --fitness-balance-center: rgba(148, 163, 184, 0.5);
   
-  --fitness-glass-blur: 18px;
+  /* Чистый blur без мутности */
+  --fitness-glass-blur: 12px;
+  
+  /* Более яркие акценты на тёмном фоне */
+  --fitness-accent-green: #4ade80;
+  --fitness-accent-red: #f87171;
+  --fitness-accent-amber: #fbbf24;
+  --fitness-accent-cyan: #22d3ee;
 }
 
 /* Дополнительные стили для тёмной темы */
@@ -83,14 +95,48 @@ html[data-fitness-theme="dark"] {
   /* Фон экрана */
   background: var(--fitness-bg-screen);
   
-  /* Улучшенное стекло для карточек */
-  --fitness-glass-blur: 18px;
+  /* Кнопка Назад - адаптация под тёмную тему */
+  --fitness-back-btn-bg: rgba(30, 41, 59, 0.7);
+  --fitness-back-btn-border: rgba(148, 163, 184, 0.2);
+  --fitness-back-btn-hover: rgba(51, 65, 85, 0.8);
   
-  /* Более яркие акценты на тёмном фоне */
-  --fitness-accent-green: #4ade80;
-  --fitness-accent-red: #f87171;
-  --fitness-accent-amber: #fbbf24;
-  --fitness-accent-cyan: #22d3ee;
+  /* Приглушённые градиенты для прогресс-баров в тёмной теме */
+  --fitness-gradient-gym: linear-gradient(to right, #a855f7, #f97316);
+  --fitness-gradient-cardio: linear-gradient(to right, #0891b2, #059669);
+  --fitness-gradient-cardio-outdoor: linear-gradient(to right, #059669, #0284c7);
+  --fitness-gradient-home: linear-gradient(to right, #d97706, #ea580c);
+  --fitness-gradient-steps: linear-gradient(to right, #d97706, #b45309);
+}
+
+/* Применяем приглушённые градиенты в тёмной теме */
+html[data-fitness-theme="dark"] .fitness-gradient-gym {
+  background: var(--fitness-gradient-gym);
+}
+
+html[data-fitness-theme="dark"] .fitness-gradient-cardio {
+  background: var(--fitness-gradient-cardio);
+}
+
+html[data-fitness-theme="dark"] .fitness-gradient-cardio-outdoor {
+  background: var(--fitness-gradient-cardio-outdoor);
+}
+
+html[data-fitness-theme="dark"] .fitness-gradient-home {
+  background: var(--fitness-gradient-home);
+}
+
+html[data-fitness-theme="dark"] .fitness-gradient-steps {
+  background: var(--fitness-gradient-steps);
+}
+
+/* Стили кнопки Назад в тёмной теме */
+html[data-fitness-theme="dark"] #fitnessBackInDashboardFixed {
+  background: var(--fitness-back-btn-bg, rgba(30, 41, 59, 0.7));
+  border-color: var(--fitness-back-btn-border, rgba(148, 163, 184, 0.2));
+}
+
+html[data-fitness-theme="dark"] #fitnessBackInDashboardFixed:hover {
+  background: var(--fitness-back-btn-hover, rgba(51, 65, 85, 0.8));
 }
 
 
@@ -111,6 +157,7 @@ html[data-fitness-theme="dark"] {
   -webkit-backdrop-filter: blur(var(--fitness-glass-blur));
   border: 1px solid var(--fitness-card-border);
   border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .fitness-card-hover:hover {
@@ -136,6 +183,7 @@ html[data-fitness-theme="dark"] {
   -webkit-backdrop-filter: blur(var(--fitness-glass-blur));
   border: 1px solid var(--fitness-card-border);
   border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .glass-card-hover:hover {

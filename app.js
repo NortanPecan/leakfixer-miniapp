@@ -5664,26 +5664,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const fitnessBackInDashboard = document.getElementById('fitnessBackInDashboard');
   if (fitnessBackInDashboard) {
     fitnessBackInDashboard.addEventListener('click', () => {
-      // Используем тот же обработчик, что и для системной кнопки назад
-      if (typeof fitnessBack === 'function') {
-        fitnessBack();
-      } else if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.BackButton.onClick(() => {
-          if (window.history.length > 1) {
-            window.history.back();
-          } else {
-            Telegram.WebApp.close();
-          }
-        });
-        Telegram.WebApp.BackButton.show();
+      // Возвращаемся на главный экран через showMain()
+      if (typeof showMain === 'function') {
+        showMain();
       } else {
-        // Фоллбек - просто назад по истории или закрыть
-        if (window.history.length > 1) {
-          window.history.back();
-        } else {
-          const fitnessScreen = document.getElementById('fitnessScreen');
-          if (fitnessScreen) fitnessScreen.classList.add('hidden');
-        }
+        // Фоллбек - скрыть фитнес-экран
+        const fitnessScreen = document.getElementById('fitnessScreen');
+        if (fitnessScreen) fitnessScreen.classList.add('hidden');
       }
     });
   }
@@ -5791,26 +5778,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const fitnessBackInDashboardFixed = document.getElementById('fitnessBackInDashboardFixed');
   if (fitnessBackInDashboardFixed) {
     fitnessBackInDashboardFixed.addEventListener('click', () => {
-      // Используем тот же обработчик, что и для системной кнопки назад
-      if (typeof fitnessBack === 'function') {
-        fitnessBack();
-      } else if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.BackButton.onClick(() => {
-          if (window.history.length > 1) {
-            window.history.back();
-          } else {
-            Telegram.WebApp.close();
-          }
-        });
-        Telegram.WebApp.BackButton.show();
+      // Возвращаемся на главный экран через showMain()
+      if (typeof showMain === 'function') {
+        showMain();
       } else {
-        // Фоллбек - просто назад по истории или закрыть
-        if (window.history.length > 1) {
-          window.history.back();
-        } else {
-          const fitnessScreen = document.getElementById('fitnessScreen');
-          if (fitnessScreen) fitnessScreen.classList.add('hidden');
-        }
+        // Фоллбек - скрыть фитнес-экран
+        const fitnessScreen = document.getElementById('fitnessScreen');
+        if (fitnessScreen) fitnessScreen.classList.add('hidden');
       }
     });
   }
