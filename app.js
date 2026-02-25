@@ -906,6 +906,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Не сворачивать при клике на кнопки внутри шапки
         if (e.target.tagName === 'BUTTON' || e.target.closest('BUTTON')) return;
         
+        // ПРЕДОТВРАЩЕНИЕ КОНФЛИКТА: останавливаем всплытие, чтобы клик по header
+        // не вызывал обработчики на родительской карточке (например, открытие попапа энергии)
+        e.stopPropagation();
+        
         const card = header.closest('[class*="bg-white/"]');
         if (!card) return;
         
@@ -927,6 +931,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
+    
+    // РАЗВЕДЕНИЕ КЛИКОВ: для карточки энергии - открытие попапа только при клике по body (не по header)
+    const energyCard = document.getElementById('fitnessCaloriesCard');
+    if (energyCard && !energyCard.dataset.popupHandlerAdded) {
+      energyCard.dataset.popupHandlerAdded = 'true';
+      energyCard.addEventListener('click', (e) => {
+        // Если клик по header - это обрабатывает сворачивание, игнорируем
+        if (e.target.closest('.fitness-card-header')) return;
+        // Игнорировать клики по кнопкам
+        if (e.target.closest('button')) return;
+        // Открываем попап детализации энергии
+        fitnessOpenEnergyDetails();
+      });
+    }
   }
   
   // Обновление мини-данных в шапках всех карточек
