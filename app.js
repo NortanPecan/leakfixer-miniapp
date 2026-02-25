@@ -966,10 +966,23 @@ document.addEventListener('DOMContentLoaded', () => {
       const totalDose = FS.getTotalDoseForDay(intakes);
       const unitLabel = supp.unit === 'табл' ? 'табл' : supp.unit;
       
-      // CRITICAL FIX: For non-daily supplements, only show if there are intakes for this date
-      // This prevents "magic" appearance of non-daily supplements in dates without data
-      if (!supp.daily && intakes.length === 0) {
-        continue; // Skip this supplement - no data for this date
+      // CRITICAL FIX: Filter supplements based on date and daily flag
+      const isPast = FS.isPastDate(dateKey);
+      const isToday = FS.isToday(dateKey);
+
+      if (isPast) {
+        // For past dates: ONLY show if there are actual intakes (history)
+        // After clearAllSupplementsHistory(), this will be empty - no cards shown
+        if (intakes.length === 0) {
+          continue; // Skip - no history for this supplement on this date
+        }
+      } else {
+        // For today and future:
+        // - daily=true: always show (plan will be generated if needed)
+        // - daily=false: only show if there are intakes
+        if (!supp.daily && intakes.length === 0) {
+          continue; // Skip non-daily supplement without data
+        }
       }
 
       html += '<div class="bg-white/5 rounded-xl p-3 mb-3">';
