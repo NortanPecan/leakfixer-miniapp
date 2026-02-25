@@ -894,6 +894,11 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessInitCollapsibleCards();
     // Обновление мини-данных в шапках
     fitnessUpdateCardSummaries();
+    // Сворачиваем все карточки по умолчанию (первый запуск)
+    if (!window.fitnessCardsInitiallyCollapsed) {
+      window.fitnessCardsInitiallyCollapsed = true;
+      fitnessCollapseAllCards();
+    }
   }
 
   // ========== СВОРАЧИВАЕМЫЕ КАРТОЧКИ ==========
@@ -5733,23 +5738,48 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // Загружаем сохранённое фото при инициализации
+  // Логика: только точное совпадение по дате, без поиска "ближайшего" фото
   function fitnessLoadSavedPhoto() {
     const dateKey = typeof fitnessGetDateKey === 'function' ? fitnessGetDateKey() : null;
-    const photoKey = dateKey ? `fitness_photo_${dateKey}` : 'fitness_photo_current';
+    
+    if (!dateKey) {
+      // Нет даты - показываем заглушку
+      if (fitnessAvatar) {
+        fitnessAvatar.classList.add('hidden');
+      }
+      if (fitnessAvatarPlaceholder) {
+        fitnessAvatarPlaceholder.classList.remove('hidden');
+      }
+      return;
+    }
+    
+    const photoKey = `fitness_photo_${dateKey}`;
     
     try {
+      // Ищем фото ТОЛЬКО для текущей даты (без fallback на другие даты)
       const savedPhoto = localStorage.getItem(photoKey);
+      
       if (savedPhoto && fitnessAvatar) {
+        // Фото есть для этой даты - показываем
         fitnessAvatar.src = savedPhoto;
         fitnessAvatar.classList.remove('hidden');
         if (fitnessAvatarPlaceholder) {
           fitnessAvatarPlaceholder.classList.add('hidden');
         }
-      } else if (fitnessAvatarPlaceholder) {
-        fitnessAvatarPlaceholder.classList.remove('hidden');
+      } else {
+        // Нет фото для этой даты - показываем заглушку (НЕ ищем на других датах!)
+        if (fitnessAvatar) {
+          fitnessAvatar.classList.add('hidden');
+        }
+        if (fitnessAvatarPlaceholder) {
+          fitnessAvatarPlaceholder.classList.remove('hidden');
+        }
       }
     } catch (err) {
       console.warn('Не удалось загрузить фото:', err);
+      // При ошибке тоже показываем заглушку
+      if (fitnessAvatar) fitnessAvatar.classList.add('hidden');
+      if (fitnessAvatarPlaceholder) fitnessAvatarPlaceholder.classList.remove('hidden');
     }
   }
   
