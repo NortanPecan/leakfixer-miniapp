@@ -267,7 +267,20 @@ function loadSupplementsProfile() {
   try {
     const raw = localStorage.getItem(getSupplementsStorageKey());
     if (raw) {
-      return JSON.parse(raw);
+      const profile = JSON.parse(raw);
+      // CRITICAL: Migrate old supplements without dailyStartDate/dailyEndDate
+      if (profile.supplements) {
+        for (const supp of profile.supplements) {
+          if (supp.daily && !supp.dailyStartDate) {
+            // Set default start date to createdAt or today for old supplements
+            supp.dailyStartDate = supp.createdAt 
+              ? formatDateKey(new Date(supp.createdAt)) 
+              : formatDateKey(new Date());
+            console.log('[Supplements] Migrated old supplement:', supp.name, 'dailyStartDate:', supp.dailyStartDate);
+          }
+        }
+      }
+      return profile;
     }
   } catch (e) {
     console.error('loadSupplementsProfile error:', e);
@@ -319,8 +332,15 @@ function getOrCreateDayIntakes(supplement, dateKey) {
 function isDateInDailyInterval(supplement, dateKey) {
   if (!supplement.daily) return false;
 
+  // CRITICAL: If dailyStartDate is not set, treat as NOT in interval
+  // This prevents old supplements without dates from auto-generating plans
+  if (!supplement.dailyStartDate) {
+    console.log('[Supplements] No dailyStartDate for:', supplement.name, 'treating as outside interval');
+    return false;
+  }
+
   // Check start date
-  if (supplement.dailyStartDate && dateKey < supplement.dailyStartDate) {
+  if (dateKey < supplement.dailyStartDate) {
     return false;
   }
 
