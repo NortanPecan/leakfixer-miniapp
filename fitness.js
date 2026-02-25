@@ -121,6 +121,8 @@
  * @property {string} name - e.g. "Кленбутерол", "Креатин"
  * @property {'мг'|'г'|'табл'} unit
  * @property {boolean} daily - "every day" flag
+ * @property {string|null} dailyStartDate - "YYYY-MM-DD" when daily generation starts, null if not set
+ * @property {string|null} dailyEndDate - "YYYY-MM-DD" when daily generation ends (inclusive), null for infinite
  * @property {number} standardDailyDose - current daily norm (e.g. 80 mg)
  * @property {SupplementTemplateIntake[]} templateIntakes
  * @property {SupplementDayIntakes[]} history - actual history by date
@@ -310,7 +312,27 @@ function getOrCreateDayIntakes(supplement, dateKey) {
   return dayIntakes;
 }
   
-/** Generate planned intakes for a date based on template (only for daily supplements)
+/** Check if date is within supplement's daily interval
+ * @param {Supplement} supplement
+ * @param {string} dateKey - "YYYY-MM-DD"
+ * @returns {boolean} */
+function isDateInDailyInterval(supplement, dateKey) {
+  if (!supplement.daily) return false;
+
+  // Check start date
+  if (supplement.dailyStartDate && dateKey < supplement.dailyStartDate) {
+    return false;
+  }
+
+  // Check end date (inclusive)
+  if (supplement.dailyEndDate && dateKey > supplement.dailyEndDate) {
+    return false;
+  }
+
+  return true;
+}
+
+/** Generate planned intakes for a date based on template (only for daily supplements within interval)
  * @param {Supplement} supplement
  * @param {string} dateKey - "YYYY-MM-DD"
  * @returns {SupplementIntake[]} */
@@ -320,23 +342,23 @@ function generatePlannedIntakes(supplement, dateKey) {
   if (createdDateKey && dateKey < createdDateKey) {
     return [];
   }
-  
-  // CRITICAL: Only auto-generate for today and future dates
-  // Past dates should only show manually added intakes from history
-  const todayKey = formatDateKey(new Date());
-  if (dateKey < todayKey) {
+
+  // CRITICAL: Check if date is within daily interval (dailyStartDate to dailyEndDate)
+  if (!isDateInDailyInterval(supplement, dateKey)) {
+    // Outside interval - return existing history if any, but don't generate new
     const existingDayIntakes = supplement.history?.find(h => h.date === dateKey);
     return existingDayIntakes?.intakes || [];
   }
 
+  // For dates within interval: generate or return existing
   const dayIntakes = getOrCreateDayIntakes(supplement, dateKey);
-  
+
   // If already has intakes for this day, return existing (don't regenerate)
   if (dayIntakes.intakes.length > 0) {
     return dayIntakes.intakes;
   }
-  
-  // Generate from template for today/future dates only
+
+  // Generate from template for dates within interval
   const intakes = [];
   for (const template of supplement.templateIntakes) {
     intakes.push({
@@ -365,12 +387,12 @@ function getSupplementIntakesForDay(supplementId, dateKey) {
     return [];
   }
   
-  // For daily supplements, generate plan if needed (today and future dates only, past shows history)
-  if (supplement.daily) {
+  // For daily supplements within their interval, generate plan
+  if (supplement.daily && isDateInDailyInterval(supplement, dateKey)) {
     return generatePlannedIntakes(supplement, dateKey);
   }
   
-  // CRITICAL FIX: For non-daily supplements:
+  // For non-daily supplements or daily supplements outside interval:
   // - Only show manually added intakes from history (never auto-generate)
   // - Don't show supplement in this day if no intakes exist
   const dayIntakes = supplement.history?.find(h => h.date === dateKey);
@@ -562,21 +584,22 @@ function removeAllSupplementIntakesForDay(supplementId, dateKey) {
   return true;
 }
 
-/** Clear ALL history for ALL supplements (keep supplement profiles)
- * This removes all intake records but preserves supplement settings
+/** Clear ALL history for ALL supplements (keep supplement profiles and daily settings)
+ * This removes all intake records but preserves supplement settings including daily interval
  * @returns {boolean} success */
 function clearAllSupplementsHistory() {
   const profile = loadSupplementsProfile();
   if (!profile || !profile.supplements) return false;
 
-  // Clear history for each supplement but keep the supplement itself
+  // Clear history for each supplement but keep the supplement itself and daily settings
   for (const supplement of profile.supplements) {
     supplement.history = [];
+    // CRITICAL: Preserve daily, dailyStartDate, dailyEndDate - only clear history
     supplement.updatedAt = new Date().toISOString();
   }
 
   saveSupplementsProfile(profile);
-  console.log('[Supplements] All history cleared, supplements preserved:', profile.supplements.length);
+  console.log('[Supplements] All history cleared, supplements and daily settings preserved:', profile.supplements.length);
   return true;
 }
 
@@ -585,20 +608,28 @@ function clearAllSupplementsHistory() {
  * @param {string} params.name
  * @param {'мг'|'г'|'табл'} params.unit
  * @param {boolean} params.daily
+ * @param {string|null} params.dailyStartDate - "YYYY-MM-DD" or null
+ * @param {string|null} params.dailyEndDate - "YYYY-MM-DD" or null
  * @param {number} params.standardDailyDose
  * @param {SupplementTemplateIntake[]} params.templateIntakes
  * @returns {Supplement} created supplement */
-function createSupplement({ name, unit, daily, standardDailyDose, templateIntakes }) {
+function createSupplement({ name, unit, daily, dailyStartDate, dailyEndDate, standardDailyDose, templateIntakes }) {
   const profile = loadSupplementsProfile();
   const now = new Date();
   const nowISO = now.toISOString();
   const todayKey = formatDateKey(now);
   
+  // CRITICAL: Set default daily dates if daily is true but dates not provided
+  const finalDailyStartDate = daily ? (dailyStartDate || todayKey) : null;
+  const finalDailyEndDate = daily ? (dailyEndDate || null) : null;
+
   const supplement = {
     id: generateId(),
     name,
     unit,
-    daily,
+    daily: daily || false,
+    dailyStartDate: finalDailyStartDate,
+    dailyEndDate: finalDailyEndDate,
     standardDailyDose,
     templateIntakes: templateIntakes || [],
     history: [],
@@ -645,7 +676,7 @@ function createSupplement({ name, unit, daily, standardDailyDose, templateIntake
 
 /** Update supplement settings (not history)
  * @param {string} id
- * @param {Partial<Pick<Supplement, 'name' | 'unit' | 'daily' | 'standardDailyDose' | 'templateIntakes'>>} updates
+ * @param {Partial<Pick<Supplement, 'name' | 'unit' | 'daily' | 'dailyStartDate' | 'dailyEndDate' | 'standardDailyDose' | 'templateIntakes'>>} updates
  * @returns {Supplement|undefined} updated supplement */
 function updateSupplement(id, updates) {
   const profile = loadSupplementsProfile();
@@ -655,6 +686,8 @@ function updateSupplement(id, updates) {
   if (updates.name !== undefined) supplement.name = updates.name;
   if (updates.unit !== undefined) supplement.unit = updates.unit;
   if (updates.daily !== undefined) supplement.daily = updates.daily;
+  if (updates.dailyStartDate !== undefined) supplement.dailyStartDate = updates.dailyStartDate;
+  if (updates.dailyEndDate !== undefined) supplement.dailyEndDate = updates.dailyEndDate;
   if (updates.standardDailyDose !== undefined) supplement.standardDailyDose = updates.standardDailyDose;
   if (updates.templateIntakes !== undefined) supplement.templateIntakes = updates.templateIntakes;
   
@@ -1204,4 +1237,6 @@ window.FitnessState = {
   isFutureDate,
   isToday,
   isPastDate,
+  // NEW: Daily interval helper
+  isDateInDailyInterval,
 };

@@ -966,23 +966,30 @@ document.addEventListener('DOMContentLoaded', () => {
       const totalDose = FS.getTotalDoseForDay(intakes);
       const unitLabel = supp.unit === 'табл' ? 'табл' : supp.unit;
       
-      // CRITICAL FIX: Filter supplements based on date and daily flag
+      // CRITICAL FIX: Filter supplements based on daily flag and date interval
       const isPast = FS.isPastDate(dateKey);
       const isToday = FS.isToday(dateKey);
 
-      if (isPast) {
-        // For past dates: ONLY show if there are actual intakes (history)
-        // After clearAllSupplementsHistory(), this will be empty - no cards shown
-        if (intakes.length === 0) {
-          continue; // Skip - no history for this supplement on this date
+      // Check if supplement should be shown for this date
+      let shouldShow = false;
+
+      if (supp.daily) {
+        // Daily supplements: check if date is within interval
+        const inInterval = FS.isDateInDailyInterval(supp, dateKey);
+        if (inInterval) {
+          // Within interval: show (plan will be generated if needed)
+          shouldShow = true;
+        } else {
+          // Outside interval: only show if there are actual intakes (manual entries)
+          shouldShow = intakes.length > 0;
         }
       } else {
-        // For today and future:
-        // - daily=true: always show (plan will be generated if needed)
-        // - daily=false: only show if there are intakes
-        if (!supp.daily && intakes.length === 0) {
-          continue; // Skip non-daily supplement without data
-        }
+        // Non-daily supplements: only show if there are intakes for this specific date
+        shouldShow = intakes.length > 0;
+      }
+
+      if (!shouldShow) {
+        continue; // Skip this supplement for this date
       }
 
       html += '<div class="bg-white/5 rounded-xl p-3 mb-3">';
@@ -1035,6 +1042,14 @@ document.addEventListener('DOMContentLoaded', () => {
       html += '</div>';
     }
     
+    // CRITICAL: If no supplements to show for this date, display placeholder
+    if (html === '') {
+      html += '<div class="text-center py-6 opacity-70">';
+      html += '<p class="text-sm mb-3">Нет БАДов для этой даты</p>';
+      html += '<button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Добавить БАД</button>';
+      html += '</div>';
+    }
+      
     // Add new supplement button
     html += '<button type="button" id="addNewSupplement" class="w-full py-2 rounded-xl bg-green-500/30 text-sm">+ Добавить БАД</button>';
     
@@ -1137,6 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // NEW: Open modal to add/edit supplement profile
   function fitnessOpenSupplementProfileModal(editId) {
     const existing = editId ? FS.getSupplementById(editId) : null;
+    const todayKey = FS.formatDateKey(new Date());
     
     let html = '<h3 class="font-semibold mb-4">' + (existing ? 'Редактировать БАД' : 'Добавить БАД') + '</h3>';
     html += '<div class="space-y-3">';
@@ -1150,30 +1166,68 @@ document.addEventListener('DOMContentLoaded', () => {
     html += '<option value="табл"' + (existing?.unit === 'табл' ? ' selected' : '') + '>таблетки</option>';
     html += '</select>';
     
-    html += '<label class="flex items-center gap-2 mt-2">';
-    html += '<input type="checkbox" id="suppProfileDaily" class="rounded"' + (existing?.daily !== false ? ' checked' : '') + '>';
-    html += '<span class="text-sm">Принимать каждый день</span></label>';
+    // CRITICAL: Daily checkbox with date interval controls
+    html += '<div class="bg-white/5 rounded-lg p-3 mt-2">';
+    html += '<label class="flex items-center gap-2">';
+    html += '<input type="checkbox" id="suppProfileDaily" class="rounded"' + (existing?.daily ? ' checked' : '') + '>';
+    html += '<span class="text-sm font-medium">Принимать ежедневно</span></label>';
+
+    // Daily interval controls (shown only when daily is checked)
+    html += '<div id="dailyIntervalControls" class="mt-3 space-y-2' + (existing?.daily ? '' : ' hidden') + '">';
+    html += '<label class="block text-xs opacity-70">Начать с даты</label>';
+    html += '<input type="date" id="suppProfileDailyStart" class="w-full p-2 bg-white/30 rounded-xl text-white text-sm" value="' + (existing?.dailyStartDate ?? todayKey) + '">';
+
+    html += '<label class="block text-xs opacity-70 mt-2">Закончить (необязательно)</label>';
+    html += '<input type="date" id="suppProfileDailyEnd" class="w-full p-2 bg-white/30 rounded-xl text-white text-sm" value="' + (existing?.dailyEndDate ?? '') + '">';
+    html += '<label class="flex items-center gap-2 mt-1">';
+    html += '<input type="checkbox" id="suppProfileDailyNoEnd" class="rounded"' + (!existing?.dailyEndDate ? ' checked' : '') + '>';
+    html += '<span class="text-xs opacity-70">Без окончания (бесконечно)</span></label>';
+    html += '</div>';
+    html += '</div>';
     
     html += '<label class="block text-sm mt-2">Дневная норма</label>';
     html += '<input type="number" id="suppProfileDailyDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.standardDailyDose ?? '1') + '" placeholder="10">';
-    
+
     html += '<label class="block text-sm mt-2">Количество приёмов в день</label>';
     html += '<input type="number" id="suppProfileIntakesCount" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.templateIntakes?.length ?? 1) + '" min="1" max="5">';
-    
+
     html += '<label class="block text-sm mt-2">Доза на приём (базовая)</label>';
     html += '<input type="number" id="suppProfileDefaultDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.templateIntakes?.[0]?.defaultDose ?? '1') + '">';
-    
+
     if (existing) {
       html += '<button type="button" id="suppProfileDelete" class="w-full py-2 mt-2 rounded-xl bg-red-500/30 text-sm text-red-300">Удалить БАД</button>';
     }
     html += '</div>';
-    
+
     html += '<div class="flex gap-3 mt-4">';
     html += '<button type="button" id="suppProfileCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
     html += '<button type="button" id="suppProfileSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
+      // Toggle daily interval controls visibility
+      const dailyCheckbox = document.getElementById('suppProfileDaily');
+      const intervalControls = document.getElementById('dailyIntervalControls');
+      const noEndCheckbox = document.getElementById('suppProfileDailyNoEnd');
+      const endDateInput = document.getElementById('suppProfileDailyEnd');
+
+      dailyCheckbox?.addEventListener('change', () => {
+        if (dailyCheckbox.checked) {
+          intervalControls?.classList.remove('hidden');
+        } else {
+          intervalControls?.classList.add('hidden');
+        }
+      });
+      
+      noEndCheckbox?.addEventListener('change', () => {
+        if (noEndCheckbox.checked) {
+          endDateInput.value = '';
+          endDateInput.disabled = true;
+        } else {
+          endDateInput.disabled = false;
+        }
+      });
+
       document.getElementById('suppProfileCancel')?.addEventListener('click', fitnessCloseModal);
       document.getElementById('suppProfileSave')?.addEventListener('click', () => {
         const name = document.getElementById('suppProfileName')?.value?.trim();
@@ -1182,10 +1236,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const standardDailyDose = Number(document.getElementById('suppProfileDailyDose')?.value) || 1;
         const intakesCount = Number(document.getElementById('suppProfileIntakesCount')?.value) || 1;
         const defaultDose = Number(document.getElementById('suppProfileDefaultDose')?.value) || 1;
-        
+
+        // CRITICAL: Get daily interval dates
+        let dailyStartDate = null;
+        let dailyEndDate = null;
+        if (daily) {
+          dailyStartDate = document.getElementById('suppProfileDailyStart')?.value || todayKey;
+          const noEnd = document.getElementById('suppProfileDailyNoEnd')?.checked;
+          if (!noEnd) {
+            dailyEndDate = document.getElementById('suppProfileDailyEnd')?.value || null;
+          }
+        }
+
         if (!name) {
           alert('Введите название БАДа');
           return;
+
         }
   
         // Generate template intakes
@@ -1193,17 +1259,17 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < intakesCount; i++) {
           templateIntakes.push({ defaultDose: defaultDose });
         }
-        
+
         if (editId) {
-          FS.updateSupplement(editId, { name, unit, daily, standardDailyDose, templateIntakes });
+          FS.updateSupplement(editId, { name, unit, daily, dailyStartDate, dailyEndDate, standardDailyDose, templateIntakes });
         } else {
-          FS.createSupplement({ name, unit, daily, standardDailyDose, templateIntakes });
+          FS.createSupplement({ name, unit, daily, dailyStartDate, dailyEndDate, standardDailyDose, templateIntakes });
         }
       
         fitnessCloseModal();
         fitnessRenderSupplementsTracking();
       });
-      
+
       document.getElementById('suppProfileDelete')?.addEventListener('click', () => {
         if (confirm('Удалить этот БАД? История приёмов будет потеряна.')) {
           FS.deleteSupplement(editId);
