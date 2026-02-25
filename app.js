@@ -5787,4 +5787,89 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(fitnessLoadSavedPhoto, 200);
 
 
+  // ========== КНОПКА "НАЗАД" ВНИЗУ СПРАВА ==========
+  const fitnessBackInDashboardFixed = document.getElementById('fitnessBackInDashboardFixed');
+  if (fitnessBackInDashboardFixed) {
+    fitnessBackInDashboardFixed.addEventListener('click', () => {
+      // Используем тот же обработчик, что и для системной кнопки назад
+      if (typeof fitnessBack === 'function') {
+        fitnessBack();
+      } else if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.BackButton.onClick(() => {
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            Telegram.WebApp.close();
+          }
+        });
+        Telegram.WebApp.BackButton.show();
+      } else {
+        // Фоллбек - просто назад по истории или закрыть
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          const fitnessScreen = document.getElementById('fitnessScreen');
+          if (fitnessScreen) fitnessScreen.classList.add('hidden');
+        }
+      }
+    });
+  }
+
+
+  // ========== ПЕРЕКЛЮЧЕНИЕ ТЕМЫ ==========
+  const THEME_STORAGE_KEY = 'fitnessTheme';
+  const DEFAULT_THEME = 'dark'; // По умолчанию тёмная тема
+  
+  // Функция применения темы
+  function fitnessApplyTheme(theme) {
+    const root = document.documentElement;
+    const themeToggle = document.getElementById('fitnessThemeToggle');
+    const themeLabel = document.getElementById('fitnessThemeLabel');
+    
+    if (theme === 'dark') {
+      // Тёмная тема - добавляем атрибут
+      root.setAttribute('data-fitness-theme', 'dark');
+      if (themeToggle) {
+        themeToggle.textContent = 'Тёмная';
+        themeToggle.classList.remove('bg-white/20');
+        themeToggle.classList.add('bg-indigo-500/50');
+      }
+      if (themeLabel) themeLabel.textContent = 'Тёмная';
+    } else {
+      // Светлая тема - убираем атрибут
+      root.removeAttribute('data-fitness-theme');
+      if (themeToggle) {
+        themeToggle.textContent = 'Светлая';
+        themeToggle.classList.remove('bg-indigo-500/50');
+        themeToggle.classList.add('bg-white/20');
+      }
+      if (themeLabel) themeLabel.textContent = 'Светлая';
+    }
+  }
+  
+  // Функция переключения темы
+  function fitnessToggleTheme() {
+    const currentTheme = localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME;
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    fitnessApplyTheme(newTheme);
+  }
+  
+  // Инициализация темы при загрузке
+  function fitnessInitTheme() {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME;
+    fitnessApplyTheme(savedTheme);
+  }
+  
+  // Обработчик кнопки переключения темы
+  const fitnessThemeToggle = document.getElementById('fitnessThemeToggle');
+  if (fitnessThemeToggle) {
+    fitnessThemeToggle.addEventListener('click', fitnessToggleTheme);
+  }
+  
+  // Применяем тему при загрузке
+  fitnessInitTheme();
+
+
 }); // конец DOMContentLoaded

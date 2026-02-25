@@ -56,9 +56,8 @@
   --fitness-balance-fill-sur: #ef4444;
 }
 
-/* ===== Тёмная тема (раскомментировать для активации) ===== */
-/*
-:root {
+/* ===== Тёмная тема (активируется через data-fitness-theme="dark" на html) ===== */
+html[data-fitness-theme="dark"] {
   --fitness-bg-screen: linear-gradient(to bottom right, #0f172a, #1e293b);
   
   --fitness-card-bg: rgba(15, 23, 42, 0.85);
@@ -78,12 +77,32 @@
   
   --fitness-glass-blur: 18px;
 }
-*/
+
+/* Дополнительные стили для тёмной темы */
+html[data-fitness-theme="dark"] {
+  /* Фон экрана */
+  background: var(--fitness-bg-screen);
+  
+  /* Улучшенное стекло для карточек */
+  --fitness-glass-blur: 18px;
+  
+  /* Более яркие акценты на тёмном фоне */
+  --fitness-accent-green: #4ade80;
+  --fitness-accent-red: #f87171;
+  --fitness-accent-amber: #fbbf24;
+  --fitness-accent-cyan: #22d3ee;
+}
 
 
 /* ========================================
  * 2. GLASS CARD SYSTEM - БАЗОВЫЕ КЛАССЫ
  * ======================================== */
+
+/* Фон экрана - применяется к fitnessScreen */
+#fitnessScreen {
+  background: var(--fitness-bg-screen);
+  min-height: 100vh;
+}
 
 /* Основной класс карточки - основа для glassmorphism */
 .fitness-card {

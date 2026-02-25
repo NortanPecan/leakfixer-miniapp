@@ -123,8 +123,7 @@
     </div>
 
     <!-- Экран Фитнес -->
-    <div id="fitnessScreen" class="hidden space-y-6">
-      <button id="fitnessBackBtn" class="text-2xl">←</button>
+    <div id="fitnessScreen" class="hidden space-y-6 pb-20">
 
       <!-- Онбординг: параметры профиля (все опционально) -->
       <div id="fitnessProfileSetup" class="bg-white/20 backdrop-blur-xl rounded-2xl p-6 space-y-4">
@@ -432,15 +431,6 @@
 
       <!-- Основной дашборд фитнеса -->
       <div id="fitnessDashboard" class="hidden space-y-4">
-        <!-- Кнопка Назад внутри дашборда -->
-        <div class="flex justify-start">
-          <button
-            id="fitnessBackInDashboard"
-            class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-medium transition"
-          >
-            ← Назад
-          </button>
-        </div>
         <!-- Верхний контейнер: Настройка тела + Дата -->
         <div class="flex items-center justify-between bg-white/15 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3">
           <button
@@ -855,7 +845,49 @@
             <!-- Сюда JS рендерит новый интерфейс БАДов -->
           </div>
           </div>
+        
+        <!-- Блок Настройки -->
+        <div class="bg-white/15 backdrop-blur-md border border-white/10 rounded-2xl p-4">
+          <div class="fitness-card-header flex items-center justify-between" data-card="settings">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="min-w-0">
+                <h3 class="font-semibold">Настройки</h3>
+                <div class="text-[10px] opacity-70 mt-0.5 whitespace-nowrap" id="settingsMiniSummary">
+                  Тема: <span id="fitnessThemeLabel">Светлая</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="fitness-card-chevron text-xs opacity-70 shrink-0">˅</span>
+            </div>
+          </div>
+          <div class="fitness-card-body">
+            <!-- Переключатель темы -->
+            <div class="bg-white/10 rounded-xl p-3 mt-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium">Тема</span>
+                <button 
+                  id="fitnessThemeToggle"
+                  class="px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-sm font-medium transition"
+                >
+                  Светлая
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+        
+      <!-- Фиксированная кнопка Назад внизу справа -->
+      <div class="fixed bottom-6 right-6 z-30">
+        <button
+          id="fitnessBackInDashboardFixed"
+          class="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 hover:bg-white/30 text-sm font-semibold transition shadow-lg"
+        >
+          ← Назад
+        </button>
+      </div>
+
                   <!-- Общий модальный слой для фитнес-форм (еда, БАДы, активность) -->
         <div
         id="fitnessModalOverlay"
