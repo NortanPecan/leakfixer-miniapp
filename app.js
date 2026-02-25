@@ -885,6 +885,11 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessRenderSupplementsTracking();
     fitnessRenderWorkDay();
     
+    // Загрузка сохранённого фото для текущей даты
+    if (typeof fitnessLoadSavedPhoto === 'function') {
+      fitnessLoadSavedPhoto();
+    }
+    
     // Инициализация сворачиваемых карточек
     fitnessInitCollapsibleCards();
     // Обновление мини-данных в шапках
