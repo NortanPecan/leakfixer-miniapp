@@ -487,6 +487,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (v === 'normal') text = 'Обычный день';
     if (v === 'high') text = 'Очень активный день';
     fitnessEl.workDayLabel.textContent = text;
+  }
+
   // Открыть детализацию энергии
   function fitnessOpenEnergyDetails() {
     const profile = FS.getFitnessProfile();
@@ -536,16 +538,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Показываем модальное окно
     document.getElementById('energyDetailsModalOverlay').classList.remove('hidden');
   }
-
-    // АВТОСОХРАНЕНИЕ
-    if (window.FitnessSync && window.currentAppUserId) {
-        const dateKey = fitnessGetDateKey();
-        const dayData = FS.getDayData(dateKey);
-        window.FitnessSync.saveDay(dateKey, {
-          work_day: dayData.workDay || 'normal'
-        }).catch(console.error);
-  }
-}
 
   function fitnessRenderDate() {
     if (fitnessEl.dateLabel) fitnessEl.dateLabel.textContent = FS.formatDateLocal(fitnessSelectedDate);
