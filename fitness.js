@@ -752,15 +752,19 @@ function formatTimeHM(date) {
 // ─── Pure: calorie calculations (replace with real formulas later) ───────────
 
 /**
- * BMR placeholder. Replace with Mifflin-St Jeor / Harris-Benedict when needed.
+ * FIXED daily calorie target - no longer depends on weight.
+ * Users can set their target manually in profile, or use default.
  * @param {ProfileFitnessSettings} profile
  * @returns {number}
  */
 function calculateBaseMetabolism(profile) {
-  if (profile.weight && profile.height && profile.age) {
-    return Math.round(10 * profile.weight + 6.25 * profile.height - 5 * profile.age + 5);
+  // FIXED: Use user's target calories if set, otherwise default
+  // Weight changes no longer automatically adjust calorie target
+  if (profile.targetCalories && profile.targetCalories > 0) {
+    return Math.round(profile.targetCalories);
   }
-  return 1800;
+  // Default fixed value - no formula based on weight
+  return 2000;
 }
 
 /**
