@@ -321,6 +321,14 @@ function generatePlannedIntakes(supplement, dateKey) {
     return [];
   }
   
+  // CRITICAL: Only auto-generate for today and future dates
+  // Past dates should only show manually added intakes from history
+  const todayKey = formatDateKey(new Date());
+  if (dateKey < todayKey) {
+    const existingDayIntakes = supplement.history?.find(h => h.date === dateKey);
+    return existingDayIntakes?.intakes || [];
+  }
+
   const dayIntakes = getOrCreateDayIntakes(supplement, dateKey);
   
   // If already has intakes for this day, return existing (don't regenerate)
@@ -328,12 +336,12 @@ function generatePlannedIntakes(supplement, dateKey) {
     return dayIntakes.intakes;
   }
   
-  // Generate from template
+  // Generate from template for today/future dates only
   const intakes = [];
   for (const template of supplement.templateIntakes) {
     intakes.push({
       id: generateId(),
-      time: template.time || '',
+      time: '', // CRITICAL: Empty time - will be set only when user clicks checkbox
       dose: template.defaultDose,
       checked: false,
       edited: false,
@@ -357,12 +365,14 @@ function getSupplementIntakesForDay(supplementId, dateKey) {
     return [];
   }
   
-  // For daily supplements, generate plan if needed (current/future dates only)
+  // For daily supplements, generate plan if needed (today and future dates only, past shows history)
   if (supplement.daily) {
     return generatePlannedIntakes(supplement, dateKey);
   }
   
-  // For non-daily supplements: only show manually added intakes from history
+  // CRITICAL FIX: For non-daily supplements:
+  // - Only show manually added intakes from history (never auto-generate)
+  // - Don't show supplement in this day if no intakes exist
   const dayIntakes = supplement.history?.find(h => h.date === dateKey);
   return dayIntakes?.intakes || [];
 }
@@ -384,10 +394,12 @@ function toggleSupplementIntakeChecked(supplementId, dateKey, intakeId) {
   // Toggle checked
   intake.checked = !intake.checked;
   
-  // If checking and no time set, set current time
+  // CRITICAL: Set time ONLY if checking AND time is empty (first check only)
+  // If time already exists (from previous check), don't change it on re-checks
   if (intake.checked && !intake.time) {
     intake.time = formatTimeHM(new Date());
   }
+  // Note: If unchecking, we keep the time - user can see when it was taken
   
   saveSupplementsProfile(profile);
   return intake;
@@ -408,16 +420,21 @@ function updateSupplementIntake(supplementId, dateKey, intakeId, updates) {
   const intake = dayIntakes.intakes.find(i => i.id === intakeId);
   if (!intake) return undefined;
   
-  // Apply updates
+  // Apply updates - only update provided fields, leave others unchanged
   if (updates.dose !== undefined) {
     intake.dose = updates.dose;
     // Mark as edited if dose differs from template default
     const templateIdx = dayIntakes.intakes.findIndex(i => i.id === intakeId);
     if (templateIdx >= 0 && supplement.templateIntakes[templateIdx]) {
       intake.edited = updates.dose !== supplement.templateIntakes[templateIdx].defaultDose;
+    } else {
+      // Manual intakes are always "edited"
+      intake.edited = true;
     }
   }
+  // CRITICAL: Allow updating time independently of other fields
   if (updates.time !== undefined) intake.time = updates.time;
+  // CRITICAL: Allow updating checked independently
   if (updates.checked !== undefined) intake.checked = updates.checked;
   
   saveSupplementsProfile(profile);
@@ -496,20 +513,37 @@ function createSupplement({ name, unit, daily, standardDailyDose, templateIntake
     updatedAt: nowISO,
   };
   
-  // Immediately create at least one intake for today so checkbox works
-  const firstIntake = {
-    id: generateId(),
-    time: formatTimeHM(now),
-    dose: templateIntakes?.[0]?.defaultDose || standardDailyDose || 1,
-    checked: false,
-    edited: false,
-  };
-  
+  // Create initial intake(s) for today WITHOUT time - user must check the box to set time
+  // This ensures checkbox works immediately but time is only set on user interaction
+  const initialIntakes = [];
+
+  if (templateIntakes && templateIntakes.length > 0) {
+    // Create one intake per template
+    for (const template of templateIntakes) {
+      initialIntakes.push({
+        id: generateId(),
+        time: '', // CRITICAL: Empty - will be set when user checks the box
+        dose: template.defaultDose,
+        checked: false,
+        edited: false,
+      });
+    }
+  } else {
+    // Create at least one intake with standard dose
+    initialIntakes.push({
+      id: generateId(),
+      time: '', // CRITICAL: Empty - will be set when user checks the box
+      dose: standardDailyDose || 1,
+      checked: false,
+      edited: false,
+    });
+  }
+
   supplement.history = [{
     date: todayKey,
-    intakes: [firstIntake],
+    intakes: initialIntakes,
   }];
-  
+
   profile.supplements = profile.supplements || [];
   profile.supplements.push(supplement);
   saveSupplementsProfile(profile);

@@ -966,6 +966,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const totalDose = FS.getTotalDoseForDay(intakes);
       const unitLabel = supp.unit === 'табл' ? 'табл' : supp.unit;
       
+      // CRITICAL FIX: For non-daily supplements, only show if there are intakes for this date
+      // This prevents "magic" appearance of non-daily supplements in dates without data
+      if (!supp.daily && intakes.length === 0) {
+        continue; // Skip this supplement - no data for this date
+      }
+
       html += '<div class="bg-white/5 rounded-xl p-3 mb-3">';
       html += '<div class="flex items-center justify-between mb-2">';
       html += '<h4 class="font-semibold text-sm">' + supp.name + '</h4>';
@@ -982,8 +988,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const checkedClass = intake.checked ? 'opacity-100' : 'opacity-50';
         
         html += '<div class="flex items-center gap-2 py-1 border-b border-white/5 last:border-0">';
+        // CRITICAL: Checkbox is enabled immediately, time will be set on first check
         html += '<input type="checkbox" class="supp-intake-check rounded" data-supp-id="' + supp.id + '" data-intake-id="' + intake.id + '"' + (intake.checked ? ' checked' : '') + '>';
         
+        // Show time if set (from checkbox click), otherwise show placeholder
         if (intake.time) {
           html += '<span class="text-xs opacity-70 w-12">' + intake.time + '</span>';
         } else {
@@ -1021,8 +1029,10 @@ document.addEventListener('DOMContentLoaded', () => {
       cb.addEventListener('change', () => {
         const suppId = cb.dataset.suppId;
         const intakeId = cb.dataset.intakeId;
+        // CRITICAL: toggleSupplementIntakeChecked sets time only on first check (when time is empty)
+        // It preserves existing time on subsequent toggles
         FS.toggleSupplementIntakeChecked(suppId, dateKey, intakeId);
-        fitnessRenderSupplementsTracking();
+        fitnessRenderSupplementsTracking(); // Re-render to show updated time
       });
     });
     
