@@ -176,6 +176,17 @@ body.fitness-screen-active {
   pointer-events: auto;
 }
 
+#fitnessModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+}
+
+#fitnessModalContent {
+  max-height: min(85vh, 720px);
+  overflow-y: auto;
+}
+
 /* Основной класс карточки - основа для glassmorphism */
 .fitness-card {
   background: var(--fitness-card-bg);

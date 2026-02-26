@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
   const tg = window.Telegram?.WebApp;
   const isTelegram = Boolean(tg && typeof tg === 'object');
   
@@ -35,11 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const SUPABASE_URL = 'https://zhpwehjbonzffpxdrbyl.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpocHdlaGpib256ZmZweGRyYnlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNzM3MjAsImV4cCI6MjA4Njk0OTcyMH0.em0tBA_YArxA2QQO-r5CWCFnyiknre88Mn6wsrX2ARs';
-  window.currentAppUserId = null; // для fitness синхронизации
+  window.currentAppUserId = null; // Р В РўвЂР В Р’В»Р РЋР РЏ fitness Р РЋР С“Р В РЎвЂР В Р вЂ¦Р РЋРІР‚В¦Р РЋР вЂљР В РЎвЂўР В Р вЂ¦Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР В РЎвЂ
 
   let currentUser = null;
   let currentDay = 1;
-  let currentAppUserId = null; // единый ID пользователя в нашем приложении
+  let currentAppUserId = null; // Р В Р’ВµР В РўвЂР В РЎвЂР В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ ID Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В Р’В·Р В РЎвЂўР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р В Р’ВµР В Р’В»Р РЋР РЏ Р В Р вЂ  Р В Р вЂ¦Р В Р’В°Р РЋРІвЂљВ¬Р В Р’ВµР В РЎВ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР В Р’В»Р В РЎвЂўР В Р’В¶Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В РЎвЂ
 
   const el = {
     main: document.getElementById('main'),
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     points: document.getElementById('points'),
   };
 
-  // корневые экраны
+  // Р В РЎвЂќР В РЎвЂўР РЋР вЂљР В Р вЂ¦Р В Р’ВµР В Р вЂ Р РЋРІР‚в„–Р В Р’Вµ Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦Р РЋРІР‚в„–
   const rootScreens = {
     main: document.getElementById('main'),
     fitness: document.getElementById('fitnessScreen'),
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
       rootScreens.fitness.classList.remove('hidden');
       rootScreens.fitness.scrollTop = 0;
     }
-    // ВНУТРЕННЮЮ очистку фитнеса добавим позже, когда fitnessEl будет объявлен
+    // Р В РІР‚в„ўР В РЎСљР В Р в‚¬Р В РЎС›Р В Р’В Р В РІР‚СћР В РЎСљР В РЎСљР В Р’В®Р В Р’В® Р В РЎвЂўР РЋРІР‚РЋР В РЎвЂР РЋР С“Р РЋРІР‚С™Р В РЎвЂќР РЋРЎвЂњ Р РЋРІР‚С›Р В РЎвЂР РЋРІР‚С™Р В Р вЂ¦Р В Р’ВµР РЋР С“Р В Р’В° Р В РўвЂР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В РЎвЂР В РЎВ Р В РЎвЂ”Р В РЎвЂўР В Р’В·Р В Р’В¶Р В Р’Вµ, Р В РЎвЂќР В РЎвЂўР В РЎвЂ“Р В РўвЂР В Р’В° fitnessEl Р В Р’В±Р РЋРЎвЂњР В РўвЂР В Р’ВµР РЋРІР‚С™ Р В РЎвЂўР В Р’В±Р РЋР вЂ°Р РЋР РЏР В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦
   }
 
   function showBuddy() {
@@ -103,11 +103,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function setCompleteButtonState({ completed }) {
     if (!el.completeBtn) return;
     if (completed) {
-      el.completeBtn.textContent = '✅ Выполнено!';
+      el.completeBtn.textContent = 'Р Р†РЎС™РІР‚В¦ Р В РІР‚в„ўР РЋРІР‚в„–Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂў!';
       el.completeBtn.disabled = true;
       el.completeBtn.className = 'w-full bg-green-400 py-3 rounded-xl font-semibold text-lg cursor-not-allowed';
     } else {
-      el.completeBtn.textContent = '✅ Выполнено';
+      el.completeBtn.textContent = 'Р Р†РЎС™РІР‚В¦ Р В РІР‚в„ўР РЋРІР‚в„–Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂў';
       el.completeBtn.disabled = false;
       el.completeBtn.className = 'w-full bg-green-500 hover:bg-green-600 py-3 rounded-xl font-semibold text-lg';
     }
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateUI() {
     if (!currentUser) return;
-    if (el.currentDay) el.currentDay.textContent = `День ${currentDay}/30`;
+    if (el.currentDay) el.currentDay.textContent = `Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ ${currentDay}/30`;
     if (el.streak) el.streak.textContent = String(currentUser.streak ?? 0);
     if (el.points) el.points.textContent = String(currentUser.points ?? 0);
   }
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     nameEl.textContent = user.first_name || 'LeakFixer User';
     usernameEl.textContent = user.username || 'demo';
 
-    // Пока просто заглушка-аватар, позже подтянем реальное фото через Bot API
+    // Р В РЎСџР В РЎвЂўР В РЎвЂќР В Р’В° Р В РЎвЂ”Р РЋР вЂљР В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В РЎвЂў Р В Р’В·Р В Р’В°Р В РЎвЂ“Р В Р’В»Р РЋРЎвЂњР РЋРІвЂљВ¬Р В РЎвЂќР В Р’В°-Р В Р’В°Р В Р вЂ Р В Р’В°Р РЋРІР‚С™Р В Р’В°Р РЋР вЂљ, Р В РЎвЂ”Р В РЎвЂўР В Р’В·Р В Р’В¶Р В Р’Вµ Р В РЎвЂ”Р В РЎвЂўР В РўвЂР РЋРІР‚С™Р РЋР РЏР В Р вЂ¦Р В Р’ВµР В РЎВ Р РЋР вЂљР В Р’ВµР В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂўР В Р’Вµ Р РЋРІР‚С›Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂў Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’ВµР В Р’В· Bot API
     photoEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name || 'LF')}&background=4f46e5&color=ffffff`;
     loadTelegramProfilePhoto(photoEl);
   }
@@ -173,18 +173,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // 1. Получаем список привычек
+      // 1. Р В РЎСџР В РЎвЂўР В Р’В»Р РЋРЎвЂњР РЋРІР‚РЋР В Р’В°Р В Р’ВµР В РЎВ Р РЋР С“Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂўР В РЎвЂќ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР В Р вЂ Р РЋРІР‚в„–Р РЋРІР‚РЋР В Р’ВµР В РЎвЂќ
       const habitsRes = await fetch(`${SUPABASE_URL}/rest/v1/habits?select=*`, {
         headers: { apikey: SUPABASE_KEY }
       });
       const habits = await habitsRes.json();
 
       if (!Array.isArray(habits) || habits.length === 0) {
-        container.innerHTML = '<div class="col-span-2 text-sm opacity-70 text-center">Привычки пока не добавлены</div>';
+        container.innerHTML = '<div class="col-span-2 text-sm opacity-70 text-center">Р В РЎСџР РЋР вЂљР В РЎвЂР В Р вЂ Р РЋРІР‚в„–Р РЋРІР‚РЋР В РЎвЂќР В РЎвЂ Р В РЎвЂ”Р В РЎвЂўР В РЎвЂќР В Р’В° Р В Р вЂ¦Р В Р’Вµ Р В РўвЂР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦Р РЋРІР‚в„–</div>';
         return;
       }
 
-      // 2. Получаем логи выполнения по текущему пользователю
+      // 2. Р В РЎСџР В РЎвЂўР В Р’В»Р РЋРЎвЂњР РЋРІР‚РЋР В Р’В°Р В Р’ВµР В РЎВ Р В Р’В»Р В РЎвЂўР В РЎвЂ“Р В РЎвЂ Р В Р вЂ Р РЋРІР‚в„–Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ Р В РЎвЂ”Р В РЎвЂў Р РЋРІР‚С™Р В Р’ВµР В РЎвЂќР РЋРЎвЂњР РЋРІР‚В°Р В Р’ВµР В РЎВР РЋРЎвЂњ Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В Р’В·Р В РЎвЂўР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р В Р’ВµР В Р’В»Р РЋР вЂ№
       const logsRes = await fetch(
         `${SUPABASE_URL}/rest/v1/habit_logs?app_user_id=eq.${currentAppUserId}&completed=eq.true&select=habit_id,day`,
         { headers: { apikey: SUPABASE_KEY } }
@@ -206,20 +206,20 @@ document.addEventListener('DOMContentLoaded', () => {
         el.className = 'bg-white/15 rounded-xl p-3 text-sm';
 
         el.innerHTML = `
-          <div class="font-semibold mb-1">${habit.title || 'Привычка'}</div>
+          <div class="font-semibold mb-1">${habit.title || 'Р В РЎСџР РЋР вЂљР В РЎвЂР В Р вЂ Р РЋРІР‚в„–Р РЋРІР‚РЋР В РЎвЂќР В Р’В°'}</div>
           <div class="text-xs opacity-80">${doneDays} / 30</div>
         `;
 
         container.appendChild(el);
       });
     } catch (e) {
-      container.innerHTML = '<div class="col-span-2 text-sm opacity-70 text-center">Ошибка загрузки привычек</div>';
+      container.innerHTML = '<div class="col-span-2 text-sm opacity-70 text-center">Р В РЎвЂєР РЋРІвЂљВ¬Р В РЎвЂР В Р’В±Р В РЎвЂќР В Р’В° Р В Р’В·Р В Р’В°Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂќР В РЎвЂ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР В Р вЂ Р РЋРІР‚в„–Р РЋРІР‚РЋР В Р’ВµР В РЎвЂќ</div>';
     }
   }
 
   async function initFromSupabase() {
     try {
-      // 1. Ищем/создаем app_user по telegram_id
+      // 1. Р В Р’ВР РЋРІР‚В°Р В Р’ВµР В РЎВ/Р РЋР С“Р В РЎвЂўР В Р’В·Р В РўвЂР В Р’В°Р В Р’ВµР В РЎВ app_user Р В РЎвЂ”Р В РЎвЂў telegram_id
       const usersRes = await fetch(
         `${SUPABASE_URL}/rest/v1/app_users?telegram_id=eq.${user.id}`,
         {
@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (typeof initFitnessSync === 'function') {
         initFitnessSync(currentAppUserId);
       }
-      // 2. Старую таблицу users можно временно использовать как «профиль прогресса»
+      // 2. Р В Р Р‹Р РЋРІР‚С™Р В Р’В°Р РЋР вЂљР РЋРЎвЂњР РЋР вЂ№ Р РЋРІР‚С™Р В Р’В°Р В Р’В±Р В Р’В»Р В РЎвЂР РЋРІР‚В Р РЋРЎвЂњ users Р В РЎВР В РЎвЂўР В Р’В¶Р В Р вЂ¦Р В РЎвЂў Р В Р вЂ Р РЋР вЂљР В Р’ВµР В РЎВР В Р’ВµР В Р вЂ¦Р В Р вЂ¦Р В РЎвЂў Р В РЎвЂР РЋР С“Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В Р’В·Р В РЎвЂўР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂќР В Р’В°Р В РЎвЂќ Р вЂ™Р’В«Р В РЎвЂ”Р РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В РЎвЂР В Р’В»Р РЋР Р‰ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂўР В РЎвЂ“Р РЋР вЂљР В Р’ВµР РЋР С“Р РЋР С“Р В Р’В°Р вЂ™Р’В»
       const legacyUsers = await fetch(
         `${SUPABASE_URL}/rest/v1/users?app_user_id=eq.${currentAppUserId}`,
         {
@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateUI();
       await loadProfileHabits();
     } catch (e) {
-      showAlert('Ошибка инициализации (Supabase).');
+      showAlert('Р В РЎвЂєР РЋРІвЂљВ¬Р В РЎвЂР В Р’В±Р В РЎвЂќР В Р’В° Р В РЎвЂР В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В РЎвЂР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР В РЎвЂ (Supabase).');
       initBrowserMode();
     }
   }
@@ -320,8 +320,8 @@ document.addEventListener('DOMContentLoaded', () => {
     currentUser = { telegram_id: null, username: 'browser', day: 1, streak: 0, points: 0 };
     currentDay = 1;
 
-    if (el.lessonTitle) el.lessonTitle.textContent = 'Демо-режим';
-    if (el.lessonDesc) el.lessonDesc.textContent = 'Открыто в браузере. Telegram-данные недоступны.';
+    if (el.lessonTitle) el.lessonTitle.textContent = 'Р В РІР‚СњР В Р’ВµР В РЎВР В РЎвЂў-Р РЋР вЂљР В Р’ВµР В Р’В¶Р В РЎвЂР В РЎВ';
+    if (el.lessonDesc) el.lessonDesc.textContent = 'Р В РЎвЂєР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р В РЎвЂў Р В Р вЂ  Р В Р’В±Р РЋР вЂљР В Р’В°Р РЋРЎвЂњР В Р’В·Р В Р’ВµР РЋР вЂљР В Р’Вµ. Telegram-Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р В Р’Вµ Р В Р вЂ¦Р В Р’ВµР В РўвЂР В РЎвЂўР РЋР С“Р РЋРІР‚С™Р РЋРЎвЂњР В РЎвЂ”Р В Р вЂ¦Р РЋРІР‚в„–.';
     if (el.video) el.video.style.display = 'none';
     setCompleteButtonState({ completed: false });
     updateUI();
@@ -335,8 +335,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const lesson = Array.isArray(lessons) ? lessons[0] : null;
     if (!lesson) {
-      if (el.lessonTitle) el.lessonTitle.textContent = `День ${currentDay}`;
-      if (el.lessonDesc) el.lessonDesc.textContent = 'Урок не найден.';
+      if (el.lessonTitle) el.lessonTitle.textContent = `Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ ${currentDay}`;
+      if (el.lessonDesc) el.lessonDesc.textContent = 'Р В Р в‚¬Р РЋР вЂљР В РЎвЂўР В РЎвЂќ Р В Р вЂ¦Р В Р’Вµ Р В Р вЂ¦Р В Р’В°Р В РІвЂћвЂ“Р В РўвЂР В Р’ВµР В Р вЂ¦.';
       if (el.video) el.video.style.display = 'none';
       setCompleteButtonState({ completed: false });
       return;
@@ -400,11 +400,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         setCompleteButtonState({ completed: true });
-        showAlert('✅ День выполнен! +10 баллов');
+        showAlert('Р Р†РЎС™РІР‚В¦ Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ Р В Р вЂ Р РЋРІР‚в„–Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦! +10 Р В Р’В±Р В Р’В°Р В Р’В»Р В Р’В»Р В РЎвЂўР В Р вЂ ');
 
         if (isTelegram && tg?.MainButton) {
           try {
-            tg.MainButton.setText('Следующий день →').show();
+            tg.MainButton.setText('Р В Р Р‹Р В Р’В»Р В Р’ВµР В РўвЂР РЋРЎвЂњР РЋР вЂ№Р РЋРІР‚В°Р В РЎвЂР В РІвЂћвЂ“ Р В РўвЂР В Р’ВµР В Р вЂ¦Р РЋР Р‰ Р Р†РІР‚В РІР‚в„ў').show();
             tg.MainButton.onClick(nextDay);
           } catch (e) {
             nextDay();
@@ -413,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
           nextDay();
         }
       } catch (e) {
-        showAlert('Ошибка при сохранении.');
+        showAlert('Р В РЎвЂєР РЋРІвЂљВ¬Р В РЎвЂР В Р’В±Р В РЎвЂќР В Р’В° Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р РЋР С“Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В РЎвЂ.');
       }
     });
   }
@@ -422,8 +422,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const FITNESS_SETUP_DONE_KEY = 'leakfixer_fitness_setup_done';
   let fitnessSelectedDate = new Date();
   const FS = window.FitnessState;
-  const FITNESS_SETTINGS_PANEL_ID = 'fitnessSettingsPanelDynamic';
-
   const fitnessEl = {
     screen: document.getElementById('fitnessScreen'),
     backBtn: document.getElementById('fitnessBackBtn'),
@@ -446,7 +444,6 @@ document.addEventListener('DOMContentLoaded', () => {
     foodList: document.getElementById('fitnessFoodList'),
     foodAdd: document.getElementById('fitnessFoodAdd'),
     waterTotal: document.getElementById('fitnessWaterTotal'),
-    // NEW: Supplements tracking container
     supplementsTracking: document.getElementById('fitnessSupplementsTracking'),
     modalOverlay: document.getElementById('fitnessModalOverlay'),
     modalContent: document.getElementById('fitnessModalContent'),
@@ -456,50 +453,40 @@ document.addEventListener('DOMContentLoaded', () => {
     weightValue: document.getElementById('fitnessWeightValue'),
     weightSave: document.getElementById('fitnessWeightSave'),
     weightStatus: document.getElementById('fitnessWeightStatus'),
+    settingsOpen: document.getElementById('fitnessSettingsOpen'),
+    settingsSummary: document.getElementById('fitnessSettingsSummary'),
   };
 
-  function ensureFitnessSettingsPanel() {
-    if (document.getElementById(FITNESS_SETTINGS_PANEL_ID)) return;
-    const settingsMini = document.getElementById('settingsMiniSummary');
-    const settingsContainer = settingsMini?.closest('.bg-white\\/15');
-    if (!settingsMini || !settingsContainer) return;
-
-    const panel = document.createElement('div');
-    panel.id = FITNESS_SETTINGS_PANEL_ID;
-    panel.className = 'bg-white/10 rounded-xl p-3 mt-3';
-    panel.innerHTML = `
-      <div class="text-[11px] uppercase tracking-wide opacity-70 mb-1">Fitness Settings</div>
-      <div class="text-xs opacity-80 mb-2" id="fitnessSettingsSummary">Water baseline: 2000 ml · Work profile: variable · Target weight: not set</div>
-      <button type="button" id="fitnessSettingsOpen" class="w-full py-2 rounded-xl bg-cyan-500/30 hover:bg-cyan-500/45 text-sm">Open Fitness Settings</button>
-    `;
-    settingsContainer.appendChild(panel);
-    fitnessEl.settingsOpen = document.getElementById('fitnessSettingsOpen');
-    fitnessEl.settingsSummary = document.getElementById('fitnessSettingsSummary');
-    fitnessEl.settingsOpen?.addEventListener('click', () => fitnessOpenWaterBaselineModal());
-  }
-
-  function fitnessApplyEnglishTexts() {
-    document.querySelectorAll('.supp-edit-norm').forEach((elNode) => { elNode.textContent = 'norm'; });
-    document.querySelectorAll('.supp-history').forEach((elNode) => { elNode.textContent = 'history'; });
-    document.querySelectorAll('.supp-add-intake').forEach((elNode) => { elNode.textContent = '+ Add intake'; });
-    document.getElementById('addFirstSupplement')?.replaceChildren(document.createTextNode('+ Add first supplement'));
-    document.getElementById('addNewSupplement')?.replaceChildren(document.createTextNode('+ Add supplement'));
-    document.getElementById('clearSupplementsHistory')?.replaceChildren(document.createTextNode('Clear supplements history'));
-    document.getElementById('resetAllSupplements')?.remove();
-    document.getElementById('fitnessSupplementsDebug')?.remove();
-  }
+  const fitnessTexts = {
+    en: {
+      settingsSummary: (water, work, target) => `Water baseline: ${water} ml | Work profile: ${work} | Target weight: ${target}`,
+      targetWeightNotSet: 'not set',
+      fitnessSettingsTitle: 'Fitness Settings',
+      waterBaseline: 'Water baseline (ml)',
+      targetWeight: 'Target weight (kg)',
+      workProfile: 'Work profile',
+      cancel: 'Cancel',
+      save: 'Save',
+      workSedentary: 'Sedentary',
+      workMixed: 'Mixed',
+      workPhysical: 'Physical',
+      workVariable: 'Variable',
+    },
+  };
+  const t = (key, ...args) => {
+    const value = fitnessTexts.en[key];
+    return typeof value === 'function' ? value(...args) : value;
+  };
 
   function fitnessUpdateSettingsSummary() {
-    const summaryEl = document.getElementById('fitnessSettingsSummary');
+    const summaryEl = fitnessEl.settingsSummary || document.getElementById('fitnessSettingsSummary');
     if (!summaryEl) return;
     const profile = FS.getFitnessProfile();
     const water = profile.waterBaselineMl || 2000;
-    const targetWeight = profile.targetWeight ? `${profile.targetWeight} kg` : 'not set';
+    const targetWeight = profile.targetWeight ? `${profile.targetWeight} kg` : t('targetWeightNotSet');
     const workProfile = profile.workProfile || 'variable';
-    summaryEl.textContent = `Water baseline: ${water} ml · Work profile: ${workProfile} · Target weight: ${targetWeight}`;
+    summaryEl.textContent = t('settingsSummary', water, workProfile, targetWeight);
   }
-  
-
   function isFitnessSetupDone() {
     return localStorage.getItem(FITNESS_SETUP_DONE_KEY) === '1';
   }
@@ -521,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessEl.balance.textContent = summary.balance || 0;
     fitnessEl.balance.className = 'font-semibold ' + (summary.balanceColor === 'green' ? 'text-green-300' : summary.balanceColor === 'red' ? 'text-red-300' : '');
     
-    // Обновление бара баланса (под графиком веса)
+    // Р В РЎвЂєР В Р’В±Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В Р’В±Р В Р’В°Р РЋР вЂљР В Р’В° Р В Р’В±Р В Р’В°Р В Р’В»Р В Р’В°Р В Р вЂ¦Р РЋР С“Р В Р’В° (Р В РЎвЂ”Р В РЎвЂўР В РўвЂ Р В РЎвЂ“Р РЋР вЂљР В Р’В°Р РЋРІР‚С›Р В РЎвЂР В РЎвЂќР В РЎвЂўР В РЎВ Р В Р вЂ Р В Р’ВµР РЋР С“Р В Р’В°)
     const balanceBarFill = document.getElementById('fitnessCalorieBalanceFill');
     if (balanceBarFill) {
       const MAX_ABS_BALANCE = 700;
@@ -553,35 +540,27 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     
-    // АВТОСОХРАНЕНИЕ в Supabase
-    if (window.FitnessSync && window.currentAppUserId) {
-        const dateKey = fitnessGetDateKey();
-        const dayData = FS.getDayData(dateKey);
-        window.FitnessSync.saveDay(dateKey, {
-          water_ml: dayData.waterMl || 0,
-          work_day: dayData.workDay || 'normal'
-        }).catch(console.error);
-      }
+    // Р В РЎвЂ™Р В РІР‚в„ўР В РЎС›Р В РЎвЂєР В Р Р‹Р В РЎвЂєР В РўС’Р В Р’В Р В РЎвЂ™Р В РЎСљР В РІР‚СћР В РЎСљР В Р’ВР В РІР‚Сћ Р В Р вЂ  Supabase
   }
 
   function fitnessRenderWorkDay() {
     if (!fitnessEl.workDayLabel) return;
     const dayData = FS.getDayData(fitnessGetDateKey());
     const v = dayData.workDay;
-    let text = 'Как обычно';
-    if (v === 'low') text = 'Больше сидел';
-    if (v === 'normal') text = 'Обычный день';
-    if (v === 'high') text = 'Очень активный день';
+    let text = 'Р В РЎв„ўР В Р’В°Р В РЎвЂќ Р В РЎвЂўР В Р’В±Р РЋРІР‚в„–Р РЋРІР‚РЋР В Р вЂ¦Р В РЎвЂў';
+    if (v === 'low') text = 'Р В РІР‚ВР В РЎвЂўР В Р’В»Р РЋР Р‰Р РЋРІвЂљВ¬Р В Р’Вµ Р РЋР С“Р В РЎвЂР В РўвЂР В Р’ВµР В Р’В»';
+    if (v === 'normal') text = 'Р В РЎвЂєР В Р’В±Р РЋРІР‚в„–Р РЋРІР‚РЋР В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В РўвЂР В Р’ВµР В Р вЂ¦Р РЋР Р‰';
+    if (v === 'high') text = 'Р В РЎвЂєР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р РЋР Р‰ Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В РўвЂР В Р’ВµР В Р вЂ¦Р РЋР Р‰';
     fitnessEl.workDayLabel.textContent = text;
   }
 
-  // Открыть детализацию энергии
+  // Р В РЎвЂєР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р РЋР Р‰ Р В РўвЂР В Р’ВµР РЋРІР‚С™Р В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР РЋР вЂ№ Р РЋР РЉР В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂ“Р В РЎвЂР В РЎвЂ
   function fitnessOpenEnergyDetails() {
     const profile = FS.getFitnessProfile();
     const dayData = FS.getDayData(fitnessGetDateKey());
     const summary = FS.getCaloriesSummary(profile, dayData);
     
-    // Защита от undefined - используем значения по умолчанию
+    // Р В РІР‚вЂќР В Р’В°Р РЋРІР‚В°Р В РЎвЂР РЋРІР‚С™Р В Р’В° Р В РЎвЂўР РЋРІР‚С™ undefined - Р В РЎвЂР РЋР С“Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В Р’В·Р РЋРЎвЂњР В Р’ВµР В РЎВ Р В Р’В·Р В Р вЂ¦Р В Р’В°Р РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ Р В РЎвЂ”Р В РЎвЂў Р РЋРЎвЂњР В РЎВР В РЎвЂўР В Р’В»Р РЋРІР‚РЋР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР вЂ№
     const eaten = summary.eaten || 0;
     const burned = summary.burned || 0;
     const balance = summary.balance || 0;
@@ -590,47 +569,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const activityCal = summary.activityCal || 0;
     const workMultiplier = summary.workMultiplier || 1.2;
     
-    // Расчёт калорий работы (с защитой от NaN)
+    // Р В Р’В Р В Р’В°Р РЋР С“Р РЋРІР‚РЋР РЋРІР‚ВР РЋРІР‚С™ Р В РЎвЂќР В Р’В°Р В Р’В»Р В РЎвЂўР РЋР вЂљР В РЎвЂР В РІвЂћвЂ“ Р РЋР вЂљР В Р’В°Р В Р’В±Р В РЎвЂўР РЋРІР‚С™Р РЋРІР‚в„– (Р РЋР С“ Р В Р’В·Р В Р’В°Р РЋРІР‚В°Р В РЎвЂР РЋРІР‚С™Р В РЎвЂўР В РІвЂћвЂ“ Р В РЎвЂўР РЋРІР‚С™ NaN)
     const workKcal = Math.max(0, baseWithWork - baseRest);
     
-    // Заполняем модальное окно
-    document.getElementById('energyDetailsEatenTotal').textContent = eaten + ' ккал';
-    document.getElementById('energyDetailsBurnedTotal').textContent = burned + ' ккал';
-    document.getElementById('energyDetailsBalance').textContent = balance + ' ккал';
-    document.getElementById('energyDetailsBaseRest').textContent = baseRest + ' ккал';
-    document.getElementById('energyDetailsWork').textContent = workKcal + ' ккал';
-    document.getElementById('energyDetailsActivity').textContent = activityCal + ' ккал';
+    // Р В РІР‚вЂќР В Р’В°Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р В Р вЂ¦Р РЋР РЏР В Р’ВµР В РЎВ Р В РЎВР В РЎвЂўР В РўвЂР В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂўР В Р’Вµ Р В РЎвЂўР В РЎвЂќР В Р вЂ¦Р В РЎвЂў
+    document.getElementById('energyDetailsEatenTotal').textContent = eaten + ' Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»';
+    document.getElementById('energyDetailsBurnedTotal').textContent = burned + ' Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»';
+    document.getElementById('energyDetailsBalance').textContent = balance + ' Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»';
+    document.getElementById('energyDetailsBaseRest').textContent = baseRest + ' Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»';
+    document.getElementById('energyDetailsWork').textContent = workKcal + ' Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»';
+    document.getElementById('energyDetailsActivity').textContent = activityCal + ' Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»';
     
-    // Тип работы и дня
-    const workProfileLabels = { sedentary: 'Сидячая', mixed: 'На ногах', physical: 'Физическая', variable: 'Меняется' };
-    const workDayLabels = { none: 'Не работал', low: 'Больше сидел', normal: 'Обычный', high: 'Очень активный' };
-    document.getElementById('energyDetailsWorkProfile').textContent = workProfileLabels[profile.workProfile] || '—';
-    document.getElementById('energyDetailsWorkDay').textContent = workDayLabels[dayData.workDay] || 'Обычный';
+    // Р В РЎС›Р В РЎвЂР В РЎвЂ” Р РЋР вЂљР В Р’В°Р В Р’В±Р В РЎвЂўР РЋРІР‚С™Р РЋРІР‚в„– Р В РЎвЂ Р В РўвЂР В Р вЂ¦Р РЋР РЏ
+    const workProfileLabels = { sedentary: 'Р В Р Р‹Р В РЎвЂР В РўвЂР РЋР РЏР РЋРІР‚РЋР В Р’В°Р РЋР РЏ', mixed: 'Р В РЎСљР В Р’В° Р В Р вЂ¦Р В РЎвЂўР В РЎвЂ“Р В Р’В°Р РЋРІР‚В¦', physical: 'Р В Р’В¤Р В РЎвЂР В Р’В·Р В РЎвЂР РЋРІР‚РЋР В Р’ВµР РЋР С“Р В РЎвЂќР В Р’В°Р РЋР РЏ', variable: 'Р В РЎС™Р В Р’ВµР В Р вЂ¦Р РЋР РЏР В Р’ВµР РЋРІР‚С™Р РЋР С“Р РЋР РЏ' };
+    const workDayLabels = { none: 'Р В РЎСљР В Р’Вµ Р РЋР вЂљР В Р’В°Р В Р’В±Р В РЎвЂўР РЋРІР‚С™Р В Р’В°Р В Р’В»', low: 'Р В РІР‚ВР В РЎвЂўР В Р’В»Р РЋР Р‰Р РЋРІвЂљВ¬Р В Р’Вµ Р РЋР С“Р В РЎвЂР В РўвЂР В Р’ВµР В Р’В»', normal: 'Р В РЎвЂєР В Р’В±Р РЋРІР‚в„–Р РЋРІР‚РЋР В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“', high: 'Р В РЎвЂєР РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р РЋР Р‰ Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“' };
+    document.getElementById('energyDetailsWorkProfile').textContent = workProfileLabels[profile.workProfile] || 'Р Р†Р вЂљРІР‚Сњ';
+    document.getElementById('energyDetailsWorkDay').textContent = workDayLabels[dayData.workDay] || 'Р В РЎвЂєР В Р’В±Р РЋРІР‚в„–Р РЋРІР‚РЋР В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“';
     
-    // Список еды
+    // Р В Р Р‹Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂўР В РЎвЂќ Р В Р’ВµР В РўвЂР РЋРІР‚в„–
     const eatenList = document.getElementById('energyDetailsEatenList');
     if (dayData.foods && dayData.foods.length > 0) {
       eatenList.innerHTML = dayData.foods.map(function(f) { 
-        return '<div class="flex justify-between bg-white/5 rounded px-2 py-1"><span>' + (f.name || 'Еда') + '</span><span>' + (f.calories || 0) + ' ккал</span></div>';
+        return '<div class="flex justify-between bg-white/5 rounded px-2 py-1"><span>' + (f.name || 'Р В РІР‚СћР В РўвЂР В Р’В°') + '</span><span>' + (f.calories || 0) + ' Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»</span></div>';
       }).join('');
     } else {
-      eatenList.innerHTML = '<div class="opacity-50 text-center py-2">Нет записей о приёмах пищи</div>';
+      eatenList.innerHTML = '<div class="opacity-50 text-center py-2">Р В РЎСљР В Р’ВµР РЋРІР‚С™ Р В Р’В·Р В Р’В°Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В Р’ВµР В РІвЂћвЂ“ Р В РЎвЂў Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР РЋРІР‚ВР В РЎВР В Р’В°Р РЋРІР‚В¦ Р В РЎвЂ”Р В РЎвЂР РЋРІР‚В°Р В РЎвЂ</div>';
     }
     
-    // Текст баланса
+    // Р В РЎС›Р В Р’ВµР В РЎвЂќР РЋР С“Р РЋРІР‚С™ Р В Р’В±Р В Р’В°Р В Р’В»Р В Р’В°Р В Р вЂ¦Р РЋР С“Р В Р’В°
     const balanceText = document.getElementById('energyDetailsBalanceText');
     if (balance > 0) {
-      balanceText.textContent = 'Профицит — возможен набор веса';
+      balanceText.textContent = 'Р В РЎСџР РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В РЎвЂР РЋРІР‚В Р В РЎвЂР РЋРІР‚С™ Р Р†Р вЂљРІР‚Сњ Р В Р вЂ Р В РЎвЂўР В Р’В·Р В РЎВР В РЎвЂўР В Р’В¶Р В Р’ВµР В Р вЂ¦ Р В Р вЂ¦Р В Р’В°Р В Р’В±Р В РЎвЂўР РЋР вЂљ Р В Р вЂ Р В Р’ВµР РЋР С“Р В Р’В°';
       balanceText.className = 'text-xs text-red-300 mt-1 text-center';
     } else if (balance < 0) {
-      balanceText.textContent = 'Дефицит — возможна потеря веса';
+      balanceText.textContent = 'Р В РІР‚СњР В Р’ВµР РЋРІР‚С›Р В РЎвЂР РЋРІР‚В Р В РЎвЂР РЋРІР‚С™ Р Р†Р вЂљРІР‚Сњ Р В Р вЂ Р В РЎвЂўР В Р’В·Р В РЎВР В РЎвЂўР В Р’В¶Р В Р вЂ¦Р В Р’В° Р В РЎвЂ”Р В РЎвЂўР РЋРІР‚С™Р В Р’ВµР РЋР вЂљР РЋР РЏ Р В Р вЂ Р В Р’ВµР РЋР С“Р В Р’В°';
       balanceText.className = 'text-xs text-green-300 mt-1 text-center';
     } else {
-      balanceText.textContent = 'Нейтральный баланс';
+      balanceText.textContent = 'Р В РЎСљР В Р’ВµР В РІвЂћвЂ“Р РЋРІР‚С™Р РЋР вЂљР В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В Р’В±Р В Р’В°Р В Р’В»Р В Р’В°Р В Р вЂ¦Р РЋР С“';
       balanceText.className = 'text-xs opacity-70 mt-1 text-center';
     }
     
-    // Показываем модальное окно
+    // Р В РЎСџР В РЎвЂўР В РЎвЂќР В Р’В°Р В Р’В·Р РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В РЎВР В РЎвЂўР В РўвЂР В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂўР В Р’Вµ Р В РЎвЂўР В РЎвЂќР В Р вЂ¦Р В РЎвЂў
     document.getElementById('energyDetailsModalOverlay').classList.remove('hidden');
   }
 
@@ -638,17 +617,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fitnessEl.dateLabel) fitnessEl.dateLabel.textContent = FS.formatDateLocal(fitnessSelectedDate);
   }
 
+  function fitnessApplyEnglishUILabels() {
+    const addMealBtn = document.getElementById('fitnessFoodAdd');
+    if (addMealBtn) addMealBtn.textContent = 'Add meal';
+
+    const waterAdjustBtn = document.querySelector('.fitness-water-adjust');
+    if (waterAdjustBtn) waterAdjustBtn.textContent = 'Adjust for today';
+
+    const waterBaselineBtn = document.querySelector('.fitness-water-baseline');
+    if (waterBaselineBtn) waterBaselineBtn.textContent = 'Edit baseline';
+
+    const settingsOpenBtn = document.getElementById('fitnessSettingsOpen');
+    if (settingsOpenBtn) settingsOpenBtn.textContent = 'Open Fitness Settings';
+
+    const backFixedBtn = document.getElementById('fitnessBackInDashboardFixed');
+    if (backFixedBtn) backFixedBtn.textContent = 'Back';
+  }
+
   function fitnessRenderActivityList() {
     if (!fitnessEl.activityList) return;
     const dayData = FS.getDayData(fitnessGetDateKey());
     const items = FS.getActivityListViewModel(dayData.activities);
-    const empty = '<li class="opacity-70 text-sm">Нет записей</li>';
+    const empty = '<li class="opacity-70 text-sm">Р В РЎСљР В Р’ВµР РЋРІР‚С™ Р В Р’В·Р В Р’В°Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В Р’ВµР В РІвЂћвЂ“</li>';
     fitnessEl.activityList.innerHTML = items.length
       ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
         <span>${item.label}</span>
         <span>
-          <button type="button" class="fitness-activity-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
-          <button type="button" class="fitness-activity-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
+          <button type="button" class="fitness-activity-edit mr-2 text-xs opacity-80" data-id="${item.id}">Р В РЎвЂР В Р’В·Р В РЎВ</button>
+          <button type="button" class="fitness-activity-delete text-xs opacity-80 text-red-300" data-id="${item.id}">Р РЋРЎвЂњР В РўвЂР В Р’В»</button>
         </span>
       </li>`).join('')
       : empty;
@@ -672,17 +668,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!fitnessEl.foodList) return;
     const dayData = FS.getDayData(fitnessGetDateKey());
     const items = FS.getFoodListViewModel(dayData.foods);
-    const empty = '<li class="opacity-70 text-sm">Нет записей</li>';
+    const empty = '<li class="opacity-70 text-sm">Р В РЎСљР В Р’ВµР РЋРІР‚С™ Р В Р’В·Р В Р’В°Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В Р’ВµР В РІвЂћвЂ“</li>';
     fitnessEl.foodList.innerHTML = items.length
       ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
             <span>
               ${item.timeText ? `<span class="opacity-70 mr-1">${item.timeText}</span>` : ''}
-              ${item.name} ${item.amount ? item.amount + ' ' : ''}${item.caloriesText ? '• ' + item.caloriesText : ''}
+              ${item.name} ${item.amount ? item.amount + ' ' : ''}${item.caloriesText ? 'Р Р†Р вЂљРЎС› ' + item.caloriesText : ''}
               ${item.macrosText ? `<span class="text-xs opacity-70 ml-1">(${item.macrosText})</span>` : ''}
             </span>
             <span>
-              <button type="button" class="fitness-food-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
-              <button type="button" class="fitness-food-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
+              <button type="button" class="fitness-food-edit mr-2 text-xs opacity-80" data-id="${item.id}">Р В РЎвЂР В Р’В·Р В РЎВ</button>
+              <button type="button" class="fitness-food-delete text-xs opacity-80 text-red-300" data-id="${item.id}">Р РЋРЎвЂњР В РўвЂР В Р’В»</button>
             </span>
           </li>`).join('')
       : empty;    
@@ -714,7 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const targetLiters = FS.formatWaterLiters(waterData.targetMl);
     
     // Update main display
-    fitnessEl.waterTotal.textContent = `${currentLiters} / ${targetLiters} л`;
+    fitnessEl.waterTotal.textContent = `${currentLiters} / ${targetLiters} Р В Р’В»`;
     
     // Calculate and display status
     const status = FS.getWaterStatus(waterData.currentMl, waterData.targetMl);
@@ -737,13 +733,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       statusEl.className = 'water-status text-xs mt-1 text-green-300';
     }
-    
-    // Auto-save to backend
-    if (window.FitnessSync && window.currentAppUserId) {
-      window.FitnessSync.saveDay(dateKey, {
-        water_ml: waterData.currentMl
-      }).catch(console.error);
-    }
   }
 
   // NEW: Adjust water by delta ml
@@ -755,14 +744,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // NEW: Open modal to manually adjust water
   function fitnessOpenWaterAdjustModal() {
-    let html = '<h3 class="font-semibold mb-4">Изменить воду</h3>';
+    let html = '<h3 class="font-semibold mb-4">Adjust water</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Изменение в мл (можно отрицательное)</label>';
-    html += '<input type="number" id="fmWaterDelta" class="w-full p-3 bg-white/30 rounded-xl text-white" placeholder="Например: -200 или +500">';
-    html += '<p class="text-xs opacity-70">Введите положительное число для добавления, отрицательное — для уменьшения</p>';
+    html += '<label class="block text-sm">Change amount (ml)</label>';
+    html += '<input type="number" id="fmWaterDelta" class="w-full p-3 bg-white/30 rounded-xl text-white" placeholder="Example: -200 or +500">';
+    html += '<p class="text-xs opacity-70">Positive value adds water, negative value subtracts water for the selected day.</p>';
     html += '</div>';
-    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmWaterAdjustCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmWaterAdjustSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
-    
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmWaterAdjustCancel" class="flex-1 py-3 rounded-xl bg-white/20">Cancel</button><button type="button" id="fmWaterAdjustSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Save</button></div>';
+
     fitnessOpenModal(html, () => {
       fitnessEl.modalOverlay.querySelector('#fmWaterAdjustCancel')?.addEventListener('click', fitnessCloseModal);
       fitnessEl.modalOverlay.querySelector('#fmWaterAdjustSave')?.addEventListener('click', () => {
@@ -777,47 +766,58 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
-
-  // NEW: Open modal to change water baseline
+// Dedicated modal for fitness-only configuration
   function fitnessOpenWaterBaselineModal() {
     const profile = FS.getFitnessProfile();
     const currentBaseline = profile.waterBaselineMl || 2000;
-    
-    let html = '<h3 class="font-semibold mb-4">Изменить норму воды</h3>';
+    const currentTargetWeight = profile.targetWeight ?? '';
+    const currentWork = profile.workProfile || 'variable';
+
+    let html = `<h3 class="font-semibold mb-4">${t('fitnessSettingsTitle')}</h3>`;
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Дневная норма в мл</label>';
-    html += '<input type="number" id="fmWaterBaseline" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentBaseline + '" placeholder="2000">';
-    html += '<p class="text-xs opacity-70">Примеры: 1800, 2000, 2500 мл</p>';
+    html += `<label class="block text-sm">${t('waterBaseline')}</label>`;
+    html += `<input type="number" id="fmWaterBaseline" class="w-full p-3 bg-white/30 rounded-xl text-white" value="${currentBaseline}" placeholder="2000">`;
+    html += `<label class="block text-sm">${t('targetWeight')}</label>`;
+    html += `<input type="number" id="fmTargetWeight" class="w-full p-3 bg-white/30 rounded-xl text-white" value="${currentTargetWeight}" placeholder="70">`;
+    html += `<label class="block text-sm">${t('workProfile')}</label>`;
+    html += '<select id="fmWorkProfile" class="w-full p-3 bg-white/30 rounded-xl text-white">';
+    html += `<option value="sedentary"${currentWork === 'sedentary' ? ' selected' : ''}>${t('workSedentary')}</option>`;
+    html += `<option value="mixed"${currentWork === 'mixed' ? ' selected' : ''}>${t('workMixed')}</option>`;
+    html += `<option value="physical"${currentWork === 'physical' ? ' selected' : ''}>${t('workPhysical')}</option>`;
+    html += `<option value="variable"${currentWork === 'variable' ? ' selected' : ''}>${t('workVariable')}</option>`;
+    html += '</select>';
     html += '</div>';
-    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmWaterBaselineCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmWaterBaselineSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
-    
+    html += `<div class="flex gap-3 mt-4"><button type="button" id="fmWaterBaselineCancel" class="flex-1 py-3 rounded-xl bg-white/20">${t('cancel')}</button><button type="button" id="fmWaterBaselineSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">${t('save')}</button></div>`;
+
     fitnessOpenModal(html, () => {
       fitnessEl.modalOverlay.querySelector('#fmWaterBaselineCancel')?.addEventListener('click', fitnessCloseModal);
       fitnessEl.modalOverlay.querySelector('#fmWaterBaselineSave')?.addEventListener('click', () => {
-        const baselineInput = document.getElementById('fmWaterBaseline')?.value;
-        const newBaseline = Number(baselineInput);
-        
-        if (!Number.isNaN(newBaseline) && newBaseline > 0) {
-          // Update profile
-          profile.waterBaselineMl = newBaseline;
-          FS.setFitnessProfile(profile);
-          
-          // Update today's target if water exists, or initialize it
-          const dateKey = fitnessGetDateKey();
-          const dayData = FS.getDayData(dateKey);
-          if (dayData.water) {
-            // Update target for today
-            FS.updateDayData(dateKey, { 
-              water: { 
-                targetMl: newBaseline, 
-                currentMl: dayData.water.currentMl 
-              } 
-            });
-          }
+        const baselineInput = Number(document.getElementById('fmWaterBaseline')?.value);
+        const targetWeightInput = Number(document.getElementById('fmTargetWeight')?.value);
+        const workProfileInput = document.getElementById('fmWorkProfile')?.value || 'variable';
+
+        if (!Number.isNaN(baselineInput) && baselineInput > 0) {
+          profile.waterBaselineMl = baselineInput;
         }
-        
+        profile.workProfile = workProfileInput;
+        profile.targetWeight = !Number.isNaN(targetWeightInput) && targetWeightInput > 0 ? targetWeightInput : null;
+        FS.setFitnessProfile(profile);
+
+        const dateKey = fitnessGetDateKey();
+        const dayData = FS.getDayData(dateKey);
+        if (dayData.water) {
+          FS.updateDayData(dateKey, {
+            water: {
+              targetMl: profile.waterBaselineMl || currentBaseline,
+              currentMl: dayData.water.currentMl || 0,
+            },
+          });
+        }
+
         fitnessCloseModal();
         fitnessRenderWater();
+        fitnessRenderCalories();
+        fitnessUpdateSettingsSummary();
       });
     });
   }
@@ -838,10 +838,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Show loading state
-    chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Загрузка...</div>';
+    chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Р В РІР‚вЂќР В Р’В°Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂќР В Р’В°...</div>';
     
     if (!window.FitnessSync || !window.currentAppUserId) {
-      chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Нет данных</div>';
+      chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Р В РЎСљР В Р’ВµР РЋРІР‚С™ Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р РЋРІР‚В¦</div>';
       return;
     }
   
@@ -854,9 +854,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show "Add weight" button when no data exists
         chartContainer.innerHTML = `
           <div class="flex flex-col items-center justify-center h-full">
-            <span class="text-xs opacity-70 mb-2">📊 Пока нет данных по весу</span>
+            <span class="text-xs opacity-70 mb-2">РЎР‚РЎСџРІР‚СљР вЂ° Р В РЎСџР В РЎвЂўР В РЎвЂќР В Р’В° Р В Р вЂ¦Р В Р’ВµР РЋРІР‚С™ Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р РЋРІР‚В¦ Р В РЎвЂ”Р В РЎвЂў Р В Р вЂ Р В Р’ВµР РЋР С“Р РЋРЎвЂњ</span>
             <button type="button" id="weightChartAddBtn" class="px-4 py-2 rounded-xl bg-green-500 hover:bg-green-600 text-sm font-medium">
-              + Добавить вес
+              + Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В Р вЂ Р В Р’ВµР РЋР С“
             </button>
           </div>
         `;
@@ -870,7 +870,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderWeightChartSVG(chartData);
     } catch (e) {
       console.error('Error loading weight chart:', e);
-      chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Ошибка загрузки</div>';
+      chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Р В РЎвЂєР РЋРІвЂљВ¬Р В РЎвЂР В Р’В±Р В РЎвЂќР В Р’В° Р В Р’В·Р В Р’В°Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂќР В РЎвЂ</div>';
     }
   }
   
@@ -911,14 +911,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ${change.text}
       </div>
       <div class="absolute top-1 left-2 text-[10px] opacity-70">
-        ${currentWeight > 0 ? currentWeight.toFixed(1) + ' кг' : '—'}
+        ${currentWeight > 0 ? currentWeight.toFixed(1) + ' Р В РЎвЂќР В РЎвЂ“' : 'Р Р†Р вЂљРІР‚Сњ'}
       </div>
     `;
     chartContainer.style.position = 'relative';
   }
 
   function fitnessRenderDashboard() {
-    ensureFitnessSettingsPanel();
+    fitnessApplyEnglishUILabels();
     fitnessUpdateSettingsSummary();
     const photoEl = document.getElementById('profilePhoto');
     if (fitnessEl.avatar && photoEl?.src) fitnessEl.avatar.src = photoEl.src;
@@ -939,42 +939,41 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessRenderWater();
     fitnessRenderWeightChart();
     fitnessRenderSupplementsTracking();
-    fitnessApplyEnglishTexts();
     fitnessRenderWorkDay();
     
-    // Загрузка сохранённого фото для текущей даты
+    // Р В РІР‚вЂќР В Р’В°Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂќР В Р’В° Р РЋР С“Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р РЋРІР‚ВР В Р вЂ¦Р В Р вЂ¦Р В РЎвЂўР В РЎвЂ“Р В РЎвЂў Р РЋРІР‚С›Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂў Р В РўвЂР В Р’В»Р РЋР РЏ Р РЋРІР‚С™Р В Р’ВµР В РЎвЂќР РЋРЎвЂњР РЋРІР‚В°Р В Р’ВµР В РІвЂћвЂ“ Р В РўвЂР В Р’В°Р РЋРІР‚С™Р РЋРІР‚в„–
     if (typeof fitnessLoadSavedPhoto === 'function') {
       fitnessLoadSavedPhoto();
     }
     
-    // Инициализация сворачиваемых карточек
+    // Р В Р’ВР В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В РЎвЂР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР РЋР РЏ Р РЋР С“Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВР РЋРІР‚в„–Р РЋРІР‚В¦ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В Р’ВµР В РЎвЂќ
     fitnessInitCollapsibleCards();
-    // Обновление мини-данных в шапках
+    // Р В РЎвЂєР В Р’В±Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РЎВР В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р РЋРІР‚В¦ Р В Р вЂ  Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ”Р В РЎвЂќР В Р’В°Р РЋРІР‚В¦
     fitnessUpdateCardSummaries();
-    // Сворачиваем все карточки по умолчанию (первый запуск)
+    // Р В Р Р‹Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В Р вЂ Р РЋР С“Р В Р’Вµ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В РЎвЂќР В РЎвЂ Р В РЎвЂ”Р В РЎвЂў Р РЋРЎвЂњР В РЎВР В РЎвЂўР В Р’В»Р РЋРІР‚РЋР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР вЂ№ (Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р вЂ Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В Р’В·Р В Р’В°Р В РЎвЂ”Р РЋРЎвЂњР РЋР С“Р В РЎвЂќ)
     if (!window.fitnessCardsInitiallyCollapsed) {
       window.fitnessCardsInitiallyCollapsed = true;
       fitnessCollapseAllCards();
     }
   }
 
-  // ========== СВОРАЧИВАЕМЫЕ КАРТОЧКИ ==========
+  // ========== Р В Р Р‹Р В РІР‚в„ўР В РЎвЂєР В Р’В Р В РЎвЂ™Р В Р’В§Р В Р’ВР В РІР‚в„ўР В РЎвЂ™Р В РІР‚СћР В РЎС™Р В Р’В«Р В РІР‚Сћ Р В РЎв„ўР В РЎвЂ™Р В Р’В Р В РЎС›Р В РЎвЂєР В Р’В§Р В РЎв„ўР В Р’В ==========
   
-  // Инициализация обработчиков кликов для сворачиваемых карточек
+  // Р В Р’ВР В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В РЎвЂР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР РЋР РЏ Р В РЎвЂўР В Р’В±Р РЋР вЂљР В Р’В°Р В Р’В±Р В РЎвЂўР РЋРІР‚С™Р РЋРІР‚РЋР В РЎвЂР В РЎвЂќР В РЎвЂўР В Р вЂ  Р В РЎвЂќР В Р’В»Р В РЎвЂР В РЎвЂќР В РЎвЂўР В Р вЂ  Р В РўвЂР В Р’В»Р РЋР РЏ Р РЋР С“Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВР РЋРІР‚в„–Р РЋРІР‚В¦ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В Р’ВµР В РЎвЂќ
   function fitnessInitCollapsibleCards() {
     const headers = document.querySelectorAll('.fitness-card-header');
     
     headers.forEach(header => {
-      // Проверяем, не добавлен ли уже обработчик
+      // Р В РЎСџР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’ВµР РЋР вЂљР РЋР РЏР В Р’ВµР В РЎВ, Р В Р вЂ¦Р В Р’Вµ Р В РўвЂР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦ Р В Р’В»Р В РЎвЂ Р РЋРЎвЂњР В Р’В¶Р В Р’Вµ Р В РЎвЂўР В Р’В±Р РЋР вЂљР В Р’В°Р В Р’В±Р В РЎвЂўР РЋРІР‚С™Р РЋРІР‚РЋР В РЎвЂР В РЎвЂќ
       if (header.dataset.collapseInitialized) return;
       header.dataset.collapseInitialized = 'true';
       
       header.addEventListener('click', (e) => {
-        // Не сворачивать при клике на кнопки внутри шапки
+        // Р В РЎСљР В Р’Вµ Р РЋР С“Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р В РЎвЂќР В Р’В»Р В РЎвЂР В РЎвЂќР В Р’Вµ Р В Р вЂ¦Р В Р’В° Р В РЎвЂќР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В РЎвЂ Р В Р вЂ Р В Р вЂ¦Р РЋРЎвЂњР РЋРІР‚С™Р РЋР вЂљР В РЎвЂ Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ”Р В РЎвЂќР В РЎвЂ
         if (e.target.tagName === 'BUTTON' || e.target.closest('BUTTON')) return;
         
-        // ПРЕДОТВРАЩЕНИЕ КОНФЛИКТА: останавливаем всплытие, чтобы клик по header
-        // не вызывал обработчики на родительской карточке (например, открытие попапа энергии)
+        // Р В РЎСџР В Р’В Р В РІР‚СћР В РІР‚СњР В РЎвЂєР В РЎС›Р В РІР‚в„ўР В Р’В Р В РЎвЂ™Р В Р’В©Р В РІР‚СћР В РЎСљР В Р’ВР В РІР‚Сћ Р В РЎв„ўР В РЎвЂєР В РЎСљР В Р’В¤Р В РІР‚С”Р В Р’ВР В РЎв„ўР В РЎС›Р В РЎвЂ™: Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В Р’В°Р В Р вЂ¦Р В Р’В°Р В Р вЂ Р В Р’В»Р В РЎвЂР В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В Р вЂ Р РЋР С“Р В РЎвЂ”Р В Р’В»Р РЋРІР‚в„–Р РЋРІР‚С™Р В РЎвЂР В Р’Вµ, Р РЋРІР‚РЋР РЋРІР‚С™Р В РЎвЂўР В Р’В±Р РЋРІР‚в„– Р В РЎвЂќР В Р’В»Р В РЎвЂР В РЎвЂќ Р В РЎвЂ”Р В РЎвЂў header
+        // Р В Р вЂ¦Р В Р’Вµ Р В Р вЂ Р РЋРІР‚в„–Р В Р’В·Р РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’В» Р В РЎвЂўР В Р’В±Р РЋР вЂљР В Р’В°Р В Р’В±Р В РЎвЂўР РЋРІР‚С™Р РЋРІР‚РЋР В РЎвЂР В РЎвЂќР В РЎвЂ Р В Р вЂ¦Р В Р’В° Р РЋР вЂљР В РЎвЂўР В РўвЂР В РЎвЂР РЋРІР‚С™Р В Р’ВµР В Р’В»Р РЋР Р‰Р РЋР С“Р В РЎвЂќР В РЎвЂўР В РІвЂћвЂ“ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В РЎвЂќР В Р’Вµ (Р В Р вЂ¦Р В Р’В°Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР В РЎВР В Р’ВµР РЋР вЂљ, Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р В РЎвЂР В Р’Вµ Р В РЎвЂ”Р В РЎвЂўР В РЎвЂ”Р В Р’В°Р В РЎвЂ”Р В Р’В° Р РЋР РЉР В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂ“Р В РЎвЂР В РЎвЂ)
         e.stopPropagation();
         
         const card = header.closest('[class*="bg-white/"]');
@@ -987,11 +986,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const isCollapsed = body.classList.contains('collapsed');
           
           if (isCollapsed) {
-            // Разворачиваем
+            // Р В Р’В Р В Р’В°Р В Р’В·Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ
             body.classList.remove('collapsed');
             if (chevron) chevron.classList.remove('rotated');
           } else {
-            // Сворачиваем
+            // Р В Р Р‹Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ
             body.classList.add('collapsed');
             if (chevron) chevron.classList.add('rotated');
           }
@@ -999,29 +998,29 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
     
-    // РАЗВЕДЕНИЕ КЛИКОВ: для карточки энергии - открытие попапа только при клике по body (не по header)
+    // Р В Р’В Р В РЎвЂ™Р В РІР‚вЂќР В РІР‚в„ўР В РІР‚СћР В РІР‚СњР В РІР‚СћР В РЎСљР В Р’ВР В РІР‚Сћ Р В РЎв„ўР В РІР‚С”Р В Р’ВР В РЎв„ўР В РЎвЂєР В РІР‚в„ў: Р В РўвЂР В Р’В»Р РЋР РЏ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В РЎвЂќР В РЎвЂ Р РЋР РЉР В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂ“Р В РЎвЂР В РЎвЂ - Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р В РЎвЂР В Р’Вµ Р В РЎвЂ”Р В РЎвЂўР В РЎвЂ”Р В Р’В°Р В РЎвЂ”Р В Р’В° Р РЋРІР‚С™Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В РЎвЂќР В РЎвЂў Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р В РЎвЂќР В Р’В»Р В РЎвЂР В РЎвЂќР В Р’Вµ Р В РЎвЂ”Р В РЎвЂў body (Р В Р вЂ¦Р В Р’Вµ Р В РЎвЂ”Р В РЎвЂў header)
     const energyCard = document.getElementById('fitnessCaloriesCard');
     if (energyCard && !energyCard.dataset.popupHandlerAdded) {
       energyCard.dataset.popupHandlerAdded = 'true';
       energyCard.addEventListener('click', (e) => {
-        // Если клик по header - это обрабатывает сворачивание, игнорируем
+        // Р В РІР‚СћР РЋР С“Р В Р’В»Р В РЎвЂ Р В РЎвЂќР В Р’В»Р В РЎвЂР В РЎвЂќ Р В РЎвЂ”Р В РЎвЂў header - Р РЋР РЉР РЋРІР‚С™Р В РЎвЂў Р В РЎвЂўР В Р’В±Р РЋР вЂљР В Р’В°Р В Р’В±Р В Р’В°Р РЋРІР‚С™Р РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР РЋРІР‚С™ Р РЋР С“Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР В Р’Вµ, Р В РЎвЂР В РЎвЂ“Р В Р вЂ¦Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР вЂљР РЋРЎвЂњР В Р’ВµР В РЎВ
         if (e.target.closest('.fitness-card-header')) return;
-        // Игнорировать клики по кнопкам
+        // Р В Р’ВР В РЎвЂ“Р В Р вЂ¦Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂќР В Р’В»Р В РЎвЂР В РЎвЂќР В РЎвЂ Р В РЎвЂ”Р В РЎвЂў Р В РЎвЂќР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В Р’В°Р В РЎВ
         if (e.target.closest('button')) return;
-        // Открываем попап детализации энергии
+        // Р В РЎвЂєР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В РЎвЂ”Р В РЎвЂўР В РЎвЂ”Р В Р’В°Р В РЎвЂ” Р В РўвЂР В Р’ВµР РЋРІР‚С™Р В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР В РЎвЂ Р РЋР РЉР В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂ“Р В РЎвЂР В РЎвЂ
         fitnessOpenEnergyDetails();
       });
     }
   }
   
-  // Обновление мини-данных в шапках всех карточек
+  // Р В РЎвЂєР В Р’В±Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РЎВР В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р РЋРІР‚В¦ Р В Р вЂ  Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ”Р В РЎвЂќР В Р’В°Р РЋРІР‚В¦ Р В Р вЂ Р РЋР С“Р В Р’ВµР РЋРІР‚В¦ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В Р’ВµР В РЎвЂќ
   function fitnessUpdateCardSummaries() {
     fitnessUpdateEnergyMiniSummary();
     fitnessUpdateActivityMiniSummary();
     fitnessUpdateSupportMiniSummary();
   }
   
-  // Мини-шкала баланса в шапке "Энергия тела"
+  // Р В РЎС™Р В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р РЋРІвЂљВ¬Р В РЎвЂќР В Р’В°Р В Р’В»Р В Р’В° Р В Р’В±Р В Р’В°Р В Р’В»Р В Р’В°Р В Р вЂ¦Р РЋР С“Р В Р’В° Р В Р вЂ  Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ”Р В РЎвЂќР В Р’Вµ "Р В Р’В­Р В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂ“Р В РЎвЂР РЋР РЏ Р РЋРІР‚С™Р В Р’ВµР В Р’В»Р В Р’В°"
   function fitnessUpdateEnergyMiniSummary() {
     const dateKey = fitnessGetDateKey();
     const dayData = FS.getDayData(dateKey);
@@ -1033,38 +1032,38 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (miniFill && miniText) {
       const balance = summary.balance || 0;
-      const MAX_ABS_BALANCE = 1000; // Максимальный отображаемый баланс
+      const MAX_ABS_BALANCE = 1000; // Р В РЎС™Р В Р’В°Р В РЎвЂќР РЋР С“Р В РЎвЂР В РЎВР В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂўР В Р’В±Р РЋР вЂљР В Р’В°Р В Р’В¶Р В Р’В°Р В Р’ВµР В РЎВР РЋРІР‚в„–Р В РІвЂћвЂ“ Р В Р’В±Р В Р’В°Р В Р’В»Р В Р’В°Р В Р вЂ¦Р РЋР С“
       
-      // Нормализуем: 0 = центр, -1000 = левый край, +1000 = правый край
+      // Р В РЎСљР В РЎвЂўР РЋР вЂљР В РЎВР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р РЋРЎвЂњР В Р’ВµР В РЎВ: 0 = Р РЋРІР‚В Р В Р’ВµР В Р вЂ¦Р РЋРІР‚С™Р РЋР вЂљ, -1000 = Р В Р’В»Р В Р’ВµР В Р вЂ Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В РЎвЂќР РЋР вЂљР В Р’В°Р В РІвЂћвЂ“, +1000 = Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В РЎвЂќР РЋР вЂљР В Р’В°Р В РІвЂћвЂ“
       const normalizedBalance = Math.max(-MAX_ABS_BALANCE, Math.min(MAX_ABS_BALANCE, balance));
       const percentFromCenter = (normalizedBalance / MAX_ABS_BALANCE) * 50; // 0-50%
       
       if (balance <= 0) {
-        // Дефицит - заполнение влево от центра
+        // Р В РІР‚СњР В Р’ВµР РЋРІР‚С›Р В РЎвЂР РЋРІР‚В Р В РЎвЂР РЋРІР‚С™ - Р В Р’В·Р В Р’В°Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ Р В РЎвЂў Р В РЎвЂўР РЋРІР‚С™ Р РЋРІР‚В Р В Р’ВµР В Р вЂ¦Р РЋРІР‚С™Р РЋР вЂљР В Р’В°
         miniFill.style.left = (50 - percentFromCenter) + '%';
         miniFill.style.width = percentFromCenter + '%';
         miniFill.className = 'fitness-mini-balance-fill bg-green-400';
       } else {
-        // Профицит - заполнение вправо от центра
+        // Р В РЎСџР РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В РЎвЂР РЋРІР‚В Р В РЎвЂР РЋРІР‚С™ - Р В Р’В·Р В Р’В°Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В Р вЂ Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р В РЎвЂў Р В РЎвЂўР РЋРІР‚С™ Р РЋРІР‚В Р В Р’ВµР В Р вЂ¦Р РЋРІР‚С™Р РЋР вЂљР В Р’В°
         miniFill.style.left = '50%';
         miniFill.style.width = percentFromCenter + '%';
         miniFill.className = 'fitness-mini-balance-fill bg-red-400';
       }
       
-      // Текст
+      // Р В РЎС›Р В Р’ВµР В РЎвЂќР РЋР С“Р РЋРІР‚С™
       const sign = balance >= 0 ? '+' : '';
       miniText.textContent = sign + balance;
       miniText.className = 'text-[10px] font-medium ' + (balance >= 0 ? 'text-red-300' : 'text-green-300');
     }
   }
   
-  // Мини-строка и полоски в шапке "Активность"
+  // Р В РЎС™Р В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р РЋР С“Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂўР В РЎвЂќР В Р’В° Р В РЎвЂ Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р В РЎвЂўР РЋР С“Р В РЎвЂќР В РЎвЂ Р В Р вЂ  Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ”Р В РЎвЂќР В Р’Вµ "Р В РЎвЂ™Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р РЋР Р‰"
   function fitnessUpdateActivityMiniSummary() {
     const dateKey = fitnessGetDateKey();
     const dayData = FS.getDayData(dateKey);
     const activities = dayData.activities || [];
     
-    // Подсчёт по типам
+    // Р В РЎСџР В РЎвЂўР В РўвЂР РЋР С“Р РЋРІР‚РЋР РЋРІР‚ВР РЋРІР‚С™ Р В РЎвЂ”Р В РЎвЂў Р РЋРІР‚С™Р В РЎвЂР В РЎвЂ”Р В Р’В°Р В РЎВ
     const totals = {
       gym: { calories: 0 },
       cardio: { calories: 0 },
@@ -1084,18 +1083,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     
-    // Общее количество
+    // Р В РЎвЂєР В Р’В±Р РЋРІР‚В°Р В Р’ВµР В Р’Вµ Р В РЎвЂќР В РЎвЂўР В Р’В»Р В РЎвЂР РЋРІР‚РЋР В Р’ВµР РЋР С“Р РЋРІР‚С™Р В Р вЂ Р В РЎвЂў
     const totalCalories = totals.gym.calories + totals.cardio.calories + totals.home.calories + totals.steps.calories;
     const totalSessions = activities.length;
     
-    // Обновляем текст
+    // Р В РЎвЂєР В Р’В±Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В»Р РЋР РЏР В Р’ВµР В РЎВ Р РЋРІР‚С™Р В Р’ВµР В РЎвЂќР РЋР С“Р РЋРІР‚С™
     const summaryEl = document.getElementById('activityMiniSummary');
     if (summaryEl) {
-      summaryEl.textContent = `${totalSessions} активностей · ${totalCalories} ккал`;
+      summaryEl.textContent = `${totalSessions} Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В Р’ВµР В РІвЂћвЂ“ Р вЂ™Р’В· ${totalCalories} Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»`;
     }
     
-    // Обновляем мини-полоски
-    const maxCalories = Math.max(totalCalories, 1); // избегаем деления на 0
+    // Р В РЎвЂєР В Р’В±Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В»Р РЋР РЏР В Р’ВµР В РЎВ Р В РЎВР В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р В РЎвЂўР РЋР С“Р В РЎвЂќР В РЎвЂ
+    const maxCalories = Math.max(totalCalories, 1); // Р В РЎвЂР В Р’В·Р В Р’В±Р В Р’ВµР В РЎвЂ“Р В Р’В°Р В Р’ВµР В РЎВ Р В РўвЂР В Р’ВµР В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ Р В Р вЂ¦Р В Р’В° 0
     
     const stripGym = document.getElementById('miniStripGym');
     const stripCardio = document.getElementById('miniStripCardio');
@@ -1108,22 +1107,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stripSteps) stripSteps.style.width = (totals.steps.calories / maxCalories * 60) + 'px';
   }
   
-  // Мини-строка в шапке "Поддержка тела"
+  // Р В РЎС™Р В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р РЋР С“Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂўР В РЎвЂќР В Р’В° Р В Р вЂ  Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ”Р В РЎвЂќР В Р’Вµ "Р В РЎСџР В РЎвЂўР В РўвЂР В РўвЂР В Р’ВµР РЋР вЂљР В Р’В¶Р В РЎвЂќР В Р’В° Р РЋРІР‚С™Р В Р’ВµР В Р’В»Р В Р’В°"
   function fitnessUpdateSupportMiniSummary() {
     const dateKey = fitnessGetDateKey();
     const dayData = FS.getDayData(dateKey);
     const profile = FS.getFitnessProfile();
     
-    // Еда
+    // Р В РІР‚СћР В РўвЂР В Р’В°
     const foods = dayData.foods || [];
     const totalEaten = foods.reduce((sum, f) => sum + (f.calories || 0), 0);
     
-    // Вода
+    // Р В РІР‚в„ўР В РЎвЂўР В РўвЂР В Р’В°
     const waterData = FS.getWaterData(dateKey);
     const waterCurrent = (waterData.currentMl || 0) / 1000;
     const waterTarget = (waterData.targetMl || profile.waterBaselineMl || 2000) / 1000;
     
-    // БАДы
+    // Р В РІР‚ВР В РЎвЂ™Р В РІР‚СњР РЋРІР‚в„–
     const supplements = FS.getAllSupplements();
     let suppTaken = 0;
     let suppPlanned = 0;
@@ -1137,13 +1136,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     
-    // Обновляем текст
+    // Р В РЎвЂєР В Р’В±Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В»Р РЋР РЏР В Р’ВµР В РЎВ Р РЋРІР‚С™Р В Р’ВµР В РЎвЂќР РЋР С“Р РЋРІР‚С™
     const summaryEl = document.getElementById('supportMiniSummary');
     if (summaryEl) {
       const waterClass = waterCurrent >= waterTarget ? 'text-emerald-300' : 'text-white';
       const suppClass = suppTaken >= suppPlanned && suppPlanned > 0 ? 'text-emerald-300' : (suppTaken < suppPlanned ? 'text-amber-300' : 'text-white');
       
-      summaryEl.innerHTML = `Еда: ${totalEaten} ккал · <span class="${waterClass}">Вода: ${waterCurrent.toFixed(1)} / ${waterTarget.toFixed(1)} л</span> · <span class="${suppClass}">БАДы: ${suppTaken} / ${suppPlanned}</span>`;
+      summaryEl.innerHTML = `Р В РІР‚СћР В РўвЂР В Р’В°: ${totalEaten} Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В» Р вЂ™Р’В· <span class="${waterClass}">Р В РІР‚в„ўР В РЎвЂўР В РўвЂР В Р’В°: ${waterCurrent.toFixed(1)} / ${waterTarget.toFixed(1)} Р В Р’В»</span> Р вЂ™Р’В· <span class="${suppClass}">Р В РІР‚ВР В РЎвЂ™Р В РІР‚СњР РЋРІР‚в„–: ${suppTaken} / ${suppPlanned}</span>`;
     }
   }
 
@@ -1152,40 +1151,40 @@ document.addEventListener('DOMContentLoaded', () => {
   window.fitnessOpenWeightDetailScreen = async function() {
     let html = '<div class="space-y-4">';
     html += '<div class="flex items-center justify-between">';
-    html += '<h3 class="font-semibold text-lg">Вес</h3>';
-    html += '<button type="button" id="weightDetailClose" class="text-xs px-3 py-1 rounded-full bg-white/20">Закрыть</button>';
+    html += '<h3 class="font-semibold text-lg">Р В РІР‚в„ўР В Р’ВµР РЋР С“</h3>';
+    html += '<button type="button" id="weightDetailClose" class="text-xs px-3 py-1 rounded-full bg-white/20">Р В РІР‚вЂќР В Р’В°Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р РЋР Р‰</button>';
     html += '</div>';
     
     // Period selector
     html += '<div class="flex gap-2 text-xs">';
-    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="7">7 дней</button>';
-    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-green-500/50" data-days="30">30 дней</button>';
-    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="90">90 дн</button>';
-    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="365">Всё</button>';
+    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="7">7 Р В РўвЂР В Р вЂ¦Р В Р’ВµР В РІвЂћвЂ“</button>';
+    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-green-500/50" data-days="30">30 Р В РўвЂР В Р вЂ¦Р В Р’ВµР В РІвЂћвЂ“</button>';
+    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="90">90 Р В РўвЂР В Р вЂ¦</button>';
+    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="365">Р В РІР‚в„ўР РЋР С“Р РЋРІР‚В</button>';
     html += '</div>';
     
     // Stats section
     html += '<div class="bg-white/10 rounded-xl p-3">';
     html += '<div class="grid grid-cols-3 gap-2 text-center text-xs">';
-    html += '<div><div class="opacity-70">Текущий</div><div id="weightCurrent" class="text-lg font-semibold mt-1">—</div></div>';
-    html += '<div><div class="opacity-70">Цель</div><div id="weightGoal" class="text-lg font-semibold mt-1">—</div></div>';
-    html += '<div><div class="opacity-70">Тренд</div><div id="weightTrend" class="text-lg font-semibold mt-1">—</div></div>';
+    html += '<div><div class="opacity-70">Р В РЎС›Р В Р’ВµР В РЎвЂќР РЋРЎвЂњР РЋРІР‚В°Р В РЎвЂР В РІвЂћвЂ“</div><div id="weightCurrent" class="text-lg font-semibold mt-1">Р Р†Р вЂљРІР‚Сњ</div></div>';
+    html += '<div><div class="opacity-70">Р В Р’В¦Р В Р’ВµР В Р’В»Р РЋР Р‰</div><div id="weightGoal" class="text-lg font-semibold mt-1">Р Р†Р вЂљРІР‚Сњ</div></div>';
+    html += '<div><div class="opacity-70">Р В РЎС›Р РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РўвЂ</div><div id="weightTrend" class="text-lg font-semibold mt-1">Р Р†Р вЂљРІР‚Сњ</div></div>';
     html += '</div>';
     html += '</div>';
     
     // Chart
     html += '<div id="weightDetailChart" class="h-40 bg-white/5 rounded-xl relative overflow-hidden">';
-    html += '<div class="flex items-center justify-center h-full text-xs opacity-50">Загрузка...</div>';
+    html += '<div class="flex items-center justify-center h-full text-xs opacity-50">Р В РІР‚вЂќР В Р’В°Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂќР В Р’В°...</div>';
     html += '</div>';
 
     // Add button
-    html += '<button type="button" id="weightAddBtn" class="w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 font-semibold text-sm">+ Добавить вес</button>';
+    html += '<button type="button" id="weightAddBtn" class="w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 font-semibold text-sm">+ Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В Р вЂ Р В Р’ВµР РЋР С“</button>';
     
     // History list
     html += '<div class="bg-white/10 rounded-xl p-3">';
-    html += '<h4 class="text-sm font-semibold mb-2">История</h4>';
+    html += '<h4 class="text-sm font-semibold mb-2">Р В Р’ВР РЋР С“Р РЋРІР‚С™Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР РЏ</h4>';
     html += '<div id="weightHistoryList" class="space-y-2 max-h-64 overflow-y-auto">';
-    html += '<div class="text-xs opacity-50 text-center py-4">Загрузка...</div>';
+    html += '<div class="text-xs opacity-50 text-center py-4">Р В РІР‚вЂќР В Р’В°Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂќР В Р’В°...</div>';
     html += '</div>';
     html += '</div>';
     
@@ -1227,25 +1226,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const firstWeight = history.length > 1 ? history[history.length - 1].value : currentWeight;
       const goalWeight = profile.targetWeight;
       
-      document.getElementById('weightCurrent').textContent = currentWeight ? currentWeight.toFixed(1) + ' кг' : '—';
-      document.getElementById('weightGoal').textContent = goalWeight ? goalWeight.toFixed(1) + ' кг' : '—';
+      document.getElementById('weightCurrent').textContent = currentWeight ? currentWeight.toFixed(1) + ' Р В РЎвЂќР В РЎвЂ“' : 'Р Р†Р вЂљРІР‚Сњ';
+      document.getElementById('weightGoal').textContent = goalWeight ? goalWeight.toFixed(1) + ' Р В РЎвЂќР В РЎвЂ“' : 'Р Р†Р вЂљРІР‚Сњ';
       
       if (currentWeight && firstWeight) {
         const totalDiff = currentWeight - firstWeight;
-        const trendText = totalDiff < -0.1 ? '↓ ' + Math.abs(totalDiff).toFixed(1) + ' кг' : 
-                         totalDiff > 0.1 ? '↑ +' + totalDiff.toFixed(1) + ' кг' : '→ 0.0 кг';
+        const trendText = totalDiff < -0.1 ? 'Р Р†РІР‚В РІР‚Сљ ' + Math.abs(totalDiff).toFixed(1) + ' Р В РЎвЂќР В РЎвЂ“' : 
+                         totalDiff > 0.1 ? 'Р Р†РІР‚В РІР‚В +' + totalDiff.toFixed(1) + ' Р В РЎвЂќР В РЎвЂ“' : 'Р Р†РІР‚В РІР‚в„ў 0.0 Р В РЎвЂќР В РЎвЂ“';
         const trendEl = document.getElementById('weightTrend');
         trendEl.textContent = trendText;
         trendEl.className = 'text-lg font-semibold mt-1 ' + 
           (totalDiff < -0.1 ? 'text-green-400' : totalDiff > 0.1 ? 'text-red-400' : 'text-white');
       } else {
-        document.getElementById('weightTrend').textContent = '—';
+        document.getElementById('weightTrend').textContent = 'Р Р†Р вЂљРІР‚Сњ';
       }
   
       // Render chart
       const chartContainer = document.getElementById('weightDetailChart');
       if (chartData.length === 0) {
-        chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Нет данных</div>';
+        chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Р В РЎСљР В Р’ВµР РЋРІР‚С™ Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р РЋРІР‚В¦</div>';
       } else {
         const points = FS.generateWeightChartPoints(chartData, 100, 40, 4);
         chartContainer.innerHTML = `
@@ -1265,7 +1264,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Render history list
       const listContainer = document.getElementById('weightHistoryList');
       if (history.length === 0) {
-        listContainer.innerHTML = '<div class="text-xs opacity-50 text-center py-4">Нет записей</div>';
+        listContainer.innerHTML = '<div class="text-xs opacity-50 text-center py-4">Р В РЎСљР В Р’ВµР РЋРІР‚С™ Р В Р’В·Р В Р’В°Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В Р’ВµР В РІвЂћвЂ“</div>';
       } else {
         listContainer.innerHTML = history.slice(0, 50).map(item => {
           const date = new Date(item.measured_at);
@@ -1278,8 +1277,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="text-xs opacity-50">${timeStr}</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="font-medium">${item.value.toFixed(1)} кг</span>
-                <span class="text-xs opacity-50">✏</span>
+                <span class="font-medium">${item.value.toFixed(1)} Р В РЎвЂќР В РЎвЂ“</span>
+                <span class="text-xs opacity-50">Р Р†РЎС™Р РЏ</span>
               </div>
             </div>
           `;
@@ -1303,18 +1302,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentTime = FS.formatTimeHM(now);
     const profile = FS.getFitnessProfile();
     
-    let html = '<h3 class="font-semibold mb-4">Добавить вес</h3>';
+    let html = '<h3 class="font-semibold mb-4">Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В Р вЂ Р В Р’ВµР РЋР С“</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Вес (кг)</label>';
+    html += '<label class="block text-sm">Р В РІР‚в„ўР В Р’ВµР РЋР С“ (Р В РЎвЂќР В РЎвЂ“)</label>';
     html += '<input type="number" step="0.1" id="addWeightValue" class="w-full p-3 bg-white/30 rounded-xl text-white" placeholder="78.5" value="' + (profile.weight || '') + '">';
-    html += '<label class="block text-sm">Дата</label>';
+    html += '<label class="block text-sm">Р В РІР‚СњР В Р’В°Р РЋРІР‚С™Р В Р’В°</label>';
     html += '<input type="date" id="addWeightDate" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + today + '">';
-    html += '<label class="block text-sm">Время</label>';
+    html += '<label class="block text-sm">Р В РІР‚в„ўР РЋР вЂљР В Р’ВµР В РЎВР РЋР РЏ</label>';
     html += '<input type="time" id="addWeightTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentTime + '">';
     html += '</div>';
     html += '<div class="flex gap-3 mt-4">';
-    html += '<button type="button" id="addWeightCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
-    html += '<button type="button" id="addWeightSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button>';
+    html += '<button type="button" id="addWeightCancel" class="flex-1 py-3 rounded-xl bg-white/20">Р В РЎвЂєР РЋРІР‚С™Р В РЎВР В Р’ВµР В Р вЂ¦Р В Р’В°</button>';
+    html += '<button type="button" id="addWeightSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Р В Р Р‹Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
@@ -1325,12 +1324,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const time = document.getElementById('addWeightTime')?.value;
         
         if (!weight || weight <= 0) {
-          alert('Введите корректный вес');
+          alert('Р В РІР‚в„ўР В Р вЂ Р В Р’ВµР В РўвЂР В РЎвЂР РЋРІР‚С™Р В Р’Вµ Р В РЎвЂќР В РЎвЂўР РЋР вЂљР РЋР вЂљР В Р’ВµР В РЎвЂќР РЋРІР‚С™Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В Р вЂ Р В Р’ВµР РЋР С“');
           return;
         }
         
         if (!window.FitnessSync || !window.currentAppUserId) {
-          alert('Нет связи с сервером');
+          alert('Р В РЎСљР В Р’ВµР РЋРІР‚С™ Р РЋР С“Р В Р вЂ Р РЋР РЏР В Р’В·Р В РЎвЂ Р РЋР С“ Р РЋР С“Р В Р’ВµР РЋР вЂљР В Р вЂ Р В Р’ВµР РЋР вЂљР В РЎвЂўР В РЎВ');
           return;
         }
         
@@ -1348,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(() => window.fitnessOpenWeightDetailScreen(), 100);
         } catch (e) {
           console.error('Error saving weight:', e);
-          alert('Ошибка сохранения');
+          alert('Р В РЎвЂєР РЋРІвЂљВ¬Р В РЎвЂР В Р’В±Р В РЎвЂќР В Р’В° Р РЋР С“Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ');
         }
       });
     });
@@ -1359,25 +1358,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateKey = FS.formatDateKey(date);
     const timeStr = date.toTimeString().slice(0, 5);
     
-    let html = '<h3 class="font-semibold mb-4">Изменить измерение</h3>';
+    let html = '<h3 class="font-semibold mb-4">Р В Р’ВР В Р’В·Р В РЎВР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂР В Р’В·Р В РЎВР В Р’ВµР РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Вес (кг)</label>';
+    html += '<label class="block text-sm">Р В РІР‚в„ўР В Р’ВµР РЋР С“ (Р В РЎвЂќР В РЎвЂ“)</label>';
     html += '<input type="number" step="0.1" id="editWeightValue" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentWeight + '">';
-    html += '<label class="block text-sm">Дата</label>';
+    html += '<label class="block text-sm">Р В РІР‚СњР В Р’В°Р РЋРІР‚С™Р В Р’В°</label>';
     html += '<input type="date" id="editWeightDate" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + dateKey + '">';
-    html += '<label class="block text-sm">Время</label>';
+    html += '<label class="block text-sm">Р В РІР‚в„ўР РЋР вЂљР В Р’ВµР В РЎВР РЋР РЏ</label>';
     html += '<input type="time" id="editWeightTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + timeStr + '">';
     html += '</div>';
     html += '<div class="flex gap-3 mt-4">';
-    html += '<button type="button" id="editWeightDelete" class="flex-1 py-3 rounded-xl bg-red-500/30 text-red-300">Удалить</button>';
-    html += '<button type="button" id="editWeightCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
-    html += '<button type="button" id="editWeightSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button>';
+    html += '<button type="button" id="editWeightDelete" class="flex-1 py-3 rounded-xl bg-red-500/30 text-red-300">Р В Р в‚¬Р В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰</button>';
+    html += '<button type="button" id="editWeightCancel" class="flex-1 py-3 rounded-xl bg-white/20">Р В РЎвЂєР РЋРІР‚С™Р В РЎВР В Р’ВµР В Р вЂ¦Р В Р’В°</button>';
+    html += '<button type="button" id="editWeightSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Р В Р Р‹Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
       document.getElementById('editWeightCancel')?.addEventListener('click', fitnessCloseModal);
       document.getElementById('editWeightDelete')?.addEventListener('click', async () => {
-        if (!confirm('Удалить это измерение?')) return;
+        if (!confirm('Р В Р в‚¬Р В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р РЋР РЉР РЋРІР‚С™Р В РЎвЂў Р В РЎвЂР В Р’В·Р В РЎВР В Р’ВµР РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ?')) return;
         
         try {
           await window.FitnessSync.deleteWeightMeasurement(measurementId);
@@ -1387,7 +1386,7 @@ document.addEventListener('DOMContentLoaded', () => {
           fitnessRenderDashboard();
           setTimeout(() => window.fitnessOpenWeightDetailScreen(), 100);
         } catch (e) {
-          alert('Ошибка удаления');
+          alert('Р В РЎвЂєР РЋРІвЂљВ¬Р В РЎвЂР В Р’В±Р В РЎвЂќР В Р’В° Р РЋРЎвЂњР В РўвЂР В Р’В°Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ');
         }
       });
       document.getElementById('editWeightSave')?.addEventListener('click', async () => {
@@ -1396,7 +1395,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const time = document.getElementById('editWeightTime')?.value;
         
         if (!weight || weight <= 0) {
-          alert('Введите корректный вес');
+          alert('Р В РІР‚в„ўР В Р вЂ Р В Р’ВµР В РўвЂР В РЎвЂР РЋРІР‚С™Р В Р’Вµ Р В РЎвЂќР В РЎвЂўР РЋР вЂљР РЋР вЂљР В Р’ВµР В РЎвЂќР РЋРІР‚С™Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В Р вЂ Р В Р’ВµР РЋР С“');
           return;
         }
         
@@ -1409,21 +1408,52 @@ document.addEventListener('DOMContentLoaded', () => {
           fitnessRenderDashboard();
           setTimeout(() => window.fitnessOpenWeightDetailScreen(), 100);
         } catch (e) {
-          alert('Ошибка сохранения');
+          alert('Р В РЎвЂєР РЋРІвЂљВ¬Р В РЎвЂР В Р’В±Р В РЎвЂќР В Р’В° Р РЋР С“Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ');
         }
       });
     });
   };
   
+  let fitnessModalScrollTop = 0;
 
   function fitnessCloseModal() {
-    if (fitnessEl.modalOverlay) fitnessEl.modalOverlay.classList.add('hidden');
+    if (!fitnessEl.modalOverlay) return;
+    const lockedTop = document.body.style.top;
+    fitnessEl.modalOverlay.classList.add('hidden');
+    fitnessEl.modalOverlay.style.display = '';
+    document.body.classList.remove('fitness-modal-open');
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    if (fitnessEl.screen) {
+      fitnessEl.screen.style.overflow = '';
+      fitnessEl.screen.scrollTop = fitnessModalScrollTop;
+    } else if (lockedTop) {
+      const y = Math.abs(parseInt(lockedTop, 10) || 0);
+      window.scrollTo(0, y);
+    }
   }
 
   function fitnessOpenModal(html, onMount) {
     if (!fitnessEl.modalContent || !fitnessEl.modalOverlay) return;
+    fitnessModalScrollTop = fitnessEl.screen ? fitnessEl.screen.scrollTop : window.scrollY;
+    if (fitnessEl.modalOverlay.parentElement !== document.body) {
+      document.body.appendChild(fitnessEl.modalOverlay);
+    }
     fitnessEl.modalContent.innerHTML = html;
+    fitnessEl.modalOverlay.style.position = 'fixed';
+    fitnessEl.modalOverlay.style.inset = '0';
+    fitnessEl.modalOverlay.style.display = 'flex';
+    fitnessEl.modalOverlay.style.alignItems = 'center';
+    fitnessEl.modalOverlay.style.justifyContent = 'center';
     fitnessEl.modalOverlay.classList.remove('hidden');
+    document.body.classList.add('fitness-modal-open');
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${fitnessModalScrollTop}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    if (fitnessEl.screen) fitnessEl.screen.style.overflow = 'hidden';
     if (onMount) onMount();
   }
 
@@ -1467,12 +1497,12 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Choice modal for gym: use GYM module or simple form
   function fitnessOpenGymChoiceModal(editId) {
-    let html = '<h3 class="font-semibold mb-4">Добавить силовую тренировку</h3>';
+    let html = '<h3 class="font-semibold mb-4">Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р РЋР С“Р В РЎвЂР В Р’В»Р В РЎвЂўР В Р вЂ Р РЋРЎвЂњР РЋР вЂ№ Р РЋРІР‚С™Р РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В РЎвЂќР РЋРЎвЂњ</h3>';
     html += '<div class="space-y-3">';
-    html += '<button type="button" id="gymChoiceModule" class="w-full py-4 rounded-xl bg-indigo-500 hover:bg-indigo-600 font-semibold">🏋️ Открыть GYM (план тренировок)</button>';
-    html += '<button type="button" id="gymChoiceSimple" class="w-full py-4 rounded-xl bg-white/15 hover:bg-white/25">⏱️ Быстрая запись (только время)</button>';
+    html += '<button type="button" id="gymChoiceModule" class="w-full py-4 rounded-xl bg-indigo-500 hover:bg-indigo-600 font-semibold">РЎР‚РЎСџР РЏРІР‚в„–Р С—РЎвЂР РЏ Р В РЎвЂєР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р РЋР Р‰ GYM (Р В РЎвЂ”Р В Р’В»Р В Р’В°Р В Р вЂ¦ Р РЋРІР‚С™Р РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В РЎвЂўР В РЎвЂќ)</button>';
+    html += '<button type="button" id="gymChoiceSimple" class="w-full py-4 rounded-xl bg-white/15 hover:bg-white/25">Р Р†Р РЏР’В±Р С—РЎвЂР РЏ Р В РІР‚ВР РЋРІР‚в„–Р РЋР С“Р РЋРІР‚С™Р РЋР вЂљР В Р’В°Р РЋР РЏ Р В Р’В·Р В Р’В°Р В РЎвЂ”Р В РЎвЂР РЋР С“Р РЋР Р‰ (Р РЋРІР‚С™Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В РЎвЂќР В РЎвЂў Р В Р вЂ Р РЋР вЂљР В Р’ВµР В РЎВР РЋР РЏ)</button>';
     html += '</div>';
-    html += '<div class="mt-4"><button type="button" id="gymChoiceCancel" class="w-full py-3 rounded-xl bg-white/10">Отмена</button></div>';
+    html += '<div class="mt-4"><button type="button" id="gymChoiceCancel" class="w-full py-3 rounded-xl bg-white/10">Р В РЎвЂєР РЋРІР‚С™Р В РЎВР В Р’ВµР В Р вЂ¦Р В Р’В°</button></div>';
     
     fitnessOpenModal(html, () => {
       fitnessEl.modalOverlay.querySelector('#gymChoiceCancel')?.addEventListener('click', fitnessCloseModal);
@@ -1517,7 +1547,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const title = document.getElementById('cardioModalTitle');
     const typeSelect = document.getElementById('cardioTypeSelect');
     
-    title.textContent = isOutdoor ? 'Аэробная на улице' : 'Кардио в зале';
+    title.textContent = isOutdoor ? 'Р В РЎвЂ™Р РЋР РЉР РЋР вЂљР В РЎвЂўР В Р’В±Р В Р вЂ¦Р В Р’В°Р РЋР РЏ Р В Р вЂ¦Р В Р’В° Р РЋРЎвЂњР В Р’В»Р В РЎвЂР РЋРІР‚В Р В Р’Вµ' : 'Р В РЎв„ўР В Р’В°Р РЋР вЂљР В РўвЂР В РЎвЂР В РЎвЂў Р В Р вЂ  Р В Р’В·Р В Р’В°Р В Р’В»Р В Р’Вµ';
     document.getElementById('cardioEditId').value = editId || '';
     document.getElementById('cardioIsOutdoor').value = isOutdoor ? 'true' : 'false';
     document.getElementById('cardioDuration').value = existing?.durationMinutes || 30;
@@ -1605,23 +1635,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const dayData = FS.getDayData(fitnessGetDateKey());
     const existing = editId ? (dayData.activities || []).find((a) => a.id === editId) : null;
     const kind = forceKind || existing?.kind || 'gym';
-    let html = '<h3 class="font-semibold mb-4">Добавить активность</h3>';
+    let html = '<h3 class="font-semibold mb-4">Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р РЋР Р‰</h3>';
     html += '<input type="hidden" id="fmActivityKind" value="' + kind + '">';
     html += '<input type="hidden" id="fmActivityEditId" value="' + (editId || '') + '">';
     if (kind === 'gym') {
-      html += '<div class="space-y-3"><label class="block">Минуты</label><input type="number" id="fmGymMinutes" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.durationMinutes ?? '') + '">';
-      html += '<label class="block">Интенсивность</label><select id="fmGymIntensity" class="w-full p-3 bg-white/30 rounded-xl text-white">';
-      ['low','medium','high'].forEach((v) => { html += '<option value="' + v + '"' + (existing?.intensity === v ? ' selected' : '') + '>' + (v === 'low' ? 'Низкая' : v === 'medium' ? 'Средняя' : 'Высокая') + '</option>'; });
+      html += '<div class="space-y-3"><label class="block">Р В РЎС™Р В РЎвЂР В Р вЂ¦Р РЋРЎвЂњР РЋРІР‚С™Р РЋРІР‚в„–</label><input type="number" id="fmGymMinutes" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.durationMinutes ?? '') + '">';
+      html += '<label class="block">Р В Р’ВР В Р вЂ¦Р РЋРІР‚С™Р В Р’ВµР В Р вЂ¦Р РЋР С“Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р РЋР Р‰</label><select id="fmGymIntensity" class="w-full p-3 bg-white/30 rounded-xl text-white">';
+      ['low','medium','high'].forEach((v) => { html += '<option value="' + v + '"' + (existing?.intensity === v ? ' selected' : '') + '>' + (v === 'low' ? 'Р В РЎСљР В РЎвЂР В Р’В·Р В РЎвЂќР В Р’В°Р РЋР РЏ' : v === 'medium' ? 'Р В Р Р‹Р РЋР вЂљР В Р’ВµР В РўвЂР В Р вЂ¦Р РЋР РЏР РЋР РЏ' : 'Р В РІР‚в„ўР РЋРІР‚в„–Р РЋР С“Р В РЎвЂўР В РЎвЂќР В Р’В°Р РЋР РЏ') + '</option>'; });
       html += '</select></div>';
     } else if (kind === 'cardio') {
-      html += '<div class="space-y-3"><label class="block">Минуты</label><input type="number" id="fmCardioMinutes" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.durationMinutes ?? '') + '">';
-      html += '<label class="block">Тип</label><select id="fmCardioType" class="w-full p-3 bg-white/30 rounded-xl text-white">';
-      ['run','walk','bike','other'].forEach((v) => { html += '<option value="' + v + '"' + (existing?.type === v ? ' selected' : '') + '>' + (v === 'run' ? 'Бег' : v === 'walk' ? 'Ходьба' : v === 'bike' ? 'Велосипед' : 'Другое') + '</option>'; });
+      html += '<div class="space-y-3"><label class="block">Р В РЎС™Р В РЎвЂР В Р вЂ¦Р РЋРЎвЂњР РЋРІР‚С™Р РЋРІР‚в„–</label><input type="number" id="fmCardioMinutes" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.durationMinutes ?? '') + '">';
+      html += '<label class="block">Р В РЎС›Р В РЎвЂР В РЎвЂ”</label><select id="fmCardioType" class="w-full p-3 bg-white/30 rounded-xl text-white">';
+      ['run','walk','bike','other'].forEach((v) => { html += '<option value="' + v + '"' + (existing?.type === v ? ' selected' : '') + '>' + (v === 'run' ? 'Р В РІР‚ВР В Р’ВµР В РЎвЂ“' : v === 'walk' ? 'Р В РўС’Р В РЎвЂўР В РўвЂР РЋР Р‰Р В Р’В±Р В Р’В°' : v === 'bike' ? 'Р В РІР‚в„ўР В Р’ВµР В Р’В»Р В РЎвЂўР РЋР С“Р В РЎвЂР В РЎвЂ”Р В Р’ВµР В РўвЂ' : 'Р В РІР‚СњР РЋР вЂљР РЋРЎвЂњР В РЎвЂ“Р В РЎвЂўР В Р’Вµ') + '</option>'; });
       html += '</select></div>';
     } else {
-      html += '<div class="space-y-3"><label class="block">Шаги</label><input type="number" id="fmSteps" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.steps ?? '') + '"></div>';
+      html += '<div class="space-y-3"><label class="block">Р В Р РѓР В Р’В°Р В РЎвЂ“Р В РЎвЂ</label><input type="number" id="fmSteps" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.steps ?? '') + '"></div>';
     }
-    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmActivityCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmActivitySave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmActivityCancel" class="flex-1 py-3 rounded-xl bg-white/20">Р В РЎвЂєР РЋРІР‚С™Р В РЎВР В Р’ВµР В Р вЂ¦Р В Р’В°</button><button type="button" id="fmActivitySave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Р В Р Р‹Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰</button></div>';
     fitnessOpenModal(html, () => {
       fitnessEl.modalOverlay.querySelector('#fmActivityCancel')?.addEventListener('click', fitnessCloseModal);
       fitnessEl.modalOverlay.querySelector('#fmActivitySave')?.addEventListener('click', () => {
@@ -1742,31 +1772,31 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Gym
     document.getElementById('activityGymStats').textContent = 
-      `${totals.gym.duration} мин · ${totals.gym.calories} ккал`;
+      `${totals.gym.duration} Р В РЎВР В РЎвЂР В Р вЂ¦ Р вЂ™Р’В· ${totals.gym.calories} Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»`;
     const gymPercent = Math.min(100, Math.round((totals.gym.duration / goals.GYM_MINUTES) * 100));
     document.getElementById('activityGymBar').style.width = `${gymPercent}%`;
     
     // Cardio Indoor
     document.getElementById('activityCardioIndoorStats').textContent = 
-      `${totals.cardio_indoor.duration} мин · ${totals.cardio_indoor.calories} ккал`;
+      `${totals.cardio_indoor.duration} Р В РЎВР В РЎвЂР В Р вЂ¦ Р вЂ™Р’В· ${totals.cardio_indoor.calories} Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»`;
     const cardioInPercent = Math.min(100, Math.round((totals.cardio_indoor.duration / goals.CARDIO_MINUTES) * 100));
     document.getElementById('activityCardioIndoorBar').style.width = `${cardioInPercent}%`;
     
     // Cardio Outdoor
     document.getElementById('activityCardioOutdoorStats').textContent = 
-      `${totals.cardio_outdoor.duration} мин · ${totals.cardio_outdoor.calories} ккал`;
+      `${totals.cardio_outdoor.duration} Р В РЎВР В РЎвЂР В Р вЂ¦ Р вЂ™Р’В· ${totals.cardio_outdoor.calories} Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»`;
     const cardioOutPercent = Math.min(100, Math.round((totals.cardio_outdoor.duration / goals.CARDIO_MINUTES) * 100));
     document.getElementById('activityCardioOutdoorBar').style.width = `${cardioOutPercent}%`;
     
     // Home
     document.getElementById('activityHomeStats').textContent = 
-      `${totals.home.duration} мин · ${totals.home.calories} ккал`;
+      `${totals.home.duration} Р В РЎВР В РЎвЂР В Р вЂ¦ Р вЂ™Р’В· ${totals.home.calories} Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»`;
     const homePercent = Math.min(100, Math.round((totals.home.duration / goals.HOME_MINUTES) * 100));
     document.getElementById('activityHomeBar').style.width = `${homePercent}%`;
     
     // Steps
     document.getElementById('activityStepsStats').textContent = 
-      `${totals.steps.steps.toLocaleString()} / ${goals.STEPS.toLocaleString()} шагов`;
+      `${totals.steps.steps.toLocaleString()} / ${goals.STEPS.toLocaleString()} Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ“Р В РЎвЂўР В Р вЂ `;
     const stepsPercent = Math.min(100, Math.round((totals.steps.steps / goals.STEPS) * 100));
     document.getElementById('activityStepsBar').style.width = `${stepsPercent}%`;
     
@@ -1811,53 +1841,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const dayData = FS.getDayData(fitnessGetDateKey());
     const existing = editId ? (dayData.foods || []).find((f) => f.id === editId) : null;
     const defaultTime = existing?.time || FS.formatTimeHM(new Date());
-    
-    // For editing, only show Manual mode with pre-filled values
     const isEditMode = !!editId;
-    
-    let html = '<h3 class="font-semibold mb-4">' + (isEditMode ? 'Редактировать приём пищи' : 'Добавить приём пищи') + '</h3>';
-    
-    // Mode toggle (only for new entries)
+
+    let html = '<h3 class="font-semibold mb-4">' + (isEditMode ? 'Edit meal' : 'Add meal') + '</h3>';
+
     if (!isEditMode) {
       html += '<div class="flex gap-2 mb-4">';
-      html += '<button type="button" id="fmModeManual" class="flex-1 py-2 px-3 rounded-lg bg-green-500/50 text-sm font-medium">Ручной ввод</button>';
-      html += '<button type="button" id="fmModeAuto" class="flex-1 py-2 px-3 rounded-lg bg-white/10 text-sm font-medium opacity-70">Авто (текст)</button>';
+      html += '<button type="button" id="fmModeManual" class="flex-1 py-2 px-3 rounded-lg bg-green-500/50 text-sm font-medium">Manual</button>';
+      html += '<button type="button" id="fmModeAuto" class="flex-1 py-2 px-3 rounded-lg bg-white/10 text-sm font-medium opacity-70">Auto</button>';
       html += '</div>';
     }
-    
-    // Manual mode content
+
     html += '<div id="fmManualContent" class="space-y-3">';
-    html += '<label class="block text-sm">Название</label><input type="text" id="fmFoodName" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.name ?? '') + '" placeholder="Что съели">';
-    html += '<label class="block text-sm">Количество</label><input type="text" id="fmFoodAmount" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.amount ?? '') + '" placeholder="200 г, 1 порция">';
-    html += '<label class="block text-sm">Калории (опционально)</label><input type="number" id="fmFoodCalories" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.calories ?? '') + '">';
+    html += '<label class="block text-sm">Meal name</label><input type="text" id="fmFoodName" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.name ?? '') + '" placeholder="Chicken breast">';
+    html += '<label class="block text-sm">Amount</label><input type="text" id="fmFoodAmount" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.amount ?? '') + '" placeholder="200 g">';
+    html += '<label class="block text-sm">Calories (kcal)</label><input type="number" id="fmFoodCalories" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.calories ?? '') + '">';
     html += '<div class="flex gap-2">';
-    html += '<div class="flex-1"><label class="block text-sm">Б (опц.)</label><input type="number" id="fmFoodProtein" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.protein ?? '') + '" placeholder="0"></div>';
-    html += '<div class="flex-1"><label class="block text-sm">Ж (опц.)</label><input type="number" id="fmFoodFat" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.fat ?? '') + '" placeholder="0"></div>';
-    html += '<div class="flex-1"><label class="block text-sm">У (опц.)</label><input type="number" id="fmFoodCarbs" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.carbs ?? '') + '" placeholder="0"></div>';
+    html += '<div class="flex-1"><label class="block text-sm">Protein (g)</label><input type="number" id="fmFoodProtein" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.protein ?? '') + '" placeholder="0"></div>';
+    html += '<div class="flex-1"><label class="block text-sm">Fat (g)</label><input type="number" id="fmFoodFat" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.fat ?? '') + '" placeholder="0"></div>';
+    html += '<div class="flex-1"><label class="block text-sm">Carbs (g)</label><input type="number" id="fmFoodCarbs" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.carbs ?? '') + '" placeholder="0"></div>';
     html += '</div>';
-    html += '<label class="block text-sm">Время (примерно)</label><input type="time" id="fmFoodTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
+    html += '<label class="block text-sm">Time</label><input type="time" id="fmFoodTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
     html += '</div>';
-    
-    // Auto mode content (hidden by default, only for new entries)
+
     if (!isEditMode) {
       html += '<div id="fmAutoContent" class="space-y-3 hidden">';
-      html += '<label class="block text-sm">Текст (лучше по‑английски)</label><input type="text" id="fmFoodQuery" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" placeholder="buckwheat 200 g или гречка 200 г">';
-      html += '<p class="text-xs opacity-70">Авто‑режим считает калории и БЖУ по тексту. Лучше вводить на английском (buckwheat 200 g). Русский тоже работает: гречка 200 г, творог 150 г.</p>';
-      html += '<label class="block text-sm">Время (примерно)</label><input type="time" id="fmFoodTimeAuto" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
+      html += '<label class="block text-sm">Food query</label><input type="text" id="fmFoodQuery" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" placeholder="buckwheat 200 g">';
+      html += '<p class="text-xs opacity-70">Use clear input with product and amount, for example: buckwheat 200 g.</p>';
+      html += '<label class="block text-sm">Time</label><input type="time" id="fmFoodTimeAuto" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
       html += '<div id="fmAutoError" class="text-red-300 text-sm hidden"></div>';
       html += '</div>';
     }
-    
-    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmFoodCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmFoodSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">' + (isEditMode ? 'Сохранить' : 'Добавить') + '</button></div>';
-    
+
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmFoodCancel" class="flex-1 py-3 rounded-xl bg-white/20">Cancel</button><button type="button" id="fmFoodSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">' + (isEditMode ? 'Save' : 'Add') + '</button></div>';
+
     fitnessOpenModal(html, () => {
-      // Mode toggle handlers (only for new entries)
       if (!isEditMode) {
         const modeManual = fitnessEl.modalOverlay.querySelector('#fmModeManual');
         const modeAuto = fitnessEl.modalOverlay.querySelector('#fmModeAuto');
         const manualContent = fitnessEl.modalOverlay.querySelector('#fmManualContent');
         const autoContent = fitnessEl.modalOverlay.querySelector('#fmAutoContent');
-        
+
         modeManual?.addEventListener('click', () => {
           modeManual.classList.add('bg-green-500/50');
           modeManual.classList.remove('bg-white/10', 'opacity-70');
@@ -1866,7 +1890,7 @@ document.addEventListener('DOMContentLoaded', () => {
           manualContent?.classList.remove('hidden');
           autoContent?.classList.add('hidden');
         });
-        
+
         modeAuto?.addEventListener('click', () => {
           modeAuto.classList.add('bg-green-500/50');
           modeAuto.classList.remove('bg-white/10', 'opacity-70');
@@ -1876,52 +1900,44 @@ document.addEventListener('DOMContentLoaded', () => {
           manualContent?.classList.add('hidden');
         });
       }
-      
-      // Cancel button
+
       fitnessEl.modalOverlay.querySelector('#fmFoodCancel')?.addEventListener('click', fitnessCloseModal);
-      
-      // Save button - handles both Manual and Auto modes
+
       fitnessEl.modalOverlay.querySelector('#fmFoodSave')?.addEventListener('click', async () => {
         const k = fitnessGetDateKey();
-        const dayData = FS.getDayData(k);
-        
-        // Determine which mode is active (for new entries)
+        const dayDataNow = FS.getDayData(k);
+
         let isAutoMode = false;
         if (!isEditMode) {
           const autoContent = fitnessEl.modalOverlay.querySelector('#fmAutoContent');
           isAutoMode = !autoContent?.classList.contains('hidden');
         }
-        
+
         if (isAutoMode) {
-          // Auto mode: fetch nutrition data
           const queryText = document.getElementById('fmFoodQuery')?.value?.trim();
           const time = document.getElementById('fmFoodTimeAuto')?.value;
           const saveBtn = fitnessEl.modalOverlay.querySelector('#fmFoodSave');
           const errorEl = fitnessEl.modalOverlay.querySelector('#fmAutoError');
-          
+
           if (!queryText) {
             if (errorEl) {
-              errorEl.textContent = 'Введите текст (например: buckwheat 200 g)';
+              errorEl.textContent = 'Please enter a food query (for example: buckwheat 200 g).';
               errorEl.classList.remove('hidden');
             }
             return;
           }
-          
-          // Show loading state
+
           if (saveBtn) {
             saveBtn.disabled = true;
-            saveBtn.textContent = 'Считаем...';
+            saveBtn.textContent = 'Loading...';
           }
-          if (errorEl) {
-            errorEl.classList.add('hidden');
-          }
-          
+          if (errorEl) errorEl.classList.add('hidden');
+
           try {
             const res = await fetch('/api/nutrition?query=' + encodeURIComponent(queryText));
             const data = await res.json();
-            
+
             if (res.ok && data.kcal) {
-              // Build entry from API response
               const entry = FS.buildFoodEntry({
                 name: queryText,
                 amount: null,
@@ -1929,39 +1945,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 protein: data.b,
                 fat: data.zh,
                 carbs: data.u,
-                time: time,
+                time,
                 source: 'auto',
               }, editId);
-              
-              const next = FS.mergeFood(dayData.foods, entry, editId);
+
+              const next = FS.mergeFood(dayDataNow.foods, entry, editId);
               FS.updateDayData(k, { foods: next });
               fitnessCloseModal();
               fitnessRenderFoodList();
               fitnessRenderCalories();
             } else {
-              // Show error
               if (errorEl) {
-                errorEl.textContent = 'Не удалось автоматически посчитать. Попробуйте ввести по‑английски (buckwheat 200 g) или используйте ручной ввод.';
+                errorEl.textContent = 'Unable to parse this query. Use clear format like "buckwheat 200 g".';
                 errorEl.classList.remove('hidden');
               }
               if (saveBtn) {
                 saveBtn.disabled = false;
-                saveBtn.textContent = 'Добавить';
+                saveBtn.textContent = 'Add';
               }
             }
           } catch (err) {
             console.error('Auto mode error:', err);
             if (errorEl) {
-              errorEl.textContent = 'Ошибка соединения. Попробуйте ещё раз или используйте ручной ввод.';
+              errorEl.textContent = 'Network error. Please enter nutrition values manually.';
               errorEl.classList.remove('hidden');
             }
             if (saveBtn) {
               saveBtn.disabled = false;
-              saveBtn.textContent = 'Добавить';
+              saveBtn.textContent = 'Add';
             }
           }
         } else {
-          // Manual mode
           const formValues = {
             name: document.getElementById('fmFoodName')?.value,
             amount: document.getElementById('fmFoodAmount')?.value,
@@ -1972,9 +1986,9 @@ document.addEventListener('DOMContentLoaded', () => {
             time: document.getElementById('fmFoodTime')?.value,
             source: 'manual',
           };
-    
+
           const entry = FS.buildFoodEntry(formValues, editId);
-          const next = FS.mergeFood(dayData.foods, entry, editId);
+          const next = FS.mergeFood(dayDataNow.foods, entry, editId);
           FS.updateDayData(k, { foods: next });
           fitnessCloseModal();
           fitnessRenderFoodList();
@@ -1983,179 +1997,93 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
-
-  // ===================== NEW SUPPLEMENTS TRACKING UI =====================
+// ===================== NEW SUPPLEMENTS TRACKING UI =====================
 
   // NEW: Render new supplements tracking (today's plan + intakes)
   function fitnessRenderSupplementsTracking() {
     if (!fitnessEl.supplementsTracking) return;
-    
-    // CRITICAL: Hard reset - clear DOM completely before rendering
-    fitnessEl.supplementsTracking.innerHTML = '';
 
+    fitnessEl.supplementsTracking.innerHTML = '';
     const dateKey = fitnessGetDateKey();
     const supplements = FS.getAllSupplements();
-    
-    // DEBUG: Log render start
-    console.log('[Supplements] render for dateKey:', dateKey, 'supplements count:', supplements.length);
-    console.log('[Supplements] supplements data:', supplements.map(s => ({
-      id: s.id,
-      name: s.name,
-      daily: s.daily,
-      dailyStartDate: s.dailyStartDate,
-      dailyEndDate: s.dailyEndDate,
-      historyDates: s.history?.map(h => h.date) || []
-    })));
-    
+
     if (supplements.length === 0) {
       fitnessEl.supplementsTracking.innerHTML = `
-        <div id="fitnessSupplementsDebug" class="text-[11px] leading-4 bg-black/25 border border-white/10 rounded-lg px-2 py-1 mb-2 hidden"></div>
         <div class="text-center py-4 opacity-70">
-          <p class="text-sm mb-2">Нет добавленных БАДов</p>
-          <button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Добавить первый БАД</button>
+          <p class="text-sm mb-2">No supplements yet</p>
+          <button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Add first supplement</button>
         </div>
       `;
       fitnessBindSupplementsTrackingHandlers();
       return;
     }
-  
-    let html = '<div id="fitnessSupplementsDebug" class="text-[11px] leading-4 bg-black/25 border border-white/10 rounded-lg px-2 py-1 mb-2 hidden"></div>';
-    
+
+    let html = '';
     let visibleCount = 0;
 
     for (const supp of supplements) {
       const intakes = FS.getSupplementIntakesForDay(supp.id, dateKey);
       const totalDose = FS.getTotalDoseForDay(intakes);
-      const unitLabel = supp.unit === 'табл' ? 'табл' : supp.unit;
-      
-      // CRITICAL FIX: Filter supplements based on daily flag and date interval
-      const isPast = FS.isPastDate(dateKey);
-      const isToday = FS.isToday(dateKey);
+      const unitLabel = supp.unit || 'mg';
 
-      // Check if supplement should be shown for this date
       let shouldShow = false;
-
       if (supp.daily) {
-        // Daily supplements: check if date is within interval
-        const inInterval = FS.isDateInDailyInterval(supp, dateKey);
-        if (inInterval) {
-          // Within interval: show (plan will be generated if needed)
-          shouldShow = true;
-        } else {
-          // Outside interval: only show if there are actual intakes (manual entries)
-          shouldShow = intakes.length > 0;
-        }
+        shouldShow = FS.isDateInDailyInterval(supp, dateKey) || intakes.length > 0;
       } else {
-        // Non-daily supplements: only show if there are intakes for this specific date
         shouldShow = intakes.length > 0;
       }
-
-      // DEBUG: Log render decision
-      console.log('[Supplements] checking:', supp.name,
-        'daily:', supp.daily,
-        'dailyStartDate:', supp.dailyStartDate,
-        'dailyEndDate:', supp.dailyEndDate,
-        'inInterval:', supp.daily ? FS.isDateInDailyInterval(supp, dateKey) : 'N/A',
-        'intakes.length:', intakes.length,
-        'shouldShow:', shouldShow
-      );
-  
-      if (!shouldShow) {
-        continue; // Skip this supplement for this date
-      }
+      if (!shouldShow) continue;
 
       visibleCount++;
-      console.log('[Supplements] WILL RENDER card for:', supp.name, 'dateKey:', dateKey, 'intakes:', intakes);
-
       html += '<div class="bg-white/5 rounded-xl p-3 mb-3">';
       html += '<div class="flex items-center justify-between mb-2">';
       html += '<h4 class="font-semibold text-sm">' + supp.name + '</h4>';
       html += '<div class="flex gap-1">';
-      html += '<button type="button" class="supp-edit-norm text-xs opacity-70" data-id="' + supp.id + '">норма</button>';
-      html += '<button type="button" class="supp-history text-xs opacity-70" data-id="' + supp.id + '">история</button>';
-      // NEW: Button to remove supplement from this specific day
-      html += '<button type="button" class="supp-remove-from-day text-xs opacity-70 text-red-300" data-id="' + supp.id + '" title="Убрать из этого дня">×</button>';
+      html += '<button type="button" class="supp-edit-norm text-xs opacity-70" data-id="' + supp.id + '">Edit</button>';
+      html += '<button type="button" class="supp-history text-xs opacity-70" data-id="' + supp.id + '">History</button>';
+      html += '<button type="button" class="supp-remove-from-day text-xs opacity-70 text-red-300" data-id="' + supp.id + '" title="Remove from this day">Remove day</button>';
       html += '</div></div>';
-      
-      html += '<p class="text-xs opacity-70 mb-2">' + supp.standardDailyDose + ' ' + unitLabel + '/день' + (supp.daily ? ' (ежедневно)' : '') + '</p>';
-      
-      // Show intakes
+
+      html += '<p class="text-xs opacity-70 mb-2">' + supp.standardDailyDose + ' ' + unitLabel + '/day' + (supp.daily ? ' (scheduled daily)' : '') + '</p>';
+
       for (const intake of intakes) {
         const doseClass = intake.edited ? 'text-yellow-300' : '';
-        const checkedClass = intake.checked ? 'opacity-100' : 'opacity-50';
-        
-        // CRITICAL: Determine if checkbox should be disabled (future dates)
         const isFuture = FS.isFutureDate(dateKey);
         const checkboxDisabled = isFuture ? ' disabled' : '';
-        const checkboxTitle = isFuture ? ' title="Нельзя отметить приём в будущем"' : '';
+        const checkboxTitle = isFuture ? ' title="Future dates are read-only"' : '';
 
         html += '<div class="flex items-center gap-2 py-1 border-b border-white/5 last:border-0">';
-        // CRITICAL: Checkbox disabled for future dates - planning only, no actual taking
         html += '<input type="checkbox" class="supp-intake-check rounded' + (isFuture ? ' opacity-50 cursor-not-allowed' : '') + '" data-supp-id="' + supp.id + '" data-intake-id="' + intake.id + '"' + (intake.checked ? ' checked' : '') + checkboxDisabled + checkboxTitle + '>';
-
-        // Show time if set (from checkbox click), otherwise show placeholder
-        if (intake.time) {
-          html += '<span class="text-xs opacity-70 w-12">' + intake.time + '</span>';
-        } else {
-          html += '<span class="text-xs opacity-30 w-12">--:--</span>';
-        }
-        
+        html += intake.time ? '<span class="text-xs opacity-70 w-12">' + intake.time + '</span>' : '<span class="text-xs opacity-30 w-12">--:--</span>';
         html += '<span class="flex-1 text-sm ' + doseClass + '">' + intake.dose + ' ' + unitLabel + '</span>';
-        
-        html += '<button type="button" class="supp-edit-intake text-xs opacity-70" data-supp-id="' + supp.id + '" data-intake-id="' + intake.id + '">✏</button>';
+        html += '<button type="button" class="supp-edit-intake text-xs opacity-70" data-supp-id="' + supp.id + '" data-intake-id="' + intake.id + '">Edit</button>';
         html += '</div>';
       }
 
-      // Total for today
       html += '<div class="text-xs mt-2 pt-2 border-t border-white/10">';
-      html += 'Сегодня: ' + totalDose + ' ' + unitLabel + ' / ' + supp.standardDailyDose + ' ' + unitLabel;
+      html += 'Total: ' + totalDose + ' ' + unitLabel + ' / ' + supp.standardDailyDose + ' ' + unitLabel;
       html += '</div>';
-      
-      // Add intake button
-      html += '<button type="button" class="supp-add-intake w-full mt-2 py-1 text-xs bg-white/10 rounded" data-supp-id="' + supp.id + '">+ Добавить приём</button>';
-      
+      html += '<button type="button" class="supp-add-intake w-full mt-2 py-1 text-xs bg-white/10 rounded" data-supp-id="' + supp.id + '">+ Add intake</button>';
       html += '</div>';
     }
-    
-    // DEBUG: Log final count
-    console.log('[Supplements] visibleCount:', visibleCount, 'dateKey:', dateKey);
 
-    // CRITICAL: If no supplements to show for this date, display placeholder
-    if (html === '' || visibleCount === 0) {
-      console.log('[Supplements] showing EMPTY placeholder for dateKey:', dateKey);
+    if (visibleCount === 0) {
       html += '<div class="text-center py-6 opacity-70">';
-      html += '<p class="text-sm mb-3">Нет БАДов для этой даты</p>';
-      html += '<button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Добавить БАД</button>';
+      html += '<p class="text-sm mb-3">No supplements planned for this day</p>';
+      html += '<button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Add supplement</button>';
       html += '</div>';
     }
-      
-    // Add new supplement button
-    html += '<button type="button" id="addNewSupplement" class="w-full py-2 rounded-xl bg-green-500/30 text-sm">+ Добавить БАД</button>';
-    
-    // DEV/DEBUG: Clear history button (hidden in production, shown for debugging)
-    html += '<button type="button" id="clearSupplementsHistory" class="w-full py-1 mt-2 rounded-xl bg-red-500/20 text-xs text-red-300 opacity-50 hover:opacity-100">🗑 Очистить всю историю БАДов</button>';
-    // DEV/DEBUG: COMPLETE RESET button - deletes ALL supplements
-    html += '<button type="button" id="resetAllSupplements" class="w-full py-1 mt-1 rounded-xl bg-red-900/40 text-xs text-red-400 opacity-50 hover:opacity-100">⚠️ УДАЛИТЬ ВСЕ БАДЫ</button>';
+
+    html += '<button type="button" id="addNewSupplement" class="w-full py-2 rounded-xl bg-green-500/30 text-sm">+ Add supplement</button>';
+    html += '<button type="button" id="clearSupplementsHistory" class="w-full py-1 mt-2 rounded-xl bg-red-500/20 text-xs text-red-300 opacity-50 hover:opacity-100">Clear supplements history</button>';
+    html += '<button type="button" id="resetAllSupplements" class="w-full py-1 mt-1 rounded-xl bg-red-900/40 text-xs text-red-400 opacity-50 hover:opacity-100">Delete all supplements</button>';
 
     fitnessEl.supplementsTracking.innerHTML = html;
     fitnessBindSupplementsTrackingHandlers();
   }
-
-  function fitnessBindSupplementsTrackingHandlers() {
+function fitnessBindSupplementsTrackingHandlers() {
     if (!fitnessEl.supplementsTracking || fitnessEl.supplementsTracking.dataset.bound === '1') return;
     fitnessEl.supplementsTracking.dataset.bound = '1';
-
-    const logSuppDebug = (message) => {
-      let debugEl = document.getElementById('fitnessSupplementsDebug');
-      if (!debugEl) {
-        debugEl = document.createElement('div');
-        debugEl.id = 'fitnessSupplementsDebug';
-        debugEl.className = 'text-[11px] leading-4 bg-black/25 border border-white/10 rounded-lg px-2 py-1 mb-2';
-        fitnessEl.supplementsTracking.prepend(debugEl);
-      }
-      const ts = new Date().toTimeString().slice(0, 8);
-      debugEl.textContent = `[${ts}] ${message}\n` + (debugEl.textContent || '');
-    };
 
     fitnessEl.supplementsTracking.addEventListener('click', (e) => {
       const dateKey = fitnessGetDateKey();
@@ -2165,27 +2093,14 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const suppId = cb.dataset.suppId;
         const intakeId = cb.dataset.intakeId;
-
-        if (!suppId || !intakeId) {
-          logSuppDebug('supp: click ignored (missing ids)');
-          return;
-        }
-
-        logSuppDebug('supp: click captured, date=' + dateKey);
+        if (!suppId || !intakeId) return;
 
         if (FS.isFutureDate(dateKey)) {
-          logSuppDebug('supp: blocked by future-date guard');
-          alert('Нельзя отметить приём БАДа в будущем дне. Можно только планировать (менять дозу/время).');
+          alert('Future dates are read-only. You can only mark supplement intakes for today or past days.');
           return;
         }
 
-        const result = FS.toggleSupplementIntakeChecked(suppId, dateKey, intakeId);
-        if (result === null) {
-          logSuppDebug('supp: blocked in state layer');
-        } else {
-          logSuppDebug('supp: toggled, checked=' + String(Boolean(result.checked)));
-        }
-
+        FS.toggleSupplementIntakeChecked(suppId, dateKey, intakeId);
         fitnessRenderSupplementsTracking();
         return;
       }
@@ -2196,23 +2111,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (e.target.closest('#clearSupplementsHistory')) {
-        if (confirm('Очистить всю историю БАДов? Сами БАДы останутся.')) {
+        if (confirm('Clear all supplement intake history? This keeps supplement definitions and schedules.')) {
           const success = FS.clearAllSupplementsHistory();
-          if (success) {
-            alert('История БАДов очищена.');
-            fitnessRenderSupplementsTracking();
-          } else {
-            alert('Ошибка при очистке истории.');
-          }
+          alert(success ? 'Supplement history was cleared.' : 'Unable to clear supplement history.');
+          if (success) fitnessRenderSupplementsTracking();
         }
         return;
       }
 
       if (e.target.closest('#resetAllSupplements')) {
-        if (confirm('Удалить все БАДы и их историю безвозвратно?') &&
-            confirm('Подтвердите удаление всех БАДов.')) {
+        if (confirm('Delete all supplements and all intake history? This action cannot be undone.') &&
+            confirm('Please confirm once more: delete all supplements now?')) {
           FS.resetAllSupplements();
-          alert('Все БАДы удалены.');
+          alert('All supplements were deleted.');
           fitnessRenderSupplementsTracking();
         }
         return;
@@ -2247,67 +2158,66 @@ document.addEventListener('DOMContentLoaded', () => {
         const suppId = removeFromDayBtn.dataset.id;
         const supp = FS.getSupplementById(suppId);
         if (!supp) return;
-        if (confirm('Убрать \"' + supp.name + '\" из этого дня?')) {
+        if (confirm('Remove "' + supp.name + '" from this day?')) {
           FS.removeAllSupplementIntakesForDay(suppId, dateKey);
           fitnessRenderSupplementsTracking();
         }
       }
     });
   }
-
-  // NEW: Open modal to add/edit supplement profile
+// NEW: Open modal to add/edit supplement profile
   function fitnessOpenSupplementProfileModal(editId) {
     const existing = editId ? FS.getSupplementById(editId) : null;
     const todayKey = FS.formatDateKey(new Date());
     
-    let html = '<h3 class="font-semibold mb-4">' + (existing ? 'Редактировать БАД' : 'Добавить БАД') + '</h3>';
+    let html = '<h3 class="font-semibold mb-4">' + (existing ? 'Р В Р’В Р В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В РІР‚ВР В РЎвЂ™Р В РІР‚Сњ' : 'Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В РІР‚ВР В РЎвЂ™Р В РІР‚Сњ') + '</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Название</label>';
-    html += '<input type="text" id="suppProfileName" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.name ?? '') + '" placeholder="Креатин, Кленбутерол...">';
+    html += '<label class="block text-sm">Р В РЎСљР В Р’В°Р В Р’В·Р В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР В Р’Вµ</label>';
+    html += '<input type="text" id="suppProfileName" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.name ?? '') + '" placeholder="Р В РЎв„ўР РЋР вЂљР В Р’ВµР В Р’В°Р РЋРІР‚С™Р В РЎвЂР В Р вЂ¦, Р В РЎв„ўР В Р’В»Р В Р’ВµР В Р вЂ¦Р В Р’В±Р РЋРЎвЂњР РЋРІР‚С™Р В Р’ВµР РЋР вЂљР В РЎвЂўР В Р’В»...">';
     
-    html += '<label class="block text-sm">Единица измерения</label>';
+    html += '<label class="block text-sm">Р В РІР‚СћР В РўвЂР В РЎвЂР В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В Р’В° Р В РЎвЂР В Р’В·Р В РЎВР В Р’ВµР РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ</label>';
     html += '<select id="suppProfileUnit" class="w-full p-3 bg-white/30 rounded-xl text-white">';
-    html += '<option value="мг"' + (existing?.unit === 'мг' ? ' selected' : '') + '>мг</option>';
-    html += '<option value="г"' + (existing?.unit === 'г' ? ' selected' : '') + '>г</option>';
-    html += '<option value="табл"' + (existing?.unit === 'табл' ? ' selected' : '') + '>таблетки</option>';
+    html += '<option value="Р В РЎВР В РЎвЂ“"' + (existing?.unit === 'Р В РЎВР В РЎвЂ“' ? ' selected' : '') + '>Р В РЎВР В РЎвЂ“</option>';
+    html += '<option value="Р В РЎвЂ“"' + (existing?.unit === 'Р В РЎвЂ“' ? ' selected' : '') + '>Р В РЎвЂ“</option>';
+    html += '<option value="Р РЋРІР‚С™Р В Р’В°Р В Р’В±Р В Р’В»"' + (existing?.unit === 'Р РЋРІР‚С™Р В Р’В°Р В Р’В±Р В Р’В»' ? ' selected' : '') + '>Р РЋРІР‚С™Р В Р’В°Р В Р’В±Р В Р’В»Р В Р’ВµР РЋРІР‚С™Р В РЎвЂќР В РЎвЂ</option>';
     html += '</select>';
     
     // CRITICAL: Daily checkbox with date interval controls
     html += '<div class="bg-white/5 rounded-lg p-3 mt-2">';
     html += '<label class="flex items-center gap-2">';
     html += '<input type="checkbox" id="suppProfileDaily" class="rounded"' + (existing?.daily ? ' checked' : '') + '>';
-    html += '<span class="text-sm font-medium">Принимать ежедневно</span></label>';
+    html += '<span class="text-sm font-medium">Р В РЎСџР РЋР вЂљР В РЎвЂР В Р вЂ¦Р В РЎвЂР В РЎВР В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В Р’ВµР В Р’В¶Р В Р’ВµР В РўвЂР В Р вЂ¦Р В Р’ВµР В Р вЂ Р В Р вЂ¦Р В РЎвЂў</span></label>';
 
     // Daily interval controls (shown only when daily is checked)
     html += '<div id="dailyIntervalControls" class="mt-3 space-y-2' + (existing?.daily ? '' : ' hidden') + '">';
-    html += '<label class="block text-xs opacity-70">Начать с даты</label>';
+    html += '<label class="block text-xs opacity-70">Р В РЎСљР В Р’В°Р РЋРІР‚РЋР В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р РЋР С“ Р В РўвЂР В Р’В°Р РЋРІР‚С™Р РЋРІР‚в„–</label>';
     html += '<input type="date" id="suppProfileDailyStart" class="w-full p-2 bg-white/30 rounded-xl text-white text-sm" value="' + (existing?.dailyStartDate ?? todayKey) + '">';
 
-    html += '<label class="block text-xs opacity-70 mt-2">Закончить (необязательно)</label>';
+    html += '<label class="block text-xs opacity-70 mt-2">Р В РІР‚вЂќР В Р’В°Р В РЎвЂќР В РЎвЂўР В Р вЂ¦Р РЋРІР‚РЋР В РЎвЂР РЋРІР‚С™Р РЋР Р‰ (Р В Р вЂ¦Р В Р’ВµР В РЎвЂўР В Р’В±Р РЋР РЏР В Р’В·Р В Р’В°Р РЋРІР‚С™Р В Р’ВµР В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂў)</label>';
     html += '<input type="date" id="suppProfileDailyEnd" class="w-full p-2 bg-white/30 rounded-xl text-white text-sm" value="' + (existing?.dailyEndDate ?? '') + '">';
     html += '<label class="flex items-center gap-2 mt-1">';
     html += '<input type="checkbox" id="suppProfileDailyNoEnd" class="rounded"' + (!existing?.dailyEndDate ? ' checked' : '') + '>';
-    html += '<span class="text-xs opacity-70">Без окончания (бесконечно)</span></label>';
+    html += '<span class="text-xs opacity-70">Р В РІР‚ВР В Р’ВµР В Р’В· Р В РЎвЂўР В РЎвЂќР В РЎвЂўР В Р вЂ¦Р РЋРІР‚РЋР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ (Р В Р’В±Р В Р’ВµР РЋР С“Р В РЎвЂќР В РЎвЂўР В Р вЂ¦Р В Р’ВµР РЋРІР‚РЋР В Р вЂ¦Р В РЎвЂў)</span></label>';
     html += '</div>';
     html += '</div>';
     
-    html += '<label class="block text-sm mt-2">Дневная норма</label>';
+    html += '<label class="block text-sm mt-2">Р В РІР‚СњР В Р вЂ¦Р В Р’ВµР В Р вЂ Р В Р вЂ¦Р В Р’В°Р РЋР РЏ Р В Р вЂ¦Р В РЎвЂўР РЋР вЂљР В РЎВР В Р’В°</label>';
     html += '<input type="number" id="suppProfileDailyDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.standardDailyDose ?? '1') + '" placeholder="10">';
 
-    html += '<label class="block text-sm mt-2">Количество приёмов в день</label>';
+    html += '<label class="block text-sm mt-2">Р В РЎв„ўР В РЎвЂўР В Р’В»Р В РЎвЂР РЋРІР‚РЋР В Р’ВµР РЋР С“Р РЋРІР‚С™Р В Р вЂ Р В РЎвЂў Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР РЋРІР‚ВР В РЎВР В РЎвЂўР В Р вЂ  Р В Р вЂ  Р В РўвЂР В Р’ВµР В Р вЂ¦Р РЋР Р‰</label>';
     html += '<input type="number" id="suppProfileIntakesCount" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.templateIntakes?.length ?? 1) + '" min="1" max="5">';
 
-    html += '<label class="block text-sm mt-2">Доза на приём (базовая)</label>';
+    html += '<label class="block text-sm mt-2">Р В РІР‚СњР В РЎвЂўР В Р’В·Р В Р’В° Р В Р вЂ¦Р В Р’В° Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР РЋРІР‚ВР В РЎВ (Р В Р’В±Р В Р’В°Р В Р’В·Р В РЎвЂўР В Р вЂ Р В Р’В°Р РЋР РЏ)</label>';
     html += '<input type="number" id="suppProfileDefaultDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.templateIntakes?.[0]?.defaultDose ?? '1') + '">';
 
     if (existing) {
-      html += '<button type="button" id="suppProfileDelete" class="w-full py-2 mt-2 rounded-xl bg-red-500/30 text-sm text-red-300">Удалить БАД</button>';
+      html += '<button type="button" id="suppProfileDelete" class="w-full py-2 mt-2 rounded-xl bg-red-500/30 text-sm text-red-300">Р В Р в‚¬Р В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В РІР‚ВР В РЎвЂ™Р В РІР‚Сњ</button>';
     }
     html += '</div>';
 
     html += '<div class="flex gap-3 mt-4">';
-    html += '<button type="button" id="suppProfileCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
-    html += '<button type="button" id="suppProfileSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button>';
+    html += '<button type="button" id="suppProfileCancel" class="flex-1 py-3 rounded-xl bg-white/20">Р В РЎвЂєР РЋРІР‚С™Р В РЎВР В Р’ВµР В Р вЂ¦Р В Р’В°</button>';
+    html += '<button type="button" id="suppProfileSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Р В Р Р‹Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
@@ -2355,7 +2265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!name) {
-          alert('Введите название БАДа');
+          alert('Р В РІР‚в„ўР В Р вЂ Р В Р’ВµР В РўвЂР В РЎвЂР РЋРІР‚С™Р В Р’Вµ Р В Р вЂ¦Р В Р’В°Р В Р’В·Р В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РІР‚ВР В РЎвЂ™Р В РІР‚СњР В Р’В°');
           return;
 
         }
@@ -2377,7 +2287,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       document.getElementById('suppProfileDelete')?.addEventListener('click', () => {
-        if (confirm('Удалить этот БАД? История приёмов будет потеряна.')) {
+        if (confirm('Р В Р в‚¬Р В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р РЋР РЉР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚С™ Р В РІР‚ВР В РЎвЂ™Р В РІР‚Сњ? Р В Р’ВР РЋР С“Р РЋРІР‚С™Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР РЏ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР РЋРІР‚ВР В РЎВР В РЎвЂўР В Р вЂ  Р В Р’В±Р РЋРЎвЂњР В РўвЂР В Р’ВµР РЋРІР‚С™ Р В РЎвЂ”Р В РЎвЂўР РЋРІР‚С™Р В Р’ВµР РЋР вЂљР РЋР РЏР В Р вЂ¦Р В Р’В°.')) {
           FS.deleteSupplement(editId);
           fitnessCloseModal();
           fitnessRenderSupplementsTracking();
@@ -2393,24 +2303,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!intake) return;
     
     const supp = FS.getSupplementById(suppId);
-    const unit = supp?.unit || 'табл';
+    const unit = supp?.unit || 'Р РЋРІР‚С™Р В Р’В°Р В Р’В±Р В Р’В»';
     
-    let html = '<h3 class="font-semibold mb-4">Изменить приём</h3>';
+    let html = '<h3 class="font-semibold mb-4">Р В Р’ВР В Р’В·Р В РЎВР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР РЋРІР‚ВР В РЎВ</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Доза (' + unit + ')</label>';
+    html += '<label class="block text-sm">Р В РІР‚СњР В РЎвЂўР В Р’В·Р В Р’В° (' + unit + ')</label>';
     html += '<input type="number" id="intakeEditDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + intake.dose + '">';
     html += '<div class="flex gap-2">';
-    html += '<button type="button" id="intakeEditMinus1" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">−1</button>';
+    html += '<button type="button" id="intakeEditMinus1" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">Р Р†РІвЂљВ¬РІР‚в„ў1</button>';
     html += '<button type="button" id="intakeEditPlus1" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">+1</button>';
-    html += '<button type="button" id="intakeEditX2" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">×2</button>';
+    html += '<button type="button" id="intakeEditX2" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">Р вЂњРІР‚вЂќ2</button>';
     html += '</div>';
-    html += '<label class="block text-sm mt-2">Время (HH:MM)</label>';
+    html += '<label class="block text-sm mt-2">Р В РІР‚в„ўР РЋР вЂљР В Р’ВµР В РЎВР РЋР РЏ (HH:MM)</label>';
     html += '<input type="time" id="intakeEditTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (intake.time || '') + '">';
     html += '</div>';
     html += '<div class="flex gap-3 mt-4">';
-    html += '<button type="button" id="intakeEditDelete" class="flex-1 py-3 rounded-xl bg-red-500/30 text-red-300">Удалить</button>';
-    html += '<button type="button" id="intakeEditCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
-    html += '<button type="button" id="intakeEditSave" class="flex-1 py-3 rounded-xl bg-green-500">Сохранить</button>';
+    html += '<button type="button" id="intakeEditDelete" class="flex-1 py-3 rounded-xl bg-red-500/30 text-red-300">Р В Р в‚¬Р В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰</button>';
+    html += '<button type="button" id="intakeEditCancel" class="flex-1 py-3 rounded-xl bg-white/20">Р В РЎвЂєР РЋРІР‚С™Р В РЎВР В Р’ВµР В Р вЂ¦Р В Р’В°</button>';
+    html += '<button type="button" id="intakeEditSave" class="flex-1 py-3 rounded-xl bg-green-500">Р В Р Р‹Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
@@ -2438,7 +2348,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // CRITICAL: If dose is 0, delete the intake instead of updating
         if (dose === 0) {
-          if (confirm('Доза = 0. Удалить этот приём?')) {
+          if (confirm('Р В РІР‚СњР В РЎвЂўР В Р’В·Р В Р’В° = 0. Р В Р в‚¬Р В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р РЋР РЉР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚С™ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР РЋРІР‚ВР В РЎВ?')) {
             FS.removeSupplementIntake(suppId, dateKey, intakeId);
             fitnessCloseModal();
             fitnessRenderSupplementsTracking();
@@ -2459,20 +2369,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // NEW: Open modal to add new intake
   function fitnessOpenIntakeAddModal(suppId, dateKey) {
     const supp = FS.getSupplementById(suppId);
-    const unit = supp?.unit || 'табл';
+    const unit = supp?.unit || 'Р РЋРІР‚С™Р В Р’В°Р В Р’В±Р В Р’В»';
     const defaultDose = supp?.templateIntakes?.[0]?.defaultDose || 1;
     const currentTime = FS.formatTimeHM(new Date());
     
-    let html = '<h3 class="font-semibold mb-4">Добавить приём</h3>';
+    let html = '<h3 class="font-semibold mb-4">Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР РЋРІР‚ВР В РЎВ</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Доза (' + unit + ')</label>';
+    html += '<label class="block text-sm">Р В РІР‚СњР В РЎвЂўР В Р’В·Р В Р’В° (' + unit + ')</label>';
     html += '<input type="number" id="intakeAddDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultDose + '">';
-    html += '<label class="block text-sm mt-2">Время (HH:MM)</label>';
+    html += '<label class="block text-sm mt-2">Р В РІР‚в„ўР РЋР вЂљР В Р’ВµР В РЎВР РЋР РЏ (HH:MM)</label>';
     html += '<input type="time" id="intakeAddTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentTime + '">';
     html += '</div>';
     html += '<div class="flex gap-3 mt-4">';
-    html += '<button type="button" id="intakeAddCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
-    html += '<button type="button" id="intakeAddSave" class="flex-1 py-3 rounded-xl bg-green-500">Добавить</button>';
+    html += '<button type="button" id="intakeAddCancel" class="flex-1 py-3 rounded-xl bg-white/20">Р В РЎвЂєР РЋРІР‚С™Р В РЎВР В Р’ВµР В Р вЂ¦Р В Р’В°</button>';
+    html += '<button type="button" id="intakeAddSave" class="flex-1 py-3 rounded-xl bg-green-500">Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
@@ -2495,7 +2405,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const supp = FS.getSupplementById(suppId);
     if (!supp) return;
     
-    const unit = supp.unit || 'табл';
+    const unit = supp.unit || 'Р РЋРІР‚С™Р В Р’В°Р В Р’В±Р В Р’В»';
     const history = supp.history || [];
     
     // Get last 14 days with data
@@ -2506,7 +2416,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dates.push(FS.formatDateKey(d));
     }
     
-    let html = '<h3 class="font-semibold mb-4">История: ' + supp.name + '</h3>';
+    let html = '<h3 class="font-semibold mb-4">Р В Р’ВР РЋР С“Р РЋРІР‚С™Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР РЏ: ' + supp.name + '</h3>';
     html += '<div class="space-y-3 max-h-96 overflow-y-auto">';
     
     for (const dateKey of dates) {
@@ -2527,12 +2437,12 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '<input type="checkbox" class="hist-intake-check rounded" data-date="' + dateKey + '" data-intake-id="' + intake.id + '"' + (intake.checked ? ' checked' : '') + '>';
         html += '<span class="w-12">' + (intake.time || '--:--') + '</span>';
         html += '<span class="flex-1">' + intake.dose + ' ' + unit + '</span>';
-        html += '<button type="button" class="hist-intake-edit text-xs opacity-70" data-date="' + dateKey + '" data-intake-id="' + intake.id + '">✏</button>';
+        html += '<button type="button" class="hist-intake-edit text-xs opacity-70" data-date="' + dateKey + '" data-intake-id="' + intake.id + '">Р Р†РЎС™Р РЏ</button>';
         html += '</div>';
       }
       
       if (intakes.length === 0) {
-        html += '<div class="text-xs opacity-50 py-1">Нет данных</div>';
+        html += '<div class="text-xs opacity-50 py-1">Р В РЎСљР В Р’ВµР РЋРІР‚С™ Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р РЋРІР‚В¦</div>';
       }
       
       html += '</div>';
@@ -2540,7 +2450,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     html += '</div>';
     html += '<div class="flex gap-3 mt-4">';
-    html += '<button type="button" id="histClose" class="flex-1 py-3 rounded-xl bg-white/20">Закрыть</button>';
+    html += '<button type="button" id="histClose" class="flex-1 py-3 rounded-xl bg-white/20">Р В РІР‚вЂќР В Р’В°Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р РЋР Р‰</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
@@ -2599,7 +2509,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fitnessEl.height) fitnessEl.height.value = p.height ?? '';
         if (fitnessEl.age) fitnessEl.age.value = p.age ?? '';
         if (fitnessEl.targetWeight) fitnessEl.targetWeight.value = p.targetWeight ?? '';
-        fitnessSetSelectedWorkProfile(p.workProfile); // НОВОЕ
+        fitnessSetSelectedWorkProfile(p.workProfile); // Р В РЎСљР В РЎвЂєР В РІР‚в„ўР В РЎвЂєР В РІР‚Сћ
       } else {
         fitnessEl.profileSetup?.classList.add('hidden');
         fitnessEl.dashboard?.classList.remove('hidden');
@@ -2629,7 +2539,7 @@ document.addEventListener('DOMContentLoaded', () => {
       height: fitnessEl.height?.value,
       age: fitnessEl.age?.value,
       targetWeight: fitnessEl.targetWeight?.value,
-      workProfile, // НОВОЕ
+      workProfile, // Р В РЎСљР В РЎвЂєР В РІР‚в„ўР В РЎвЂєР В РІР‚Сћ
     });
     FS.setFitnessProfile(profile);
     setFitnessSetupDone();
@@ -2648,7 +2558,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   fitnessEl.profileEdit?.addEventListener('click', () => {
     const p = FS.getFitnessProfile();
-    // показать форму профиля вместо дашборда
+    // Р В РЎвЂ”Р В РЎвЂўР В РЎвЂќР В Р’В°Р В Р’В·Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р РЋРІР‚С›Р В РЎвЂўР РЋР вЂљР В РЎВР РЋРЎвЂњ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В РЎвЂР В Р’В»Р РЋР РЏ Р В Р вЂ Р В РЎВР В Р’ВµР РЋР С“Р РЋРІР‚С™Р В РЎвЂў Р В РўвЂР В Р’В°Р РЋРІвЂљВ¬Р В Р’В±Р В РЎвЂўР РЋР вЂљР В РўвЂР В Р’В°
     fitnessEl.dashboard?.classList.add('hidden');
     fitnessEl.profileSetup?.classList.remove('hidden');
 
@@ -2657,6 +2567,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fitnessEl.age) fitnessEl.age.value = p.age ?? '';
     if (fitnessEl.targetWeight) fitnessEl.targetWeight.value = p.targetWeight ?? '';
     fitnessSetSelectedWorkProfile(p.workProfile);
+  });
+
+  fitnessEl.settingsOpen?.addEventListener('click', () => {
+    fitnessOpenWaterBaselineModal();
   });
 
   document.querySelectorAll('.fitness-activity-btn').forEach(btn => {
@@ -2782,14 +2696,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   fitnessEl.foodAdd?.addEventListener('click', () => fitnessOpenFoodModal(null));
 
-  // Клик на карточку энергии — открыть детализацию
+  // Р В РЎв„ўР В Р’В»Р В РЎвЂР В РЎвЂќ Р В Р вЂ¦Р В Р’В° Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В РЎвЂќР РЋРЎвЂњ Р РЋР РЉР В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂ“Р В РЎвЂР В РЎвЂ Р Р†Р вЂљРІР‚Сњ Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р РЋР Р‰ Р В РўвЂР В Р’ВµР РЋРІР‚С™Р В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР РЋР вЂ№
   document.getElementById('fitnessCaloriesCard')?.addEventListener('click', function(e) {
-    // Не открывать если клик по кнопкам внутри карточки
+    // Р В РЎСљР В Р’Вµ Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В Р’ВµР РЋР С“Р В Р’В»Р В РЎвЂ Р В РЎвЂќР В Р’В»Р В РЎвЂР В РЎвЂќ Р В РЎвЂ”Р В РЎвЂў Р В РЎвЂќР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В Р’В°Р В РЎВ Р В Р вЂ Р В Р вЂ¦Р РЋРЎвЂњР РЋРІР‚С™Р РЋР вЂљР В РЎвЂ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В РЎвЂќР В РЎвЂ
     if (e.target.closest('button')) return;
     fitnessOpenEnergyDetails();
   });
 
-  // Закрытие модального окна энергии
+  // Р В РІР‚вЂќР В Р’В°Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р В РЎвЂР В Р’Вµ Р В РЎВР В РЎвЂўР В РўвЂР В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂўР В РЎвЂ“Р В РЎвЂў Р В РЎвЂўР В РЎвЂќР В Р вЂ¦Р В Р’В° Р РЋР РЉР В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂ“Р В РЎвЂР В РЎвЂ
   document.getElementById('energyDetailsCloseBtn')?.addEventListener('click', function() {
     document.getElementById('energyDetailsModalOverlay')?.classList.add('hidden');
   });
@@ -2828,7 +2742,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const dayData = FS.getDayData(k);
       FS.updateDayData(k, { workDay: value });
       fitnessRenderWorkDay();
-      fitnessRenderCalories(); // чтобы пересчитать ккал с учётом workDay
+      fitnessRenderCalories(); // Р РЋРІР‚РЋР РЋРІР‚С™Р В РЎвЂўР В Р’В±Р РЋРІР‚в„– Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР РЋР С“Р РЋРІР‚РЋР В РЎвЂР РЋРІР‚С™Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В» Р РЋР С“ Р РЋРЎвЂњР РЋРІР‚РЋР РЋРІР‚ВР РЋРІР‚С™Р В РЎвЂўР В РЎВ workDay
     });
   });
 
@@ -2836,7 +2750,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === fitnessEl.modalOverlay) fitnessCloseModal();
   });
 
-    // --- Глобальная шкала настроения (главный экран) ---
+    // --- Р В РІР‚СљР В Р’В»Р В РЎвЂўР В Р’В±Р В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В Р’В°Р РЋР РЏ Р РЋРІвЂљВ¬Р В РЎвЂќР В Р’В°Р В Р’В»Р В Р’В° Р В Р вЂ¦Р В Р’В°Р РЋР С“Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂўР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ (Р В РЎвЂ“Р В Р’В»Р В Р’В°Р В Р вЂ Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦) ---
 
     function renderGlobalMood(moodValue = 7.3, yesterdayValue = 6.5) {
     const container = document.getElementById('moodScaleContainer');
@@ -2855,53 +2769,53 @@ document.addEventListener('DOMContentLoaded', () => {
     const fullSegments = Math.floor(value);
 
     segments.forEach((segment, index) => {
-      const level = 10 - index; // 10 = верхний
-      segment.innerHTML = '';   // очищаем на всякий случай
+      const level = 10 - index; // 10 = Р В Р вЂ Р В Р’ВµР РЋР вЂљР РЋРІР‚В¦Р В Р вЂ¦Р В РЎвЂР В РІвЂћвЂ“
+      segment.innerHTML = '';   // Р В РЎвЂўР РЋРІР‚РЋР В РЎвЂР РЋРІР‚В°Р В Р’В°Р В Р’ВµР В РЎВ Р В Р вЂ¦Р В Р’В° Р В Р вЂ Р РЋР С“Р РЋР РЏР В РЎвЂќР В РЎвЂР В РІвЂћвЂ“ Р РЋР С“Р В Р’В»Р РЋРЎвЂњР РЋРІР‚РЋР В Р’В°Р В РІвЂћвЂ“
 
-      // базовый фон (неактивный)
+      // Р В Р’В±Р В Р’В°Р В Р’В·Р В РЎвЂўР В Р вЂ Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р РЋРІР‚С›Р В РЎвЂўР В Р вЂ¦ (Р В Р вЂ¦Р В Р’ВµР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“)
       segment.style.backgroundColor = 'rgba(15,23,42,0.6)';
 
       if (level <= fullSegments) {
-        // активный сегмент
-        const hue = 120 - level * 8; // зелёный → красный
+        // Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р РЋР С“Р В Р’ВµР В РЎвЂ“Р В РЎВР В Р’ВµР В Р вЂ¦Р РЋРІР‚С™
+        const hue = 120 - level * 8; // Р В Р’В·Р В Р’ВµР В Р’В»Р РЋРІР‚ВР В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р Р†РІР‚В РІР‚в„ў Р В РЎвЂќР РЋР вЂљР В Р’В°Р РЋР С“Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“
         const color = `hsl(${hue}, 70%, 50%)`;
         segment.style.backgroundColor = color;
       }
     });
 
-    // числа
+    // Р РЋРІР‚РЋР В РЎвЂР РЋР С“Р В Р’В»Р В Р’В°
     scoreEl.textContent = value.toFixed(1);
     yesterdayEl.textContent = yesterday.toFixed(1);
 
     const diff = value - yesterday;
     if (Math.abs(diff) < 0.1) {
-      trendEl.textContent = '→ 0.0';
+      trendEl.textContent = 'Р Р†РІР‚В РІР‚в„ў 0.0';
       trendEl.className = 'text-[10px] opacity-70';
     } else if (diff > 0) {
-      trendEl.textContent = `↗ +${diff.toFixed(1)}`;
+      trendEl.textContent = `Р Р†РІР‚В РІР‚вЂќ +${diff.toFixed(1)}`;
       trendEl.className = 'text-[10px] text-emerald-300';
     } else {
-      trendEl.textContent = `↘ ${diff.toFixed(1)}`;
+      trendEl.textContent = `Р Р†РІР‚В Р’В ${diff.toFixed(1)}`;
       trendEl.className = 'text-[10px] text-red-300';
     }
 
-    // статус
+    // Р РЋР С“Р РЋРІР‚С™Р В Р’В°Р РЋРІР‚С™Р РЋРЎвЂњР РЋР С“
     let statusText = '';
     let statusClass = 'text-xs font-medium ';
     if (value >= 8.5) {
-      statusText = 'Пик, используй момент';
+      statusText = 'Р В РЎСџР В РЎвЂР В РЎвЂќ, Р В РЎвЂР РЋР С“Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В Р’В·Р РЋРЎвЂњР В РІвЂћвЂ“ Р В РЎВР В РЎвЂўР В РЎВР В Р’ВµР В Р вЂ¦Р РЋРІР‚С™';
       statusClass += 'text-orange-300';
     } else if (value >= 7) {
-      statusText = 'Хороший тон, есть ресурс';
+      statusText = 'Р В РўС’Р В РЎвЂўР РЋР вЂљР В РЎвЂўР РЋРІвЂљВ¬Р В РЎвЂР В РІвЂћвЂ“ Р РЋРІР‚С™Р В РЎвЂўР В Р вЂ¦, Р В Р’ВµР РЋР С“Р РЋРІР‚С™Р РЋР Р‰ Р РЋР вЂљР В Р’ВµР РЋР С“Р РЋРЎвЂњР РЋР вЂљР РЋР С“';
       statusClass += 'text-emerald-300';
     } else if (value >= 5) {
-      statusText = 'Норма, держи базу';
+      statusText = 'Р В РЎСљР В РЎвЂўР РЋР вЂљР В РЎВР В Р’В°, Р В РўвЂР В Р’ВµР РЋР вЂљР В Р’В¶Р В РЎвЂ Р В Р’В±Р В Р’В°Р В Р’В·Р РЋРЎвЂњ';
       statusClass += 'text-amber-200';
     } else if (value >= 3) {
-      statusText = 'Усталость, нужен отдых';
+      statusText = 'Р В Р в‚¬Р РЋР С“Р РЋРІР‚С™Р В Р’В°Р В Р’В»Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р РЋР Р‰, Р В Р вЂ¦Р РЋРЎвЂњР В Р’В¶Р В Р’ВµР В Р вЂ¦ Р В РЎвЂўР РЋРІР‚С™Р В РўвЂР РЋРІР‚в„–Р РЋРІР‚В¦';
       statusClass += 'text-red-300';
     } else {
-      statusText = 'Кризис, нужна поддержка';
+      statusText = 'Р В РЎв„ўР РЋР вЂљР В РЎвЂР В Р’В·Р В РЎвЂР РЋР С“, Р В Р вЂ¦Р РЋРЎвЂњР В Р’В¶Р В Р вЂ¦Р В Р’В° Р В РЎвЂ”Р В РЎвЂўР В РўвЂР В РўвЂР В Р’ВµР РЋР вЂљР В Р’В¶Р В РЎвЂќР В Р’В°';
       statusClass += 'text-red-400';
     }
     statusEl.textContent = statusText;
@@ -2913,15 +2827,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('logMoodBtn');
     if (btn) {
       btn.addEventListener('click', async () => {
-        const raw = prompt('Текущее состояние (0–10):', '7');
+        const raw = prompt('Р В РЎС›Р В Р’ВµР В РЎвЂќР РЋРЎвЂњР РЋРІР‚В°Р В Р’ВµР В Р’Вµ Р РЋР С“Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В РЎвЂўР РЋР РЏР В Р вЂ¦Р В РЎвЂР В Р’Вµ (0Р Р†Р вЂљРІР‚Сљ10):', '7');
         if (raw == null) return;
         const num = parseFloat(raw);
         if (Number.isNaN(num)) return;
   
-        // обновляем UI
+        // Р В РЎвЂўР В Р’В±Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В»Р РЋР РЏР В Р’ВµР В РЎВ UI
         renderGlobalMood(num, 6.5);
   
-        // сохраняем в Supabase как daily_state + measurements
+        // Р РЋР С“Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р РЋР РЏР В Р’ВµР В РЎВ Р В Р вЂ  Supabase Р В РЎвЂќР В Р’В°Р В РЎвЂќ daily_state + measurements
         if (window.FitnessSync && window.currentAppUserId) {
           const todayKey = FS.formatDateKey(new Date()); // YYYY-MM-DD
           try {
@@ -2939,21 +2853,21 @@ document.addEventListener('DOMContentLoaded', () => {
   
 
 
-  // Инициализация профиля
+  // Р В Р’ВР В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В РЎвЂР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР РЋР РЏ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В РЎвЂР В Р’В»Р РЋР РЏ
   initProfileHeader();
-  // Инициализация глобальной шкалы настроения
+  // Р В Р’ВР В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В РЎвЂР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР РЋР РЏ Р В РЎвЂ“Р В Р’В»Р В РЎвЂўР В Р’В±Р В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂўР В РІвЂћвЂ“ Р РЋРІвЂљВ¬Р В РЎвЂќР В Р’В°Р В Р’В»Р РЋРІР‚в„– Р В Р вЂ¦Р В Р’В°Р РЋР С“Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂўР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ
   initGlobalMoodWidget();
 
-  // Запуск приложения
+  // Р В РІР‚вЂќР В Р’В°Р В РЎвЂ”Р РЋРЎвЂњР РЋР С“Р В РЎвЂќ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР В Р’В»Р В РЎвЂўР В Р’В¶Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ
   if (supabaseEnabled) initFromSupabase();
   else initBrowserMode();
 
   let gymCurrentDayIndex = 1;
 
 
-  // --- GYM: Тренировка в зале ---------------------------------------------
+  // --- GYM: Р В РЎС›Р РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В РЎвЂќР В Р’В° Р В Р вЂ  Р В Р’В·Р В Р’В°Р В Р’В»Р В Р’Вµ ---------------------------------------------
   const gymEl = {
-    // экран списка периодов
+    // Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р РЋР С“Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂќР В Р’В° Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В РЎвЂўР В Р вЂ 
     periodsScreen: document.getElementById('gymPeriodsScreen'),
     periodsBackBtn: document.getElementById('gymPeriodsBackBtn'),
     noPeriodsState: document.getElementById('gymNoPeriodsState'),
@@ -2962,7 +2876,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createPeriodBtn: document.getElementById('gymCreatePeriodBtn'),
     createPeriodTopBtn: document.getElementById('gymCreatePeriodTopBtn'),
 
-    // экран мастера периода
+    // Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р В РЎВР В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљР В Р’В° Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В°
     periodWizardScreen: document.getElementById('gymPeriodWizardScreen'),
     periodWizardBackBtn: document.getElementById('gymPeriodWizardBackBtn'),
     periodStep1: document.getElementById('gymPeriodStep1'),
@@ -2973,7 +2887,7 @@ document.addEventListener('DOMContentLoaded', () => {
     periodStep2BackBtn: document.getElementById('gymPeriodStep2BackBtn'),
     periodStep2CreateBtn: document.getElementById('gymPeriodStep2CreateBtn'),
 
-    // экран конкретного периода
+    // Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р В РЎвЂќР В РЎвЂўР В Р вЂ¦Р В РЎвЂќР РЋР вЂљР В Р’ВµР РЋРІР‚С™Р В Р вЂ¦Р В РЎвЂўР В РЎвЂ“Р В РЎвЂў Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В°
     screen: document.getElementById('gymScreen'),
     backBtn: document.getElementById('gymBackBtn'),
     fromFitnessBtn: document.getElementById('gymBtn'),
@@ -2989,10 +2903,10 @@ document.addEventListener('DOMContentLoaded', () => {
     cycleSelect: document.getElementById('gymCycleSelect'),
   };
 
-  // до GYM-блока, после fitnessEl/gymEl
+  // Р В РўвЂР В РЎвЂў GYM-Р В Р’В±Р В Р’В»Р В РЎвЂўР В РЎвЂќР В Р’В°, Р В РЎвЂ”Р В РЎвЂўР РЋР С“Р В Р’В»Р В Р’Вµ fitnessEl/gymEl
   const fitnessBtn = document.getElementById('fitnessBtn');
 
-  // переопределяем showFitness с учётом fitnessEl и gymEl
+  // Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР В РЎвЂўР В РЎвЂ”Р РЋР вЂљР В Р’ВµР В РўвЂР В Р’ВµР В Р’В»Р РЋР РЏР В Р’ВµР В РЎВ showFitness Р РЋР С“ Р РЋРЎвЂњР РЋРІР‚РЋР РЋРІР‚ВР РЋРІР‚С™Р В РЎвЂўР В РЎВ fitnessEl Р В РЎвЂ gymEl
   const _showFitnessBase = showFitness;
   function showFitnessFull() {
     _showFitnessBase();
@@ -3003,10 +2917,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (gymEl?.screen) gymEl.screen.classList.add('hidden');
   }
 
-  // Кнопки на главном экране
+  // Р В РЎв„ўР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В РЎвЂ Р В Р вЂ¦Р В Р’В° Р В РЎвЂ“Р В Р’В»Р В Р’В°Р В Р вЂ Р В Р вЂ¦Р В РЎвЂўР В РЎВ Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦Р В Р’Вµ
   if (el.habitsBtn) {
     el.habitsBtn.addEventListener('click', () => {
-      showAlert('Экран привычек будет позже');
+      showAlert('Р В Р’В­Р В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР В Р вЂ Р РЋРІР‚в„–Р РЋРІР‚РЋР В Р’ВµР В РЎвЂќ Р В Р’В±Р РЋРЎвЂњР В РўвЂР В Р’ВµР РЋРІР‚С™ Р В РЎвЂ”Р В РЎвЂўР В Р’В·Р В Р’В¶Р В Р’Вµ');
     });
   }
 
@@ -3049,31 +2963,31 @@ document.addEventListener('DOMContentLoaded', () => {
  *
  * 1) Period card
  *    - name, type, manual startDate edits:
- *      → saved immediately to gymState + localStorage on change (low-frequency settings).
+ *      Р Р†РІР‚В РІР‚в„ў saved immediately to gymState + localStorage on change (low-frequency settings).
  *
  * 2) Cycle card (whole cycle with all days)
  *    - structural / planning changes for the cycle (days, which are active, how active days propagate to future cycles, etc.)
  *      live in memory/runtime while editing.
  *    - "Save cycle" button:
- *      → commits the current cycle structure and plan to gymState + localStorage,
- *      → used for copying active days to future cycles, updating period progress, etc.
+ *      Р Р†РІР‚В РІР‚в„ў commits the current cycle structure and plan to gymState + localStorage,
+ *      Р Р†РІР‚В РІР‚в„ў used for copying active days to future cycles, updating period progress, etc.
  *
  * 3) Day card
  *    - editing a day (adding/removing exercises, toggling "day active", etc.)
  *      updates runtime for that day while editing.
  *    - "Save day" button:
- *      → commits that day's structure/settings to gymState + localStorage.
+ *      Р Р†РІР‚В РІР‚в„ў commits that day's structure/settings to gymState + localStorage.
  *    - "Day completed" checkbox + completion date:
- *      → saved immediately (no extra button) to gymState.completedWorkouts + backend DB,
+ *      Р Р†РІР‚В РІР‚в„ў saved immediately (no extra button) to gymState.completedWorkouts + backend DB,
  *        using "today" if no date is chosen.
  *
  * 4) Exercise card
  *    - Header (right side of exercise name):
  *      - editable working sets: setsCount, repsCount, workWeight.
  *      - when these change:
- *          → update exercise fields in gymState,
- *          → immediately persist to localStorage via gymSaveState,
- *          → immediately send to backend DB (e.g. FitnessSync.saveGymExerciseSets),
+ *          Р Р†РІР‚В РІР‚в„ў update exercise fields in gymState,
+ *          Р Р†РІР‚В РІР‚в„ў immediately persist to localStorage via gymSaveState,
+ *          Р Р†РІР‚В РІР‚в„ў immediately send to backend DB (e.g. FitnessSync.saveGymExerciseSets),
  *            if FitnessSync / currentAppUserId are available.
  *    - Inside expanded exercise body:
  *      - working sets are read-only (display the same setsCount/repsCount/workWeight),
@@ -3089,22 +3003,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   const GYM_STORAGE_KEY = 'leakfixer_gym_data';
-  const GYM_DEFAULT_GROUPS = ['Грудь + Трицепс', 'Спина + Бицепс', 'Ноги + Икры'];
+  const GYM_DEFAULT_GROUPS = ['Р В РІР‚СљР РЋР вЂљР РЋРЎвЂњР В РўвЂР РЋР Р‰ + Р В РЎС›Р РЋР вЂљР В РЎвЂР РЋРІР‚В Р В Р’ВµР В РЎвЂ”Р РЋР С“', 'Р В Р Р‹Р В РЎвЂ”Р В РЎвЂР В Р вЂ¦Р В Р’В° + Р В РІР‚ВР В РЎвЂР РЋРІР‚В Р В Р’ВµР В РЎвЂ”Р РЋР С“', 'Р В РЎСљР В РЎвЂўР В РЎвЂ“Р В РЎвЂ + Р В Р’ВР В РЎвЂќР РЋР вЂљР РЋРІР‚в„–'];
 
-  // Функция форматирования даты без года для UI (дд MMM)
+  // Р В Р’В¤Р РЋРЎвЂњР В Р вЂ¦Р В РЎвЂќР РЋРІР‚В Р В РЎвЂР РЋР РЏ Р РЋРІР‚С›Р В РЎвЂўР РЋР вЂљР В РЎВР В Р’В°Р РЋРІР‚С™Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ Р В РўвЂР В Р’В°Р РЋРІР‚С™Р РЋРІР‚в„– Р В Р’В±Р В Р’ВµР В Р’В· Р В РЎвЂ“Р В РЎвЂўР В РўвЂР В Р’В° Р В РўвЂР В Р’В»Р РЋР РЏ UI (Р В РўвЂР В РўвЂ MMM)
   function gymFormatDateNoYear(dateStr) {
-    if (!dateStr) return '—';
+    if (!dateStr) return 'Р Р†Р вЂљРІР‚Сњ';
     try {
       const d = new Date(dateStr + 'T00:00:00');
-      const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+      const months = ['Р РЋР РЏР В Р вЂ¦Р В Р вЂ ', 'Р РЋРІР‚С›Р В Р’ВµР В Р вЂ ', 'Р В РЎВР В Р’В°Р РЋР вЂљ', 'Р В Р’В°Р В РЎвЂ”Р РЋР вЂљ', 'Р В РЎВР В Р’В°Р В РІвЂћвЂ“', 'Р В РЎвЂР РЋР вЂ№Р В Р вЂ¦', 'Р В РЎвЂР РЋР вЂ№Р В Р’В»', 'Р В Р’В°Р В Р вЂ Р В РЎвЂ“', 'Р РЋР С“Р В Р’ВµР В Р вЂ¦', 'Р В РЎвЂўР В РЎвЂќР РЋРІР‚С™', 'Р В Р вЂ¦Р В РЎвЂўР РЋР РЏ', 'Р В РўвЂР В Р’ВµР В РЎвЂќ'];
       return `${d.getDate()} ${months[d.getMonth()]}`;
     } catch (e) {
       return dateStr;
     }
   }
 
-  // Централизованная функция сохранения GYM-состояния
-  // Все записи в storage должны проходить через эту функцию
+  // Р В Р’В¦Р В Р’ВµР В Р вЂ¦Р РЋРІР‚С™Р РЋР вЂљР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В РЎвЂўР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р В Р’В°Р РЋР РЏ Р РЋРІР‚С›Р РЋРЎвЂњР В Р вЂ¦Р В РЎвЂќР РЋРІР‚В Р В РЎвЂР РЋР РЏ Р РЋР С“Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ GYM-Р РЋР С“Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В РЎвЂўР РЋР РЏР В Р вЂ¦Р В РЎвЂР РЋР РЏ
+  // Р В РІР‚в„ўР РЋР С“Р В Р’Вµ Р В Р’В·Р В Р’В°Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂ Р В Р вЂ  storage Р В РўвЂР В РЎвЂўР В Р’В»Р В Р’В¶Р В Р вЂ¦Р РЋРІР‚в„– Р В РЎвЂ”Р РЋР вЂљР В РЎвЂўР РЋРІР‚В¦Р В РЎвЂўР В РўвЂР В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’ВµР В Р’В· Р РЋР РЉР РЋРІР‚С™Р РЋРЎвЂњ Р РЋРІР‚С›Р РЋРЎвЂњР В Р вЂ¦Р В РЎвЂќР РЋРІР‚В Р В РЎвЂР РЋР вЂ№
   function gymPersistState() {
     // Debug logging for key operations
     if (typeof console !== 'undefined' && console.log) {
@@ -3125,8 +3039,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Централизованная функция рендера всего GYM UI
-  // Вызывает все необходимые рендер-функции
+  // Р В Р’В¦Р В Р’ВµР В Р вЂ¦Р РЋРІР‚С™Р РЋР вЂљР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В РЎвЂўР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р В Р’В°Р РЋР РЏ Р РЋРІР‚С›Р РЋРЎвЂњР В Р вЂ¦Р В РЎвЂќР РЋРІР‚В Р В РЎвЂР РЋР РЏ Р РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РўвЂР В Р’ВµР РЋР вЂљР В Р’В° Р В Р вЂ Р РЋР С“Р В Р’ВµР В РЎвЂ“Р В РЎвЂў GYM UI
+  // Р В РІР‚в„ўР РЋРІР‚в„–Р В Р’В·Р РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР РЋРІР‚С™ Р В Р вЂ Р РЋР С“Р В Р’Вµ Р В Р вЂ¦Р В Р’ВµР В РЎвЂўР В Р’В±Р РЋРІР‚В¦Р В РЎвЂўР В РўвЂР В РЎвЂР В РЎВР РЋРІР‚в„–Р В Р’Вµ Р РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РўвЂР В Р’ВµР РЋР вЂљ-Р РЋРІР‚С›Р РЋРЎвЂњР В Р вЂ¦Р В РЎвЂќР РЋРІР‚В Р В РЎвЂР В РЎвЂ
   function gymRenderAll() {
     const period = gymGetActivePeriod();
     
@@ -3171,7 +3085,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   let gymState = gymLoadState();
-   // временный буфер для мастера периода
+   // Р В Р вЂ Р РЋР вЂљР В Р’ВµР В РЎВР В Р’ВµР В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В Р’В±Р РЋРЎвЂњР РЋРІР‚С›Р В Р’ВµР РЋР вЂљ Р В РўвЂР В Р’В»Р РЋР РЏ Р В РЎВР В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљР В Р’В° Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В°
   let gymPeriodWizardDraft = null;
 
   window.gymDebug = {
@@ -3192,7 +3106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cycles: {},
       };
   
-      // старый формат: cycles как массив
+      // Р РЋР С“Р РЋРІР‚С™Р В Р’В°Р РЋР вЂљР РЋРІР‚в„–Р В РІвЂћвЂ“ Р РЋРІР‚С›Р В РЎвЂўР РЋР вЂљР В РЎВР В Р’В°Р РЋРІР‚С™: cycles Р В РЎвЂќР В Р’В°Р В РЎвЂќ Р В РЎВР В Р’В°Р РЋР С“Р РЋР С“Р В РЎвЂР В Р вЂ 
       if (Array.isArray(data.cycles)) {
         data.cycles.forEach((c, idx) => {
           if (!c || typeof c !== 'object') return;
@@ -3204,7 +3118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
   
-      // новый формат: cycles как объект
+      // Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р РЋРІР‚С›Р В РЎвЂўР РЋР вЂљР В РЎВР В Р’В°Р РЋРІР‚С™: cycles Р В РЎвЂќР В Р’В°Р В РЎвЂќ Р В РЎвЂўР В Р’В±Р РЋР вЂ°Р В Р’ВµР В РЎвЂќР РЋРІР‚С™
       if (data.cycles && !Array.isArray(data.cycles)) {
         Object.entries(data.cycles).forEach(([k, c]) => {
           if (!c || typeof c !== 'object') return;
@@ -3215,7 +3129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
   
-      // гарантируем хотя бы цикл 1
+      // Р В РЎвЂ“Р В Р’В°Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р РЋРІР‚С™Р В РЎвЂР РЋР вЂљР РЋРЎвЂњР В Р’ВµР В РЎВ Р РЋРІР‚В¦Р В РЎвЂўР РЋРІР‚С™Р РЋР РЏ Р В Р’В±Р РЋРІР‚в„– Р РЋРІР‚В Р В РЎвЂР В РЎвЂќР В Р’В» 1
       if (!Object.keys(cur.cycles).length) {
         cur.cycles[cur.currentCycle] = { days: {}, groups: {} };
       }
@@ -3226,7 +3140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return migrated;
   }
   
-  // применяем миграцию
+  // Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР В РЎВР В Р’ВµР В Р вЂ¦Р РЋР РЏР В Р’ВµР В РЎВ Р В РЎВР В РЎвЂР В РЎвЂ“Р РЋР вЂљР В Р’В°Р РЋРІР‚В Р В РЎвЂР РЋР вЂ№
   if (!gymState.runtime) gymState.runtime = {};
   gymState.runtime = gymMigrateRuntime(gymState.runtime);
   
@@ -3385,7 +3299,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gymEl.newCycleBtn.addEventListener('click', gymCreateNextCycle);
   }
   
-  // Обработчик создания нового периода (кнопка "Создать период" в мастере)
+  // Р В РЎвЂєР В Р’В±Р РЋР вЂљР В Р’В°Р В Р’В±Р В РЎвЂўР РЋРІР‚С™Р РЋРІР‚РЋР В РЎвЂР В РЎвЂќ Р РЋР С“Р В РЎвЂўР В Р’В·Р В РўвЂР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В РЎвЂўР В РЎвЂ“Р В РЎвЂў Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В° (Р В РЎвЂќР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В Р’В° "Р В Р Р‹Р В РЎвЂўР В Р’В·Р В РўвЂР В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ" Р В Р вЂ  Р В РЎВР В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљР В Р’Вµ)
   if (gymEl.periodStep2CreateBtn) {
     gymEl.periodStep2CreateBtn.addEventListener('click', () => {
       if (!gymPeriodWizardDraft) return;
@@ -3393,7 +3307,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const periodId = gymCreatePeriodId();
       const today = new Date().toISOString().slice(0, 10);
       
-      // Собираем дни из DOM (шаг 2 мастера)
+      // Р В Р Р‹Р В РЎвЂўР В Р’В±Р В РЎвЂР РЋР вЂљР В Р’В°Р В Р’ВµР В РЎВ Р В РўвЂР В Р вЂ¦Р В РЎвЂ Р В РЎвЂР В Р’В· DOM (Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ“ 2 Р В РЎВР В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљР В Р’В°)
       const days = [];
       if (gymEl.periodDaysContainer) {
         const dayDivs = gymEl.periodDaysContainer.querySelectorAll('[data-day-index]');
@@ -3410,21 +3324,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
       
-      // Создаём НОВЫЙ период без наследования истории от старых периодов
+      // Р В Р Р‹Р В РЎвЂўР В Р’В·Р В РўвЂР В Р’В°Р РЋРІР‚ВР В РЎВ Р В РЎСљР В РЎвЂєР В РІР‚в„ўР В Р’В«Р В РІвЂћСћ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ Р В Р’В±Р В Р’ВµР В Р’В· Р В Р вЂ¦Р В Р’В°Р РЋР С“Р В Р’В»Р В Р’ВµР В РўвЂР В РЎвЂўР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ Р В РЎвЂР РЋР С“Р РЋРІР‚С™Р В РЎвЂўР РЋР вЂљР В РЎвЂР В РЎвЂ Р В РЎвЂўР РЋРІР‚С™ Р РЋР С“Р РЋРІР‚С™Р В Р’В°Р РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚В¦ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В РЎвЂўР В Р вЂ 
       const newPeriod = {
         id: periodId,
-        name: gymPeriodWizardDraft.name || 'Период',
+        name: gymPeriodWizardDraft.name || 'Р В РЎСџР В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ',
         type: gymPeriodWizardDraft.type || 'strength',
         splitType: gymPeriodWizardDraft.splitType || 'split',
         cycleLengthDays: gymPeriodWizardDraft.cycleLengthDays || 7,
         totalCycles: gymPeriodWizardDraft.totalCycles || 8,
         workoutsPerCycle: gymPeriodWizardDraft.workoutsPerCycle || 3,
         days: days,
-        startDate: today, // Устанавливаем текущую дату сразу
-        // НЕ копируем никакие данные из старых периодов:
-        // - нет history
-        // - нет completedWorkouts
-        // - нет previousPeriodData
+        startDate: today, // Р В Р в‚¬Р РЋР С“Р РЋРІР‚С™Р В Р’В°Р В Р вЂ¦Р В Р’В°Р В Р вЂ Р В Р’В»Р В РЎвЂР В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р РЋРІР‚С™Р В Р’ВµР В РЎвЂќР РЋРЎвЂњР РЋРІР‚В°Р РЋРЎвЂњР РЋР вЂ№ Р В РўвЂР В Р’В°Р РЋРІР‚С™Р РЋРЎвЂњ Р РЋР С“Р РЋР вЂљР В Р’В°Р В Р’В·Р РЋРЎвЂњ
+        // Р В РЎСљР В РІР‚Сћ Р В РЎвЂќР В РЎвЂўР В РЎвЂ”Р В РЎвЂР РЋР вЂљР РЋРЎвЂњР В Р’ВµР В РЎВ Р В Р вЂ¦Р В РЎвЂР В РЎвЂќР В Р’В°Р В РЎвЂќР В РЎвЂР В Р’Вµ Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р В Р’Вµ Р В РЎвЂР В Р’В· Р РЋР С“Р РЋРІР‚С™Р В Р’В°Р РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚В¦ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В РЎвЂўР В Р вЂ :
+        // - Р В Р вЂ¦Р В Р’ВµР РЋРІР‚С™ history
+        // - Р В Р вЂ¦Р В Р’ВµР РЋРІР‚С™ completedWorkouts
+        // - Р В Р вЂ¦Р В Р’ВµР РЋРІР‚С™ previousPeriodData
       };
 
       // Debug logging
@@ -3437,14 +3351,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
       
-      // Добавляем в state
+      // Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В Р’В»Р РЋР РЏР В Р’ВµР В РЎВ Р В Р вЂ  state
       if (!gymState.periods) gymState.periods = {};
       gymState.periods[periodId] = newPeriod;
       
       if (!gymState.periodOrder) gymState.periodOrder = [];
       gymState.periodOrder.push(periodId);
       
-      // Инициализируем runtime для нового периода - чистый, без данных
+      // Р В Р’ВР В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В РЎвЂР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В РЎвЂР РЋР вЂљР РЋРЎвЂњР В Р’ВµР В РЎВ runtime Р В РўвЂР В Р’В»Р РЋР РЏ Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В РЎвЂўР В РЎвЂ“Р В РЎвЂў Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В° - Р РЋРІР‚РЋР В РЎвЂР РЋР С“Р РЋРІР‚С™Р РЋРІР‚в„–Р В РІвЂћвЂ“, Р В Р’В±Р В Р’ВµР В Р’В· Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р РЋРІР‚В¦
       if (!gymState.runtime) gymState.runtime = {};
       const initialDays = {};
       days.forEach(d => {
@@ -3460,16 +3374,16 @@ document.addEventListener('DOMContentLoaded', () => {
         },
       };
       
-      // Сохраняем и рендерим
+      // Р В Р Р‹Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р РЋР РЏР В Р’ВµР В РЎВ Р В РЎвЂ Р РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РўвЂР В Р’ВµР РЋР вЂљР В РЎвЂР В РЎВ
       gymPersistState();
       
-      // Закрываем мастер и открываем период
+      // Р В РІР‚вЂќР В Р’В°Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В РЎВР В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљ Р В РЎвЂ Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ
       if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
       
-      // Открываем список периодов - новый период будет виден
+      // Р В РЎвЂєР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р РЋР С“Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂўР В РЎвЂќ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В РЎвЂўР В Р вЂ  - Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ Р В Р’В±Р РЋРЎвЂњР В РўвЂР В Р’ВµР РЋРІР‚С™ Р В Р вЂ Р В РЎвЂР В РўвЂР В Р’ВµР В Р вЂ¦
       gymOpenPeriodsScreen();
       
-      // Автоматически открываем созданный период
+      // Р В РЎвЂ™Р В Р вЂ Р РЋРІР‚С™Р В РЎвЂўР В РЎВР В Р’В°Р РЋРІР‚С™Р В РЎвЂР РЋРІР‚РЋР В Р’ВµР РЋР С“Р В РЎвЂќР В РЎвЂ Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р РЋР С“Р В РЎвЂўР В Р’В·Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ
       gymSetActivePeriod(periodId);
       gymOpen();
     });
@@ -3479,7 +3393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const period = gymGetActivePeriod();
     if (!period || !gymEl.groupsContainer) return;
 
-    // базовая карта только с dayIndex + muscles
+    // Р В Р’В±Р В Р’В°Р В Р’В·Р В РЎвЂўР В Р вЂ Р В Р’В°Р РЋР РЏ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В Р’В° Р РЋРІР‚С™Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В РЎвЂќР В РЎвЂў Р РЋР С“ dayIndex + muscles
     const daysMap = new Map();
     const baseDays = Array.isArray(period.days) ? period.days : [];
     baseDays.forEach((d) => {
@@ -3489,7 +3403,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   
-    // поверх накатываем то, что сейчас в DOM
+    // Р В РЎвЂ”Р В РЎвЂўР В Р вЂ Р В Р’ВµР РЋР вЂљР РЋРІР‚В¦ Р В Р вЂ¦Р В Р’В°Р В РЎвЂќР В Р’В°Р РЋРІР‚С™Р РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р РЋРІР‚С™Р В РЎвЂў, Р РЋРІР‚РЋР РЋРІР‚С™Р В РЎвЂў Р РЋР С“Р В Р’ВµР В РІвЂћвЂ“Р РЋРІР‚РЋР В Р’В°Р РЋР С“ Р В Р вЂ  DOM
     const wrappers = gymEl.groupsContainer.querySelectorAll('[data-day-index]');
     wrappers.forEach((wrapper) => {
       const dayIndex = Number(wrapper.dataset.dayIndex || '1');
@@ -3588,11 +3502,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function gymOpenPeriodWizardStep1() {
     if (!gymEl.periodWizardScreen) return;
   
-    // мы уже внутри фитнеса, прячем список периодов и экран конкретного периода
+    // Р В РЎВР РЋРІР‚в„– Р РЋРЎвЂњР В Р’В¶Р В Р’Вµ Р В Р вЂ Р В Р вЂ¦Р РЋРЎвЂњР РЋРІР‚С™Р РЋР вЂљР В РЎвЂ Р РЋРІР‚С›Р В РЎвЂР РЋРІР‚С™Р В Р вЂ¦Р В Р’ВµР РЋР С“Р В Р’В°, Р В РЎвЂ”Р РЋР вЂљР РЋР РЏР РЋРІР‚РЋР В Р’ВµР В РЎВ Р РЋР С“Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂўР В РЎвЂќ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В РЎвЂўР В Р вЂ  Р В РЎвЂ Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р В РЎвЂќР В РЎвЂўР В Р вЂ¦Р В РЎвЂќР РЋР вЂљР В Р’ВµР РЋРІР‚С™Р В Р вЂ¦Р В РЎвЂўР В РЎвЂ“Р В РЎвЂў Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В°
     if (gymEl.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
     if (gymEl.screen) gymEl.screen.classList.add('hidden');
   
-    // фитнес-экран остаётся видимым, просто показываем в нём мастер
+    // Р РЋРІР‚С›Р В РЎвЂР РЋРІР‚С™Р В Р вЂ¦Р В Р’ВµР РЋР С“-Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В Р’В°Р РЋРІР‚ВР РЋРІР‚С™Р РЋР С“Р РЋР РЏ Р В Р вЂ Р В РЎвЂР В РўвЂР В РЎвЂР В РЎВР РЋРІР‚в„–Р В РЎВ, Р В РЎвЂ”Р РЋР вЂљР В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В РЎвЂў Р В РЎвЂ”Р В РЎвЂўР В РЎвЂќР В Р’В°Р В Р’В·Р РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В Р вЂ  Р В Р вЂ¦Р РЋРІР‚ВР В РЎВ Р В РЎВР В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљ
     if (fitnessEl?.screen) fitnessEl.screen.classList.remove('hidden');
   
     gymEl.periodWizardScreen.classList.remove('hidden');
@@ -3601,11 +3515,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
     gymPeriodWizardDraft = {
       type: 'strength',
-      name: 'На силу',
+      name: 'Р В РЎСљР В Р’В° Р РЋР С“Р В РЎвЂР В Р’В»Р РЋРЎвЂњ',
       splitType: 'split',
       cycleLengthDays: 7,
       totalCycles: 8,
-      workoutsPerCycle: 3,   // НОВОЕ
+      workoutsPerCycle: 3,   // Р В РЎСљР В РЎвЂєР В РІР‚в„ўР В РЎвЂєР В РІР‚Сћ
       days: [],
     };    
   
@@ -3624,11 +3538,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   function gymClosePeriodWizard() {
     if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
-    // возвращаемся к списку периодов
+    // Р В Р вЂ Р В РЎвЂўР В Р’В·Р В Р вЂ Р РЋР вЂљР В Р’В°Р РЋРІР‚В°Р В Р’В°Р В Р’ВµР В РЎВР РЋР С“Р РЋР РЏ Р В РЎвЂќ Р РЋР С“Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂќР РЋРЎвЂњ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В РЎвЂўР В Р вЂ 
     gymOpenPeriodsScreen();
   }  
 
-  // Кнопка "Добавить день в цикл" на шаге 2 мастера периода
+  // Р В РЎв„ўР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В Р’В° "Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В РўвЂР В Р’ВµР В Р вЂ¦Р РЋР Р‰ Р В Р вЂ  Р РЋРІР‚В Р В РЎвЂР В РЎвЂќР В Р’В»" Р В Р вЂ¦Р В Р’В° Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ“Р В Р’Вµ 2 Р В РЎВР В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљР В Р’В° Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В°
   const addDayBtn = document.getElementById('gymPeriodAddDayBtn');
 
   if (addDayBtn && gymEl.periodDaysContainer) {
@@ -3643,11 +3557,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       dayDiv.innerHTML = `
         <div class="flex items-center justify-between mb-1">
-          <span class="text-sm font-medium text-white">День ${nextIndex}</span>
+          <span class="text-sm font-medium text-white">Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ ${nextIndex}</span>
           <button type="button"
             data-role="deleteDay"
             class="text-11px text-red-300 underline">
-            удалить
+            Р РЋРЎвЂњР В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰
           </button>
         </div>
 
@@ -3658,10 +3572,10 @@ document.addEventListener('DOMContentLoaded', () => {
             class="accent-emerald-400"
             checked
           >
-          <span>День активен</span>
+          <span>Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р’ВµР В Р вЂ¦</span>
         </label>
 
-        <div class="text-11px text-slate-300 mb-1">Группы мышц</div>
+        <div class="text-11px text-slate-300 mb-1">Р В РІР‚СљР РЋР вЂљР РЋРЎвЂњР В РЎвЂ”Р В РЎвЂ”Р РЋРІР‚в„– Р В РЎВР РЋРІР‚в„–Р РЋРІвЂљВ¬Р РЋРІР‚В </div>
         <div data-role="muscleList" class="space-y-1"></div>
 
         <button
@@ -3669,7 +3583,7 @@ document.addEventListener('DOMContentLoaded', () => {
           data-role="addMuscleGroup"
           class="mt-1 text-11px text-emerald-300 underline"
         >
-          Добавить группу мышц
+          Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В РЎвЂ”Р В РЎвЂ”Р РЋРЎвЂњ Р В РЎВР РЋРІР‚в„–Р РЋРІвЂљВ¬Р РЋРІР‚В 
         </button>
       `;
 
@@ -3681,7 +3595,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <input
             type="text"
             class="flex-1 bg-white/15 rounded-lg px-2 py-1 text-xs text-white"
-            placeholder="Грудь, спина…"
+            placeholder="Р В РІР‚СљР РЋР вЂљР РЋРЎвЂњР В РўвЂР РЋР Р‰, Р РЋР С“Р В РЎвЂ”Р В РЎвЂР В Р вЂ¦Р В Р’В°Р Р†Р вЂљР’В¦"
             data-field="muscleGroupName"
           >
         `;
@@ -3705,7 +3619,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <input
               type="text"
               class="flex-1 bg-white/15 rounded-lg px-2 py-1 text-xs text-white"
-              placeholder="Группа мышц"
+              placeholder="Р В РІР‚СљР РЋР вЂљР РЋРЎвЂњР В РЎвЂ”Р В РЎвЂ”Р В Р’В° Р В РЎВР РЋРІР‚в„–Р РЋРІвЂљВ¬Р РЋРІР‚В "
               data-field="muscleGroupName"
             >
           `;
@@ -3733,9 +3647,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalCycles = Math.max(1, Number(totalCyclesInput?.value || 8));
     const workoutsPerCycle = Math.max(1, Number(wpcInput?.value || 3) || 3);
   
-    let name = 'Период';
-    if (type === 'strength') name = 'На силу';
-    else if (type === 'endurance') name = 'На выносливость';
+    let name = 'Р В РЎСџР В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ';
+    if (type === 'strength') name = 'Р В РЎСљР В Р’В° Р РЋР С“Р В РЎвЂР В Р’В»Р РЋРЎвЂњ';
+    else if (type === 'endurance') name = 'Р В РЎСљР В Р’В° Р В Р вЂ Р РЋРІР‚в„–Р В Р вЂ¦Р В РЎвЂўР РЋР С“Р В Р’В»Р В РЎвЂР В Р вЂ Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р РЋР Р‰';
     if (type === 'custom') {
       const v = (customNameInput?.value || '').trim();
       if (v) name = v;
@@ -3750,11 +3664,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
     if (!gymEl.periodDaysContainer) return;
   
-    // переключаем шаги мастера
+    // Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР В РЎвЂќР В Р’В»Р РЋР вЂ№Р РЋРІР‚РЋР В Р’В°Р В Р’ВµР В РЎВ Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ“Р В РЎвЂ Р В РЎВР В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљР В Р’В°
     if (gymEl.periodStep1) gymEl.periodStep1.classList.add('hidden');
     if (gymEl.periodStep2) gymEl.periodStep2.classList.remove('hidden');
   
-    // генерим N тренировочных дней по workoutsPerCycle
+    // Р В РЎвЂ“Р В Р’ВµР В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎВ N Р РЋРІР‚С™Р РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В РЎвЂўР РЋРІР‚РЋР В Р вЂ¦Р РЋРІР‚в„–Р РЋРІР‚В¦ Р В РўвЂР В Р вЂ¦Р В Р’ВµР В РІвЂћвЂ“ Р В РЎвЂ”Р В РЎвЂў workoutsPerCycle
     gymEl.periodDaysContainer.innerHTML = '';
     const wpc = gymPeriodWizardDraft.workoutsPerCycle || 3;
   
@@ -3764,26 +3678,26 @@ document.addEventListener('DOMContentLoaded', () => {
       dayDiv.dataset.dayIndex = String(i);
       dayDiv.innerHTML = `
         <div class="flex items-center justify-between">
-          <div class="font-semibold text-white text-sm">День ${i}</div>
+          <div class="font-semibold text-white text-sm">Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ ${i}</div>
           <button type="button" data-role="removeDay" class="text-[11px] text-red-300 underline">
-            удалить
+            Р РЋРЎвЂњР В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰
           </button>
         </div>
         <label class="flex items-center gap-2 text-xs text-slate-200">
           <input type="checkbox" data-field="dayEnabled" class="accent-emerald-400" checked>
-          <span>День активен (основная тренировка)</span>
+          <span>Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р’ВµР В Р вЂ¦ (Р В РЎвЂўР РЋР С“Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р вЂ¦Р В Р’В°Р РЋР РЏ Р РЋРІР‚С™Р РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В РЎвЂќР В Р’В°)</span>
         </label>
         <input
           type="text"
           data-field="muscles"
           class="w-full bg-white/10 rounded-lg px-2 py-1 text-xs text-white"
-          placeholder="Грудь, спина..."
+          placeholder="Р В РІР‚СљР РЋР вЂљР РЋРЎвЂњР В РўвЂР РЋР Р‰, Р РЋР С“Р В РЎвЂ”Р В РЎвЂР В Р вЂ¦Р В Р’В°..."
         />
       `;
       gymEl.periodDaysContainer.appendChild(dayDiv);
     }
   
-    // обработчик удаления дня
+    // Р В РЎвЂўР В Р’В±Р РЋР вЂљР В Р’В°Р В Р’В±Р В РЎвЂўР РЋРІР‚С™Р РЋРІР‚РЋР В РЎвЂР В РЎвЂќ Р РЋРЎвЂњР В РўвЂР В Р’В°Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ Р В РўвЂР В Р вЂ¦Р РЋР РЏ
     gymEl.periodDaysContainer
       .querySelectorAll('button[data-role="removeDay"]')
       .forEach((btn) => {
@@ -3794,7 +3708,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }  
 
-  // экран списка периодов
+  // Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р РЋР С“Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂќР В Р’В° Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В РЎвЂўР В Р вЂ 
   function gymRenderPeriodsList() {
     if (!gymEl.periodsList || !gymState.periods) return;
   
@@ -3805,7 +3719,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gymEl.periodsList.innerHTML = '';
   
     if (!order.length) {
-      // нет периодов — показываем заглушку
+      // Р В Р вЂ¦Р В Р’ВµР РЋРІР‚С™ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В РЎвЂўР В Р вЂ  Р Р†Р вЂљРІР‚Сњ Р В РЎвЂ”Р В РЎвЂўР В РЎвЂќР В Р’В°Р В Р’В·Р РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В Р’В·Р В Р’В°Р В РЎвЂ“Р В Р’В»Р РЋРЎвЂњР РЋРІвЂљВ¬Р В РЎвЂќР РЋРЎвЂњ
       if (gymEl.noPeriodsState) gymEl.noPeriodsState.classList.remove('hidden');
       if (gymEl.periodsListWrapper) gymEl.periodsListWrapper.classList.add('hidden');
       return;
@@ -3826,7 +3740,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div>
             <div class="text-sm font-semibold text-white">${p.name}</div>
             <div class="text-xs text-slate-300">
-              ${p.cycleLengthDays} дн · ${p.totalCycles} циклов
+              ${p.cycleLengthDays} Р В РўвЂР В Р вЂ¦ Р вЂ™Р’В· ${p.totalCycles} Р РЋРІР‚В Р В РЎвЂР В РЎвЂќР В Р’В»Р В РЎвЂўР В Р вЂ 
             </div>
           </div>
           <div class="flex flex-col items-end gap-1">
@@ -3834,22 +3748,22 @@ document.addEventListener('DOMContentLoaded', () => {
               class="text-xs px-2 py-1 rounded-full bg-indigo-500 text-white"
               data-open-period="${p.id}"
             >
-              Открыть
+              Р В РЎвЂєР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р РЋР Р‰
             </button>
             <button
               class="text-[11px] text-red-300 underline"
               data-delete-period="${p.id}"
             >
-              Удалить
+              Р В Р в‚¬Р В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰
             </button>
           </div>
         </div>
         <div class="mt-2 text-xs text-slate-300">
-          <label class="block mb-1">Дата старта периода (можно переопределить)</label>
+          <label class="block mb-1">Р В РІР‚СњР В Р’В°Р РЋРІР‚С™Р В Р’В° Р РЋР С“Р РЋРІР‚С™Р В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В Р’В° Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В° (Р В РЎВР В РЎвЂўР В Р’В¶Р В Р вЂ¦Р В РЎвЂў Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР В РЎвЂўР В РЎвЂ”Р РЋР вЂљР В Р’ВµР В РўвЂР В Р’ВµР В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰)</label>
           <input type="date" class="w-full bg-white/10 rounded-lg px-2 py-1" data-role="periodStartInput" value="${p.startDate || ''}" />
           <div class="mt-2">
-            <div class="text-[11px]">План: <span data-role="plannedRange">—</span></div>
-            <div class="text-[11px]">Фактически: <span data-role="actualRange">—</span></div>
+            <div class="text-[11px]">Р В РЎСџР В Р’В»Р В Р’В°Р В Р вЂ¦: <span data-role="plannedRange">Р Р†Р вЂљРІР‚Сњ</span></div>
+            <div class="text-[11px]">Р В Р’В¤Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋРІР‚РЋР В Р’ВµР РЋР С“Р В РЎвЂќР В РЎвЂ: <span data-role="actualRange">Р Р†Р вЂљРІР‚Сњ</span></div>
           </div>
         </div>
       `;
@@ -3890,10 +3804,10 @@ document.addEventListener('DOMContentLoaded', () => {
           if (lastStart) {
             const lastStartDate = new Date(lastStart + 'T00:00:00');
             const lastEndDate = new Date(lastStartDate.getTime() + (cycleLen - 1) * 24 * 60 * 60 * 1000);
-            plannedRangeEl.textContent = `${gymFormatDateNoYear(cycleStarts[1])} — ${gymFormatDateNoYear(lastEndDate.toISOString().slice(0,10))}`;
-          } else plannedRangeEl.textContent = '—';
+            plannedRangeEl.textContent = `${gymFormatDateNoYear(cycleStarts[1])} Р Р†Р вЂљРІР‚Сњ ${gymFormatDateNoYear(lastEndDate.toISOString().slice(0,10))}`;
+          } else plannedRangeEl.textContent = 'Р Р†Р вЂљРІР‚Сњ';
         } else {
-          plannedRangeEl.textContent = '—';
+          plannedRangeEl.textContent = 'Р Р†Р вЂљРІР‚Сњ';
         }
       }
 
@@ -3912,12 +3826,12 @@ document.addEventListener('DOMContentLoaded', () => {
           const completedInLast = cw.filter(e => Number(e.cycleIndex) === lastCycle);
           if (expectedCount > 0 && completedInLast.length >= expectedCount) {
             const lastDates = completedInLast.map(x => x.dateCompleted).filter(Boolean).sort();
-            actualRangeEl.textContent = `${gymFormatDateNoYear(earliest)} — ${gymFormatDateNoYear(lastDates[lastDates.length-1])}`;
+            actualRangeEl.textContent = `${gymFormatDateNoYear(earliest)} Р Р†Р вЂљРІР‚Сњ ${gymFormatDateNoYear(lastDates[lastDates.length-1])}`;
           } else {
-            actualRangeEl.textContent = `${gymFormatDateNoYear(earliest)} — —`;
+            actualRangeEl.textContent = `${gymFormatDateNoYear(earliest)} Р Р†Р вЂљРІР‚Сњ Р Р†Р вЂљРІР‚Сњ`;
           }
         } else {
-          actualRangeEl.textContent = '—';
+          actualRangeEl.textContent = 'Р Р†Р вЂљРІР‚Сњ';
         }
       }
 
@@ -3958,10 +3872,10 @@ document.addEventListener('DOMContentLoaded', () => {
               if (lastStart) {
                 const lastStartDate = new Date(lastStart + 'T00:00:00');
                 const lastEndDate = new Date(lastStartDate.getTime() + (cycleLen - 1) * 24 * 60 * 60 * 1000);
-                plannedRangeEl.textContent = `${gymFormatDateNoYear(cycleStarts[1])} — ${gymFormatDateNoYear(lastEndDate.toISOString().slice(0,10))}`;
-              } else plannedRangeEl.textContent = '—';
+                plannedRangeEl.textContent = `${gymFormatDateNoYear(cycleStarts[1])} Р Р†Р вЂљРІР‚Сњ ${gymFormatDateNoYear(lastEndDate.toISOString().slice(0,10))}`;
+              } else plannedRangeEl.textContent = 'Р Р†Р вЂљРІР‚Сњ';
             } else {
-              plannedRangeEl.textContent = '—';
+              plannedRangeEl.textContent = 'Р Р†Р вЂљРІР‚Сњ';
             }
           }
           // Re-render periods list to reflect changes
@@ -3972,24 +3886,24 @@ document.addEventListener('DOMContentLoaded', () => {
       gymEl.periodsList.appendChild(card);
     });
   
-    // открыть период
+    // Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ
     gymEl.periodsList.querySelectorAll('button[data-open-period]').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.openPeriod;
         if (!id) return;
         gymSetActivePeriod(id);
-        gymOpen(); // показывает экран конкретного периода
+        gymOpen(); // Р В РЎвЂ”Р В РЎвЂўР В РЎвЂќР В Р’В°Р В Р’В·Р РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР РЋРІР‚С™ Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р В РЎвЂќР В РЎвЂўР В Р вЂ¦Р В РЎвЂќР РЋР вЂљР В Р’ВµР РЋРІР‚С™Р В Р вЂ¦Р В РЎвЂўР В РЎвЂ“Р В РЎвЂў Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В°
       });
     });
   
-    // удалить период с подтверждением
+    // Р РЋРЎвЂњР В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ Р РЋР С“ Р В РЎвЂ”Р В РЎвЂўР В РўвЂР РЋРІР‚С™Р В Р вЂ Р В Р’ВµР РЋР вЂљР В Р’В¶Р В РўвЂР В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’ВµР В РЎВ
     gymEl.periodsList.querySelectorAll('button[data-delete-period]').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.deletePeriod;
         if (!id) return;
         const p = gymState.periods[id];
-        const name = p?.name || 'период';
-        if (!confirm(`Точно удалить «${name}»? Это действие нельзя отменить.`)) {
+        const name = p?.name || 'Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ';
+        if (!confirm(`Р В РЎС›Р В РЎвЂўР РЋРІР‚РЋР В Р вЂ¦Р В РЎвЂў Р РЋРЎвЂњР В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р вЂ™Р’В«${name}Р вЂ™Р’В»? Р В Р’В­Р РЋРІР‚С™Р В РЎвЂў Р В РўвЂР В Р’ВµР В РІвЂћвЂ“Р РЋР С“Р РЋРІР‚С™Р В Р вЂ Р В РЎвЂР В Р’Вµ Р В Р вЂ¦Р В Р’ВµР В Р’В»Р РЋР Р‰Р В Р’В·Р РЋР РЏ Р В РЎвЂўР РЋРІР‚С™Р В РЎВР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰.`)) {
           return;
         }
   
@@ -4013,16 +3927,16 @@ document.addEventListener('DOMContentLoaded', () => {
   function gymOpenPeriodsScreen() {
     if (!gymEl.periodsScreen) return;
   
-    // фитнес-экран включён, но сам фитнес-дашборд прячем
+    // Р РЋРІР‚С›Р В РЎвЂР РЋРІР‚С™Р В Р вЂ¦Р В Р’ВµР РЋР С“-Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р В Р вЂ Р В РЎвЂќР В Р’В»Р РЋР вЂ№Р РЋРІР‚РЋР РЋРІР‚ВР В Р вЂ¦, Р В Р вЂ¦Р В РЎвЂў Р РЋР С“Р В Р’В°Р В РЎВ Р РЋРІР‚С›Р В РЎвЂР РЋРІР‚С™Р В Р вЂ¦Р В Р’ВµР РЋР С“-Р В РўвЂР В Р’В°Р РЋРІвЂљВ¬Р В Р’В±Р В РЎвЂўР РЋР вЂљР В РўвЂ Р В РЎвЂ”Р РЋР вЂљР РЋР РЏР РЋРІР‚РЋР В Р’ВµР В РЎВ
     if (fitnessEl?.screen) fitnessEl.screen.classList.remove('hidden');
     if (fitnessEl?.profileSetup) fitnessEl.profileSetup.classList.add('hidden');
     if (fitnessEl?.dashboard) fitnessEl.dashboard.classList.add('hidden');
   
-    // прячем экран конкретного периода и мастер
+    // Р В РЎвЂ”Р РЋР вЂљР РЋР РЏР РЋРІР‚РЋР В Р’ВµР В РЎВ Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р В РЎвЂќР В РЎвЂўР В Р вЂ¦Р В РЎвЂќР РЋР вЂљР В Р’ВµР РЋРІР‚С™Р В Р вЂ¦Р В РЎвЂўР В РЎвЂ“Р В РЎвЂў Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В° Р В РЎвЂ Р В РЎВР В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљ
     if (gymEl.screen) gymEl.screen.classList.add('hidden');
     if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
   
-    // показываем "новое окно" – список периодов
+    // Р В РЎвЂ”Р В РЎвЂўР В РЎвЂќР В Р’В°Р В Р’В·Р РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ "Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В РЎвЂўР В Р’Вµ Р В РЎвЂўР В РЎвЂќР В Р вЂ¦Р В РЎвЂў" Р Р†Р вЂљРІР‚Сљ Р РЋР С“Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂўР В РЎвЂќ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В РЎвЂўР В Р вЂ 
     gymRenderPeriodsList();
     gymEl.periodsScreen.classList.remove('hidden');
   }
@@ -4032,21 +3946,21 @@ document.addEventListener('DOMContentLoaded', () => {
   function gymClosePeriodsScreen() {
     if (gymEl.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
   
-    // если есть фитнес-экран – возвращаемся к фитнес-дашборду
+    // Р В Р’ВµР РЋР С“Р В Р’В»Р В РЎвЂ Р В Р’ВµР РЋР С“Р РЋРІР‚С™Р РЋР Р‰ Р РЋРІР‚С›Р В РЎвЂР РЋРІР‚С™Р В Р вЂ¦Р В Р’ВµР РЋР С“-Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р Р†Р вЂљРІР‚Сљ Р В Р вЂ Р В РЎвЂўР В Р’В·Р В Р вЂ Р РЋР вЂљР В Р’В°Р РЋРІР‚В°Р В Р’В°Р В Р’ВµР В РЎВР РЋР С“Р РЋР РЏ Р В РЎвЂќ Р РЋРІР‚С›Р В РЎвЂР РЋРІР‚С™Р В Р вЂ¦Р В Р’ВµР РЋР С“-Р В РўвЂР В Р’В°Р РЋРІвЂљВ¬Р В Р’В±Р В РЎвЂўР РЋР вЂљР В РўвЂР РЋРЎвЂњ
     if (fitnessEl?.screen) {
       fitnessEl.screen.classList.remove('hidden');
   
       if (fitnessEl.profileSetup) fitnessEl.profileSetup.classList.add('hidden');
       if (fitnessEl.dashboard) fitnessEl.dashboard.classList.remove('hidden');
   
-      // на всякий случай прячем мастер и экран периода
+      // Р В Р вЂ¦Р В Р’В° Р В Р вЂ Р РЋР С“Р РЋР РЏР В РЎвЂќР В РЎвЂР В РІвЂћвЂ“ Р РЋР С“Р В Р’В»Р РЋРЎвЂњР РЋРІР‚РЋР В Р’В°Р В РІвЂћвЂ“ Р В РЎвЂ”Р РЋР вЂљР РЋР РЏР РЋРІР‚РЋР В Р’ВµР В РЎВ Р В РЎВР В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљ Р В РЎвЂ Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В°
       if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
       if (gymEl.screen) gymEl.screen.classList.add('hidden');
   
       return;
     }
   
-    // fallback: если по какой-то причине fitnessScreen нет – вернёмся на главный экран
+    // fallback: Р В Р’ВµР РЋР С“Р В Р’В»Р В РЎвЂ Р В РЎвЂ”Р В РЎвЂў Р В РЎвЂќР В Р’В°Р В РЎвЂќР В РЎвЂўР В РІвЂћвЂ“-Р РЋРІР‚С™Р В РЎвЂў Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР РЋРІР‚РЋР В РЎвЂР В Р вЂ¦Р В Р’Вµ fitnessScreen Р В Р вЂ¦Р В Р’ВµР РЋРІР‚С™ Р Р†Р вЂљРІР‚Сљ Р В Р вЂ Р В Р’ВµР РЋР вЂљР В Р вЂ¦Р РЋРІР‚ВР В РЎВР РЋР С“Р РЋР РЏ Р В Р вЂ¦Р В Р’В° Р В РЎвЂ“Р В Р’В»Р В Р’В°Р В Р вЂ Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦
     const main = document.getElementById('main');
     if (main) main.classList.remove('hidden');
   }
@@ -4100,7 +4014,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     const period = gymGetActivePeriod();
     if (!period) {
-      gymEl.cycleSelect.innerHTML = '<option value="1">Цикл 1</option>';
+      gymEl.cycleSelect.innerHTML = '<option value="1">Р В Р’В¦Р В РЎвЂР В РЎвЂќР В Р’В» 1</option>';
       gymEl.cycleSelect.value = '1';
       return;
     }
@@ -4117,7 +4031,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let options = '';
     for (let i = 1; i <= maxCycle; i += 1) {
-      options += `<option value="${i}">Цикл ${i}</option>`;
+      options += `<option value="${i}">Р В Р’В¦Р В РЎвЂР В РЎвЂќР В Р’В» ${i}</option>`;
     }
 
     gymEl.cycleSelect.innerHTML = options;
@@ -4141,7 +4055,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
   
     gymEl.cycleInfo.textContent = `${currentCycle}/${totalCycles}`;
-    gymEl.periodInfo.textContent = period.name || 'Период';
+    gymEl.periodInfo.textContent = period.name || 'Р В РЎСџР В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ';
   
     const pct = Math.max(0, Math.min(100, (periodDone / totalCycles) * 100));
     gymEl.progressBar.style.width = `${pct}%`;
@@ -4164,7 +4078,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!runtime.groups) runtime.groups = {};
     if (!runtime.days) runtime.days = {};
   
-    // UI-состояние сворачивания и редактирования
+    // UI-Р РЋР С“Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В РЎвЂўР РЋР РЏР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р РЋР С“Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ Р В РЎвЂ Р РЋР вЂљР В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ
     if (!gymState.uiCollapse) gymState.uiCollapse = {};
     const uiKey = `period-${period.id || 'default'}`;
     if (!gymState.uiCollapse[uiKey]) {
@@ -4191,15 +4105,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const daysToRender = Array.from(daysMap.values()).sort((a,b)=>a.dayIndex-b.dayIndex);
     
-    // --- РЕНДЕР ДНЕЙ ---
+    // --- Р В Р’В Р В РІР‚СћР В РЎСљР В РІР‚СњР В РІР‚СћР В Р’В  Р В РІР‚СњР В РЎСљР В РІР‚СћР В РІвЂћСћ ---
     daysToRender.forEach((day) => {
       const dayIndex = day.dayIndex;
     
-      // читаем enabled из runtime, по умолчанию true
+      // Р РЋРІР‚РЋР В РЎвЂР РЋРІР‚С™Р В Р’В°Р В Р’ВµР В РЎВ enabled Р В РЎвЂР В Р’В· runtime, Р В РЎвЂ”Р В РЎвЂў Р РЋРЎвЂњР В РЎВР В РЎвЂўР В Р’В»Р РЋРІР‚РЋР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР вЂ№ true
       const runtimeDayRaw = runtime && runtime.days ? runtime.days[dayIndex] : null;
       const enabled = runtimeDayRaw ? runtimeDayRaw.enabled !== false : true;
     
-      // если день выключен и не в режиме редактирования — пропускаем
+      // Р В Р’ВµР РЋР С“Р В Р’В»Р В РЎвЂ Р В РўвЂР В Р’ВµР В Р вЂ¦Р РЋР Р‰ Р В Р вЂ Р РЋРІР‚в„–Р В РЎвЂќР В Р’В»Р РЋР вЂ№Р РЋРІР‚РЋР В Р’ВµР В Р вЂ¦ Р В РЎвЂ Р В Р вЂ¦Р В Р’Вµ Р В Р вЂ  Р РЋР вЂљР В Р’ВµР В Р’В¶Р В РЎвЂР В РЎВР В Р’Вµ Р РЋР вЂљР В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ Р Р†Р вЂљРІР‚Сњ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂўР В РЎвЂ”Р РЋРЎвЂњР РЋР С“Р В РЎвЂќР В Р’В°Р В Р’ВµР В РЎВ
       // if (!enabled && !ui.editDays[dayIndex]) return;
     
       if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
@@ -4212,14 +4126,14 @@ document.addEventListener('DOMContentLoaded', () => {
       dayWrapper.className = 'bg-white/5 rounded-2xl px-3 py-3 space-y-2';
       dayWrapper.dataset.dayIndex = String(dayIndex);
 
-      // --- ШАПКА ДНЯ ---
+      // --- Р В Р РѓР В РЎвЂ™Р В РЎСџР В РЎв„ўР В РЎвЂ™ Р В РІР‚СњР В РЎСљР В Р вЂЎ ---
       const title = document.createElement('div');
       title.className = 'flex items-center justify-between mb-2';
   
       const left = document.createElement('div');
       left.className = 'flex items-center gap-2 flex-1';
   
-      // чекбокс только в режиме редактирования
+      // Р РЋРІР‚РЋР В Р’ВµР В РЎвЂќР В Р’В±Р В РЎвЂўР В РЎвЂќР РЋР С“ Р РЋРІР‚С™Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В РЎвЂќР В РЎвЂў Р В Р вЂ  Р РЋР вЂљР В Р’ВµР В Р’В¶Р В РЎвЂР В РЎВР В Р’Вµ Р РЋР вЂљР В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ
       if (isEditing) {
         const checkboxLabel = document.createElement('label');
         checkboxLabel.className = 'flex items-center gap-1 text-xs text-slate-200';
@@ -4230,7 +4144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         checkbox.dataset.role = 'dayEnabled';
         checkbox.dataset.dayIndex = String(dayIndex);
       
-        // читаем состояние из runtime текущего цикла
+        // Р РЋРІР‚РЋР В РЎвЂР РЋРІР‚С™Р В Р’В°Р В Р’ВµР В РЎВ Р РЋР С“Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В РЎвЂўР РЋР РЏР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РЎвЂР В Р’В· runtime Р РЋРІР‚С™Р В Р’ВµР В РЎвЂќР РЋРЎвЂњР РЋРІР‚В°Р В Р’ВµР В РЎвЂ“Р В РЎвЂў Р РЋРІР‚В Р В РЎвЂР В РЎвЂќР В Р’В»Р В Р’В°
         const runtimeDay = runtime.days[dayIndex] || {};
         if (runtimeDay.enabled !== false) {
           checkbox.checked = true;
@@ -4239,7 +4153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       
         const span = document.createElement('span');
-        span.textContent = 'Активен';
+        span.textContent = 'Р В РЎвЂ™Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р’ВµР В Р вЂ¦';
       
         checkboxLabel.appendChild(checkbox);
         checkboxLabel.appendChild(span);
@@ -4254,12 +4168,12 @@ document.addEventListener('DOMContentLoaded', () => {
       titleBtn.dataset.role = 'toggleDay';
       titleBtn.dataset.dayIndex = String(dayIndex);
       // titleBtn.innerHTML = `
-      //   <div class="text-sm font-semibold text-white">День ${day.dayIndex}</div>
+      //   <div class="text-sm font-semibold text-white">Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ ${day.dayIndex}</div>
       //   <div class="text-xs text-slate-300" data-role="dayMusclesView">
       //     ${
       //       day.muscles && day.muscles.length
       //         ? day.muscles.join(', ')
-      //         : 'Нажми "Редактировать", чтобы выбрать группы'
+      //         : 'Р В РЎСљР В Р’В°Р В Р’В¶Р В РЎВР В РЎвЂ "Р В Р’В Р В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰", Р РЋРІР‚РЋР РЋРІР‚С™Р В РЎвЂўР В Р’В±Р РЋРІР‚в„– Р В Р вЂ Р РЋРІР‚в„–Р В Р’В±Р РЋР вЂљР В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В РЎвЂ”Р В РЎвЂ”Р РЋРІР‚в„–'
       //     }
       //   </div>
       // `;
@@ -4269,13 +4183,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       titleBtn.innerHTML = `
         <div class="flex items-center justify-between">
-          <div class="text-sm font-semibold text-white">День ${day.dayIndex}</div>
+          <div class="text-sm font-semibold text-white">Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ ${day.dayIndex}</div>
         </div>
         <div class="text-xs text-slate-300" data-role="dayMusclesView">
           ${
             day.muscles && day.muscles.length
               ? day.muscles.join(', ')
-              : 'Нажми "Редактировать", чтобы выбрать группы'
+              : 'Р В РЎСљР В Р’В°Р В Р’В¶Р В РЎВР В РЎвЂ "Р В Р’В Р В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰", Р РЋРІР‚РЋР РЋРІР‚С™Р В РЎвЂўР В Р’В±Р РЋРІР‚в„– Р В Р вЂ Р РЋРІР‚в„–Р В Р’В±Р РЋР вЂљР В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В РЎвЂ”Р В РЎвЂ”Р РЋРІР‚в„–'
           }
         </div>
       `;
@@ -4345,21 +4259,21 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.className = 'text-[11px] text-emerald-300 underline';
         saveBtn.dataset.role = 'daySave';
         saveBtn.dataset.dayIndex = String(dayIndex);
-        saveBtn.textContent = 'Сохранить';
+        saveBtn.textContent = 'Р В Р Р‹Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰';
   
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'text-[11px] text-red-300 underline';
         deleteBtn.dataset.role = 'dayDelete';
         deleteBtn.dataset.dayIndex = String(dayIndex);
-        deleteBtn.textContent = 'Удалить день';
+        deleteBtn.textContent = 'Р В Р в‚¬Р В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В РўвЂР В Р’ВµР В Р вЂ¦Р РЋР Р‰';
   
         const cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
         cancelBtn.className = 'text-[11px] text-slate-300 underline';
         cancelBtn.dataset.role = 'dayCancel';
         cancelBtn.dataset.dayIndex = String(dayIndex);
-        cancelBtn.textContent = 'Назад';
+        cancelBtn.textContent = 'Р В РЎСљР В Р’В°Р В Р’В·Р В Р’В°Р В РўвЂ';
   
         right.appendChild(saveBtn);
         right.appendChild(deleteBtn);
@@ -4370,7 +4284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editBtn.className = 'text-[11px] text-emerald-300 underline';
         editBtn.dataset.role = 'dayEdit';
         editBtn.dataset.dayIndex = String(dayIndex);
-        editBtn.textContent = 'Редактировать';
+        editBtn.textContent = 'Р В Р’В Р В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰';
   
         right.appendChild(editBtn);
       }
@@ -4379,18 +4293,18 @@ document.addEventListener('DOMContentLoaded', () => {
       title.appendChild(right);
       dayWrapper.appendChild(title);
   
-      // --- СТРОКА РЕДАКТИРОВАНИЯ ГРУПП МЫШЦ (ТОЛЬКО В РЕЖИМЕ РЕДАКТИРОВАНИЯ) ---
+      // --- Р В Р Р‹Р В РЎС›Р В Р’В Р В РЎвЂєР В РЎв„ўР В РЎвЂ™ Р В Р’В Р В РІР‚СћР В РІР‚СњР В РЎвЂ™Р В РЎв„ўР В РЎС›Р В Р’ВР В Р’В Р В РЎвЂєР В РІР‚в„ўР В РЎвЂ™Р В РЎСљР В Р’ВР В Р вЂЎ Р В РІР‚СљР В Р’В Р В Р в‚¬Р В РЎСџР В РЎСџ Р В РЎС™Р В Р’В«Р В Р РѓР В Р’В¦ (Р В РЎС›Р В РЎвЂєР В РІР‚С”Р В Р’В¬Р В РЎв„ўР В РЎвЂє Р В РІР‚в„ў Р В Р’В Р В РІР‚СћР В РІР‚вЂњР В Р’ВР В РЎС™Р В РІР‚Сћ Р В Р’В Р В РІР‚СћР В РІР‚СњР В РЎвЂ™Р В РЎв„ўР В РЎС›Р В Р’ВР В Р’В Р В РЎвЂєР В РІР‚в„ўР В РЎвЂ™Р В РЎСљР В Р’ВР В Р вЂЎ) ---
       if (isEditing) {
         const musclesRow = document.createElement('div');
         musclesRow.className = 'mb-2';
   
         musclesRow.innerHTML = `
           <div class="text-[11px] text-slate-300 mb-1">
-            Группы мышц через запятую
+            Р В РІР‚СљР РЋР вЂљР РЋРЎвЂњР В РЎвЂ”Р В РЎвЂ”Р РЋРІР‚в„– Р В РЎВР РЋРІР‚в„–Р РЋРІвЂљВ¬Р РЋРІР‚В  Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’ВµР В Р’В· Р В Р’В·Р В Р’В°Р В РЎвЂ”Р РЋР РЏР РЋРІР‚С™Р РЋРЎвЂњР РЋР вЂ№
           </div>
           <input
             class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
-            placeholder="Грудь, плечи, спина"
+            placeholder="Р В РІР‚СљР РЋР вЂљР РЋРЎвЂњР В РўвЂР РЋР Р‰, Р В РЎвЂ”Р В Р’В»Р В Р’ВµР РЋРІР‚РЋР В РЎвЂ, Р РЋР С“Р В РЎвЂ”Р В РЎвЂР В Р вЂ¦Р В Р’В°"
             data-role="dayMusclesInput"
             data-day-index="${dayIndex}"
             value="${
@@ -4404,7 +4318,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dayWrapper.appendChild(musclesRow);
       }
   
-      // --- ТЕЛО ДНЯ ---
+      // --- Р В РЎС›Р В РІР‚СћР В РІР‚С”Р В РЎвЂє Р В РІР‚СњР В РЎСљР В Р вЂЎ ---
       const dayBody = document.createElement('div');
       const dayExpanded = ui.days[dayIndex] === true;
       dayBody.className = 'space-y-2' + (dayExpanded ? '' : ' hidden');
@@ -4421,7 +4335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const header = document.createElement('div');
         header.className = 'flex items-center justify-between mb-1';
   
-        // название группы
+        // Р В Р вЂ¦Р В Р’В°Р В Р’В·Р В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В РЎвЂ”Р В РЎвЂ”Р РЋРІР‚в„–
         const groupBtn = document.createElement('button');
         groupBtn.type = 'button';
         groupBtn.className = 'flex-1 text-left text-sm text-slate-100 font-medium';
@@ -4431,7 +4345,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
         header.appendChild(groupBtn);
   
-        // кнопки для групп — только в режиме редактирования
+        // Р В РЎвЂќР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В РЎвЂ Р В РўвЂР В Р’В»Р РЋР РЏ Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В РЎвЂ”Р В РЎвЂ” Р Р†Р вЂљРІР‚Сњ Р РЋРІР‚С™Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В РЎвЂќР В РЎвЂў Р В Р вЂ  Р РЋР вЂљР В Р’ВµР В Р’В¶Р В РЎвЂР В РЎВР В Р’Вµ Р РЋР вЂљР В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ
         if (isEditing) {
           const groupActions = document.createElement('div');
           groupActions.className = 'flex items-center gap-2';
@@ -4441,14 +4355,14 @@ document.addEventListener('DOMContentLoaded', () => {
           addExBtn.className = 'text-xs px-2 py-1 rounded-full bg-emerald-500 text-white';
           addExBtn.dataset.role = 'addExercise';
           addExBtn.dataset.group = groupName;
-          addExBtn.textContent = '+ Упражнение';
+          addExBtn.textContent = '+ Р В Р в‚¬Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р’В¶Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ';
   
           const delGroupBtn = document.createElement('button');
           delGroupBtn.type = 'button';
           delGroupBtn.className = 'text-[11px] text-red-300 underline';
           delGroupBtn.dataset.role = 'deleteGroup';
           delGroupBtn.dataset.group = groupName;
-          delGroupBtn.textContent = 'удалить';
+          delGroupBtn.textContent = 'Р РЋРЎвЂњР В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰';
   
           groupActions.appendChild(addExBtn);
           groupActions.appendChild(delGroupBtn);
@@ -4469,7 +4383,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!exercises.length) {
           const empty = document.createElement('div');
           empty.className = 'text-xs text-slate-400';
-          empty.textContent = 'Добавь упражнение для этой группы.';
+          empty.textContent = 'Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р РЋР Р‰ Р РЋРЎвЂњР В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р’В¶Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РўвЂР В Р’В»Р РЋР РЏ Р РЋР РЉР РЋРІР‚С™Р В РЎвЂўР В РІвЂћвЂ“ Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В РЎвЂ”Р В РЎвЂ”Р РЋРІР‚в„–.';
           listContainer.appendChild(empty);
         } else {
           exercises.forEach((ex, idx) => {
@@ -4477,7 +4391,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = 'bg-slate-900/80 rounded-xl px-3 py-3 space-y-2';
             card.dataset.index = String(idx);
   
-            // --- ШАПКА УПРАЖНЕНИЯ ---
+            // --- Р В Р РѓР В РЎвЂ™Р В РЎСџР В РЎв„ўР В РЎвЂ™ Р В Р в‚¬Р В РЎСџР В Р’В Р В РЎвЂ™Р В РІР‚вЂњР В РЎСљР В РІР‚СћР В РЎСљР В Р’ВР В Р вЂЎ ---
             const exHeader = document.createElement('div');
             exHeader.className = 'flex items-center justify-between text-xs mb-1';
 
@@ -4523,40 +4437,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
             if (isEditing) {
-              // Редактируемое название
+              // Р В Р’В Р В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР РЋРЎвЂњР В Р’ВµР В РЎВР В РЎвЂўР В Р’Вµ Р В Р вЂ¦Р В Р’В°Р В Р’В·Р В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР В Р’Вµ
               const nameInput = document.createElement('input');
               nameInput.type = 'text';
               nameInput.className = 'w-full bg-transparent text-left text-slate-100 text-xs font-semibold border-b border-white/10 focus:outline-none';
-              nameInput.placeholder = 'Название (Жим гантелей)';
+              nameInput.placeholder = 'Р В РЎСљР В Р’В°Р В Р’В·Р В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР В Р’Вµ (Р В РІР‚вЂњР В РЎвЂР В РЎВ Р В РЎвЂ“Р В Р’В°Р В Р вЂ¦Р РЋРІР‚С™Р В Р’ВµР В Р’В»Р В Р’ВµР В РІвЂћвЂ“)';
               nameInput.value = ex.name || '';
               nameInput.dataset.field = 'name';
               titleWrap.appendChild(nameInput);
             } else {
-              // Только текст (кнопка сворачивания)
+              // Р В РЎС›Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В РЎвЂќР В РЎвЂў Р РЋРІР‚С™Р В Р’ВµР В РЎвЂќР РЋР С“Р РЋРІР‚С™ (Р В РЎвЂќР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В Р’В° Р РЋР С“Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ)
               const nameBtn = document.createElement('button');
               nameBtn.type = 'button';
               nameBtn.className = 'text-left flex-1 text-slate-100';
               nameBtn.dataset.role = 'toggleExercise';
-              nameBtn.textContent = ex.name || 'Упражнение ' + (idx + 1);
+              nameBtn.textContent = ex.name || 'Р В Р в‚¬Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р’В¶Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ ' + (idx + 1);
               titleWrap.appendChild(nameBtn);
             }
 
             exHeader.appendChild(titleWrap);
 
-            // Кнопка удаления упражнения — ТОЛЬКО в режиме редактирования дня
+            // Р В РЎв„ўР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В Р’В° Р РЋРЎвЂњР В РўвЂР В Р’В°Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ Р РЋРЎвЂњР В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р’В¶Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ Р Р†Р вЂљРІР‚Сњ Р В РЎС›Р В РЎвЂєР В РІР‚С”Р В Р’В¬Р В РЎв„ўР В РЎвЂє Р В Р вЂ  Р РЋР вЂљР В Р’ВµР В Р’В¶Р В РЎвЂР В РЎВР В Р’Вµ Р РЋР вЂљР В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР РЏ Р В РўвЂР В Р вЂ¦Р РЋР РЏ
             if (isEditing) {
               const delBtn = document.createElement('button');
               delBtn.type = 'button';
               delBtn.className = 'text-[11px] text-red-300 underline';
               delBtn.dataset.delete = '1';
-              delBtn.textContent = 'Удалить';
+              delBtn.textContent = 'Р В Р в‚¬Р В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰';
               exHeader.appendChild(delBtn);
             }
 
             card.appendChild(exHeader);
 
   
-            // --- ТЕЛО УПРАЖНЕНИЯ ---
+            // --- Р В РЎС›Р В РІР‚СћР В РІР‚С”Р В РЎвЂє Р В Р в‚¬Р В РЎСџР В Р’В Р В РЎвЂ™Р В РІР‚вЂњР В РЎСљР В РІР‚СћР В РЎСљР В Р’ВР В Р вЂЎ ---
             const body = document.createElement('div');
             body.className = 'space-y-2 hidden';
             body.dataset.role = 'exerciseBody';
@@ -4564,19 +4478,19 @@ document.addEventListener('DOMContentLoaded', () => {
             body.innerHTML = `
               <div class="flex gap-4 text-xs text-slate-300 mb-2">
                 <div>
-                  <span class="text-slate-400">Подходы:</span> ${ex.setsCount || '—'}
+                  <span class="text-slate-400">Р В РЎСџР В РЎвЂўР В РўвЂР РЋРІР‚В¦Р В РЎвЂўР В РўвЂР РЋРІР‚в„–:</span> ${ex.setsCount || 'Р Р†Р вЂљРІР‚Сњ'}
                 </div>
                 <div>
-                  <span class="text-slate-400">Повторения:</span> ${ex.repsCount || '—'}
+                  <span class="text-slate-400">Р В РЎСџР В РЎвЂўР В Р вЂ Р РЋРІР‚С™Р В РЎвЂўР РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ:</span> ${ex.repsCount || 'Р Р†Р вЂљРІР‚Сњ'}
                 </div>
                 <div>
-                  <span class="text-slate-400">Вес:</span> ${ex.workWeight || '—'}
+                  <span class="text-slate-400">Р В РІР‚в„ўР В Р’ВµР РЋР С“:</span> ${ex.workWeight || 'Р Р†Р вЂљРІР‚Сњ'}
                 </div>
               </div>
 
               <div class="flex gap-2 text-xs">
                 <div class="flex-1">
-                  <div class="text-slate-400 mb-1">Разминка (опц.)</div>
+                  <div class="text-slate-400 mb-1">Р В Р’В Р В Р’В°Р В Р’В·Р В РЎВР В РЎвЂР В Р вЂ¦Р В РЎвЂќР В Р’В° (Р В РЎвЂўР В РЎвЂ”Р РЋРІР‚В .)</div>
                   <input
                     class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
                     placeholder="2x15"
@@ -4588,7 +4502,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
               <div class="flex items-center justify-between text-xs">
                 <div class="flex-1 mr-2">
-                  <div class="text-slate-400 mb-1">RPE 1–10</div>
+                  <div class="text-slate-400 mb-1">RPE 1Р Р†Р вЂљРІР‚Сљ10</div>
                   <div class="flex items-center gap-2">
                     <input
                       type="range"
@@ -4610,19 +4524,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
               <div class="flex gap-2 text-xs">
                 <div class="flex-1">
-                  <div class="text-slate-400 mb-1">Прогресс за период</div>
+                  <div class="text-slate-400 mb-1">Р В РЎСџР РЋР вЂљР В РЎвЂўР В РЎвЂ“Р РЋР вЂљР В Р’ВµР РЋР С“Р РЋР С“ Р В Р’В·Р В Р’В° Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ</div>
                   <input
                     class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                    placeholder="+5 кг с начала"
+                    placeholder="+5 Р В РЎвЂќР В РЎвЂ“ Р РЋР С“ Р В Р вЂ¦Р В Р’В°Р РЋРІР‚РЋР В Р’В°Р В Р’В»Р В Р’В°"
                     value="${ex.progressNote || ''}"
                     data-field="progressNote"
                   />
                 </div>
                 <div class="flex-1">
-                  <div class="text-slate-400 mb-1">План на след. цикл</div>
+                  <div class="text-slate-400 mb-1">Р В РЎСџР В Р’В»Р В Р’В°Р В Р вЂ¦ Р В Р вЂ¦Р В Р’В° Р РЋР С“Р В Р’В»Р В Р’ВµР В РўвЂ. Р РЋРІР‚В Р В РЎвЂР В РЎвЂќР В Р’В»</div>
                   <input
                     class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                    placeholder="След. цикл: 37 кг"
+                    placeholder="Р В Р Р‹Р В Р’В»Р В Р’ВµР В РўвЂ. Р РЋРІР‚В Р В РЎвЂР В РЎвЂќР В Р’В»: 37 Р В РЎвЂќР В РЎвЂ“"
                     value="${ex.nextCyclePlan || ''}"
                     data-field="nextCyclePlan"
                   />
@@ -4643,7 +4557,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gymEl.groupsContainer.appendChild(dayWrapper);
     });
   
-    // --- КНОПКА/ФОРМА "ДОБАВИТЬ ДЕНЬ" (как раньше) ---
+    // --- Р В РЎв„ўР В РЎСљР В РЎвЂєР В РЎСџР В РЎв„ўР В РЎвЂ™/Р В Р’В¤Р В РЎвЂєР В Р’В Р В РЎС™Р В РЎвЂ™ "Р В РІР‚СњР В РЎвЂєР В РІР‚ВР В РЎвЂ™Р В РІР‚в„ўР В Р’ВР В РЎС›Р В Р’В¬ Р В РІР‚СњР В РІР‚СћР В РЎСљР В Р’В¬" (Р В РЎвЂќР В Р’В°Р В РЎвЂќ Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р РЋР Р‰Р РЋРІвЂљВ¬Р В Р’Вµ) ---
     const addDayContainer = document.createElement('div');
     addDayContainer.className = 'mt-3 space-y-2 text-xs text-slate-200';
     addDayContainer.innerHTML = `
@@ -4653,7 +4567,7 @@ document.addEventListener('DOMContentLoaded', () => {
       >
         <div class="flex items-center justify-between mb-2">
           <div class="text-sm font-semibold text-white">
-            Новый день
+            Р В РЎСљР В РЎвЂўР В Р вЂ Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В РўвЂР В Р’ВµР В Р вЂ¦Р РЋР Р‰
           </div>
           <label class="flex items-center gap-1 text-[11px] text-slate-200">
             <input
@@ -4662,15 +4576,15 @@ document.addEventListener('DOMContentLoaded', () => {
               data-role="newDayEnabled"
               checked
             />
-            <span>День активен</span>
+            <span>Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ Р В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р’ВµР В Р вЂ¦</span>
           </label>
         </div>
   
         <div class="space-y-1">
-          <div class="text-[11px] text-slate-300">Группы мышц через запятую</div>
+          <div class="text-[11px] text-slate-300">Р В РІР‚СљР РЋР вЂљР РЋРЎвЂњР В РЎвЂ”Р В РЎвЂ”Р РЋРІР‚в„– Р В РЎВР РЋРІР‚в„–Р РЋРІвЂљВ¬Р РЋРІР‚В  Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’ВµР В Р’В· Р В Р’В·Р В Р’В°Р В РЎвЂ”Р РЋР РЏР РЋРІР‚С™Р РЋРЎвЂњР РЋР вЂ№</div>
           <input
             class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
-            placeholder="Грудь, плечи, спина"
+            placeholder="Р В РІР‚СљР РЋР вЂљР РЋРЎвЂњР В РўвЂР РЋР Р‰, Р В РЎвЂ”Р В Р’В»Р В Р’ВµР РЋРІР‚РЋР В РЎвЂ, Р РЋР С“Р В РЎвЂ”Р В РЎвЂР В Р вЂ¦Р В Р’В°"
             data-role="newDayMuscles"
           />
         </div>
@@ -4681,14 +4595,14 @@ document.addEventListener('DOMContentLoaded', () => {
             class="flex-1 bg-emerald-500 hover:bg-emerald-600 py-2 rounded-xl font-semibold text-sm"
             data-role="createDaySubmit"
           >
-            Сохранить день
+            Р В Р Р‹Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В РўвЂР В Р’ВµР В Р вЂ¦Р РЋР Р‰
           </button>
           <button
             type="button"
             class="flex-1 bg-white/10 py-2 rounded-xl text-sm"
             data-role="createDayCancel"
           >
-            Отмена
+            Р В РЎвЂєР РЋРІР‚С™Р В РЎВР В Р’ВµР В Р вЂ¦Р В Р’В°
           </button>
         </div>
       </div>
@@ -4698,12 +4612,12 @@ document.addEventListener('DOMContentLoaded', () => {
         class="w-full bg-transparent border border-emerald-500/60 py-2 rounded-xl font-semibold text-sm"
         data-role="addDayFromScreen"
       >
-        + Добавить день
+        + Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р В РўвЂР В Р’ВµР В Р вЂ¦Р РЋР Р‰
       </button>
     `;
     gymEl.groupsContainer.appendChild(addDayContainer);
   
-    // ---- ОБРАБОТЧИКИ "НОВЫЙ ДЕНЬ" ----
+    // ---- Р В РЎвЂєР В РІР‚ВР В Р’В Р В РЎвЂ™Р В РІР‚ВР В РЎвЂєР В РЎС›Р В Р’В§Р В Р’ВР В РЎв„ўР В Р’В "Р В РЎСљР В РЎвЂєР В РІР‚в„ўР В Р’В«Р В РІвЂћСћ Р В РІР‚СњР В РІР‚СћР В РЎСљР В Р’В¬" ----
     {
       const addBtn = addDayContainer.querySelector('[data-role="addDayFromScreen"]');
       const form = addDayContainer.querySelector('[data-role="newDayForm"]');
@@ -4766,7 +4680,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   
-    // ---- ПЕРЕКЛЮЧЕНИЕ РЕЖИМА ДНЯ ----
+    // ---- Р В РЎСџР В РІР‚СћР В Р’В Р В РІР‚СћР В РЎв„ўР В РІР‚С”Р В Р’В®Р В Р’В§Р В РІР‚СћР В РЎСљР В Р’ВР В РІР‚Сћ Р В Р’В Р В РІР‚СћР В РІР‚вЂњР В Р’ВР В РЎС™Р В РЎвЂ™ Р В РІР‚СњР В РЎСљР В Р вЂЎ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="dayEdit"]')
       .forEach((btn) => {
@@ -4789,7 +4703,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
-    // ---- СОХРАНИТЬ ДЕНЬ ----
+    // ---- Р В Р Р‹Р В РЎвЂєР В РўС’Р В Р’В Р В РЎвЂ™Р В РЎСљР В Р’ВР В РЎС›Р В Р’В¬ Р В РІР‚СњР В РІР‚СћР В РЎСљР В Р’В¬ ----
     // "Save day": commit this day's structure/settings to gymState + localStorage.
 
     gymEl.groupsContainer
@@ -4845,7 +4759,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
   
-    // ---- УДАЛИТЬ ДЕНЬ ----
+    // ---- Р В Р в‚¬Р В РІР‚СњР В РЎвЂ™Р В РІР‚С”Р В Р’ВР В РЎС›Р В Р’В¬ Р В РІР‚СњР В РІР‚СћР В РЎСљР В Р’В¬ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="dayDelete"]')
       .forEach((btn) => {
@@ -4868,7 +4782,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
-    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ ДЕНЬ ----
+    // ---- Р В Р Р‹Р В РІР‚в„ўР В РІР‚СћР В Р’В Р В РЎСљР В Р в‚¬Р В РЎС›Р В Р’В¬/Р В Р’В Р В РЎвЂ™Р В РІР‚вЂќР В РІР‚в„ўР В РІР‚СћР В Р’В Р В РЎСљР В Р в‚¬Р В РЎС›Р В Р’В¬ Р В РІР‚СњР В РІР‚СћР В РЎСљР В Р’В¬ ----
     gymEl.groupsContainer
       .querySelectorAll('[data-role="toggleDay"]')
       .forEach((btn) => {
@@ -4887,7 +4801,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
-    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ ГРУППУ ----
+    // ---- Р В Р Р‹Р В РІР‚в„ўР В РІР‚СћР В Р’В Р В РЎСљР В Р в‚¬Р В РЎС›Р В Р’В¬/Р В Р’В Р В РЎвЂ™Р В РІР‚вЂќР В РІР‚в„ўР В РІР‚СћР В Р’В Р В РЎСљР В Р в‚¬Р В РЎС›Р В Р’В¬ Р В РІР‚СљР В Р’В Р В Р в‚¬Р В РЎСџР В РЎСџР В Р в‚¬ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="toggleGroup"]')
       .forEach((btn) => {
@@ -4910,7 +4824,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
-    // ---- ДОБАВИТЬ УПРАЖНЕНИЕ ----
+    // ---- Р В РІР‚СњР В РЎвЂєР В РІР‚ВР В РЎвЂ™Р В РІР‚в„ўР В Р’ВР В РЎС›Р В Р’В¬ Р В Р в‚¬Р В РЎСџР В Р’В Р В РЎвЂ™Р В РІР‚вЂњР В РЎСљР В РІР‚СћР В РЎСљР В Р’ВР В РІР‚Сћ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="addExercise"]')
       .forEach((btn) => {
@@ -4941,7 +4855,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
-    // ---- УДАЛИТЬ ГРУППУ ----
+    // ---- Р В Р в‚¬Р В РІР‚СњР В РЎвЂ™Р В РІР‚С”Р В Р’ВР В РЎС›Р В Р’В¬ Р В РІР‚СљР В Р’В Р В Р в‚¬Р В РЎСџР В РЎСџР В Р в‚¬ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="deleteGroup"]')
       .forEach((btn) => {
@@ -4966,7 +4880,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
-    // ---- ИЗМЕНЕНИЯ В ПОЛЯХ УПРАЖНЕНИЙ (включая name) ----
+    // ---- Р В Р’ВР В РІР‚вЂќР В РЎС™Р В РІР‚СћР В РЎСљР В РІР‚СћР В РЎСљР В Р’ВР В Р вЂЎ Р В РІР‚в„ў Р В РЎСџР В РЎвЂєР В РІР‚С”Р В Р вЂЎР В РўС’ Р В Р в‚¬Р В РЎСџР В Р’В Р В РЎвЂ™Р В РІР‚вЂњР В РЎСљР В РІР‚СћР В РЎСљР В Р’ВР В РІвЂћСћ (Р В Р вЂ Р В РЎвЂќР В Р’В»Р РЋР вЂ№Р РЋРІР‚РЋР В Р’В°Р РЋР РЏ name) ----
     gymEl.groupsContainer
       .querySelectorAll('[data-field]')
       .forEach((input) => {
@@ -5021,7 +4935,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
 
-          // UX: "План на след цикл" - apply only on blur (when user finishes typing)
+          // UX: "Р В РЎСџР В Р’В»Р В Р’В°Р В Р вЂ¦ Р В Р вЂ¦Р В Р’В° Р РЋР С“Р В Р’В»Р В Р’ВµР В РўвЂ Р РЋРІР‚В Р В РЎвЂР В РЎвЂќР В Р’В»" - apply only on blur (when user finishes typing)
           // Using 'change' event instead of 'input' - triggers when user leaves the field
           if (field === 'nextCyclePlan') {
             // The actual sync to next cycle will happen on 'change' event, handled separately below
@@ -5085,7 +4999,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
   
-    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ УПРАЖНЕНИЕ ----
+    // ---- Р В Р Р‹Р В РІР‚в„ўР В РІР‚СћР В Р’В Р В РЎСљР В Р в‚¬Р В РЎС›Р В Р’В¬/Р В Р’В Р В РЎвЂ™Р В РІР‚вЂќР В РІР‚в„ўР В РІР‚СћР В Р’В Р В РЎСљР В Р в‚¬Р В РЎС›Р В Р’В¬ Р В Р в‚¬Р В РЎСџР В Р’В Р В РЎвЂ™Р В РІР‚вЂњР В РЎСљР В РІР‚СћР В РЎСљР В Р’ВР В РІР‚Сћ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="toggleExercise"]')
       .forEach((btn) => {
@@ -5098,7 +5012,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
   
-    // ---- УДАЛЕНИЕ УПРАЖНЕНИЯ ----
+    // ---- Р В Р в‚¬Р В РІР‚СњР В РЎвЂ™Р В РІР‚С”Р В РІР‚СћР В РЎСљР В Р’ВР В РІР‚Сћ Р В Р в‚¬Р В РЎСџР В Р’В Р В РЎвЂ™Р В РІР‚вЂњР В РЎСљР В РІР‚СћР В РЎСљР В Р’ВР В Р вЂЎ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-delete]')
       .forEach((btn) => {
@@ -5142,12 +5056,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const period = gymGetActivePeriod();
       if (!period) return;
   
-      // привязка вариантов к индексу дня цикла
+      // Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР В Р вЂ Р РЋР РЏР В Р’В·Р В РЎвЂќР В Р’В° Р В Р вЂ Р В Р’В°Р РЋР вЂљР В РЎвЂР В Р’В°Р В Р вЂ¦Р РЋРІР‚С™Р В РЎвЂўР В Р вЂ  Р В РЎвЂќ Р В РЎвЂР В Р вЂ¦Р В РўвЂР В Р’ВµР В РЎвЂќР РЋР С“Р РЋРЎвЂњ Р В РўвЂР В Р вЂ¦Р РЋР РЏ Р РЋРІР‚В Р В РЎвЂР В РЎвЂќР В Р’В»Р В Р’В°
       const value = gymEl.daySelect.value;
-      if (value === 'Сегодня') {
-        gymCurrentDayIndex = 1; // MVP: всегда День 1, позже привяжем к календарю
+      if (value === 'Р В Р Р‹Р В Р’ВµР В РЎвЂ“Р В РЎвЂўР В РўвЂР В Р вЂ¦Р РЋР РЏ') {
+        gymCurrentDayIndex = 1; // MVP: Р В Р вЂ Р РЋР С“Р В Р’ВµР В РЎвЂ“Р В РўвЂР В Р’В° Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ 1, Р В РЎвЂ”Р В РЎвЂўР В Р’В·Р В Р’В¶Р В Р’Вµ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР В Р вЂ Р РЋР РЏР В Р’В¶Р В Р’ВµР В РЎВ Р В РЎвЂќ Р В РЎвЂќР В Р’В°Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РўвЂР В Р’В°Р РЋР вЂљР РЋР вЂ№
       } else {
-        // если опции будут вида "День 1", "День 2" и т.п.
+        // Р В Р’ВµР РЋР С“Р В Р’В»Р В РЎвЂ Р В РЎвЂўР В РЎвЂ”Р РЋРІР‚В Р В РЎвЂР В РЎвЂ Р В Р’В±Р РЋРЎвЂњР В РўвЂР РЋРЎвЂњР РЋРІР‚С™ Р В Р вЂ Р В РЎвЂР В РўвЂР В Р’В° "Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ 1", "Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ 2" Р В РЎвЂ Р РЋРІР‚С™.Р В РЎвЂ”.
         const match = value.match(/\d+/);
         gymCurrentDayIndex = match ? Number(match[0]) : 1;
       }
@@ -5163,7 +5077,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     const period = gymGetActivePeriod();
     if (period) {
-      gymCurrentDayIndex = 1; // всегда начинаем с Дня 1 цикла
+      gymCurrentDayIndex = 1; // Р В Р вЂ Р РЋР С“Р В Р’ВµР В РЎвЂ“Р В РўвЂР В Р’В° Р В Р вЂ¦Р В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ¦Р В Р’В°Р В Р’ВµР В РЎВ Р РЋР С“ Р В РІР‚СњР В Р вЂ¦Р РЋР РЏ 1 Р РЋРІР‚В Р В РЎвЂР В РЎвЂќР В Р’В»Р В Р’В°
     }
   
     gymRenderHeader();
@@ -5177,7 +5091,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (gymEl.periodsScreen) gymEl.periodsScreen.classList.remove('hidden');
   }
 
-  // кнопка "Фитнес → Зал"
+  // Р В РЎвЂќР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В Р’В° "Р В Р’В¤Р В РЎвЂР РЋРІР‚С™Р В Р вЂ¦Р В Р’ВµР РЋР С“ Р Р†РІР‚В РІР‚в„ў Р В РІР‚вЂќР В Р’В°Р В Р’В»"
   if (gymEl.fromFitnessBtn) {
     gymEl.fromFitnessBtn.addEventListener('click', gymOpenPeriodsScreen);
   }
@@ -5202,7 +5116,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!p) return;
       const opt = document.createElement('option');
       opt.value = id;
-      opt.textContent = `${p.name} (${p.cycleLengthDays}d · ${p.totalCycles} cyc)`;
+      opt.textContent = `${p.name} (${p.cycleLengthDays}d Р вЂ™Р’В· ${p.totalCycles} cyc)`;
       gymCalendarPeriodSelect.appendChild(opt);
     });
   }
@@ -5313,16 +5227,16 @@ document.addEventListener('DOMContentLoaded', () => {
         gymCalendarOutput.textContent = res.error;
         return;
       }
-      gymCalendarOutput.textContent = `Дата ${dateVal} → Цикл ${res.cycleIndex}, День ${res.dayOfCycle} (дней с начала: ${res.daysSince})`;
+      gymCalendarOutput.textContent = `Р В РІР‚СњР В Р’В°Р РЋРІР‚С™Р В Р’В° ${dateVal} Р Р†РІР‚В РІР‚в„ў Р В Р’В¦Р В РЎвЂР В РЎвЂќР В Р’В» ${res.cycleIndex}, Р В РІР‚СњР В Р’ВµР В Р вЂ¦Р РЋР Р‰ ${res.dayOfCycle} (Р В РўвЂР В Р вЂ¦Р В Р’ВµР В РІвЂћвЂ“ Р РЋР С“ Р В Р вЂ¦Р В Р’В°Р РЋРІР‚РЋР В Р’В°Р В Р’В»Р В Р’В°: ${res.daysSince})`;
     });
   }
 
-  // список периодов: назад
+  // Р РЋР С“Р В РЎвЂ”Р В РЎвЂР РЋР С“Р В РЎвЂўР В РЎвЂќ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В РЎвЂўР В Р вЂ : Р В Р вЂ¦Р В Р’В°Р В Р’В·Р В Р’В°Р В РўвЂ
   if (gymEl.periodsBackBtn) {
     gymEl.periodsBackBtn.addEventListener('click', gymClosePeriodsScreen);
   }
 
-  // кнопки "Создать период"
+  // Р В РЎвЂќР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В РЎвЂ "Р В Р Р‹Р В РЎвЂўР В Р’В·Р В РўвЂР В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ"
   if (gymEl.createPeriodBtn) {
     gymEl.createPeriodBtn.addEventListener('click', () => {
       gymOpenPeriodWizardStep1();
@@ -5335,7 +5249,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  // мастер периода: навигация и действия
+  // Р В РЎВР В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В°: Р В Р вЂ¦Р В Р’В°Р В Р вЂ Р В РЎвЂР В РЎвЂ“Р В Р’В°Р РЋРІР‚В Р В РЎвЂР РЋР РЏ Р В РЎвЂ Р В РўвЂР В Р’ВµР В РІвЂћвЂ“Р РЋР С“Р РЋРІР‚С™Р В Р вЂ Р В РЎвЂР РЋР РЏ
   if (gymEl.periodWizardBackBtn) {
     gymEl.periodWizardBackBtn.addEventListener('click', () => {
       gymClosePeriodWizard();
@@ -5353,7 +5267,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   if (gymEl.periodStep2BackBtn) {
     gymEl.periodStep2BackBtn.addEventListener('click', () => {
-      // назад на шаг 1
+      // Р В Р вЂ¦Р В Р’В°Р В Р’В·Р В Р’В°Р В РўвЂ Р В Р вЂ¦Р В Р’В° Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ“ 1
       if (gymEl.periodStep2) gymEl.periodStep2.classList.add('hidden');
       if (gymEl.periodStep1) gymEl.periodStep1.classList.remove('hidden');
     });
@@ -5363,7 +5277,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!gymPeriodWizardDraft) return;
       if (!gymEl.periodDaysContainer) return;
   
-      // Собираем дни из UI
+      // Р В Р Р‹Р В РЎвЂўР В Р’В±Р В РЎвЂР РЋР вЂљР В Р’В°Р В Р’ВµР В РЎВ Р В РўвЂР В Р вЂ¦Р В РЎвЂ Р В РЎвЂР В Р’В· UI
       const dayDivs = gymEl.periodDaysContainer.querySelectorAll('[data-day-index]');
       const rawDays = [];
       dayDivs.forEach((div) => {
@@ -5381,31 +5295,31 @@ document.addEventListener('DOMContentLoaded', () => {
         rawDays.push({ dayIndex, enabled, muscles });
       });
       
-      // в модель периода сохраняем только включённые дни
+      // Р В Р вЂ  Р В РЎВР В РЎвЂўР В РўвЂР В Р’ВµР В Р’В»Р РЋР Р‰ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В° Р РЋР С“Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р РЋР РЏР В Р’ВµР В РЎВ Р РЋРІР‚С™Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В РЎвЂќР В РЎвЂў Р В Р вЂ Р В РЎвЂќР В Р’В»Р РЋР вЂ№Р РЋРІР‚РЋР РЋРІР‚ВР В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р В Р’Вµ Р В РўвЂР В Р вЂ¦Р В РЎвЂ
       const days = rawDays.filter((d) => d.enabled);
       gymPeriodWizardDraft.days = days;
   
       gymPeriodWizardDraft.days = days;
   
-      // Создаём период в gymState
+      // Р В Р Р‹Р В РЎвЂўР В Р’В·Р В РўвЂР В Р’В°Р РЋРІР‚ВР В РЎВ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ Р В Р вЂ  gymState
       const periodId = gymCreatePeriodId();
       const period = {
         id: periodId,
-        name: gymPeriodWizardDraft.name || 'Период',
+        name: gymPeriodWizardDraft.name || 'Р В РЎСџР В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂ',
         type: gymPeriodWizardDraft.type,
         splitType: gymPeriodWizardDraft.splitType,
         cycleLengthDays: gymPeriodWizardDraft.cycleLengthDays,
         totalCycles: gymPeriodWizardDraft.totalCycles,
-        workoutsPerCycle: gymPeriodWizardDraft.workoutsPerCycle || days.length, // НОВОЕ
+        workoutsPerCycle: gymPeriodWizardDraft.workoutsPerCycle || days.length, // Р В РЎСљР В РЎвЂєР В РІР‚в„ўР В РЎвЂєР В РІР‚Сћ
         days,
-        cycles: {}, // пока циклы храним тут, дальше расширим
-        runtime: {}, // можно использовать для per-cycle данных, если нужно
+        cycles: {}, // Р В РЎвЂ”Р В РЎвЂўР В РЎвЂќР В Р’В° Р РЋРІР‚В Р В РЎвЂР В РЎвЂќР В Р’В»Р РЋРІР‚в„– Р РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В РЎвЂР В РЎВ Р РЋРІР‚С™Р РЋРЎвЂњР РЋРІР‚С™, Р В РўвЂР В Р’В°Р В Р’В»Р РЋР Р‰Р РЋРІвЂљВ¬Р В Р’Вµ Р РЋР вЂљР В Р’В°Р РЋР С“Р РЋРІвЂљВ¬Р В РЎвЂР РЋР вЂљР В РЎвЂР В РЎВ
+        runtime: {}, // Р В РЎВР В РЎвЂўР В Р’В¶Р В Р вЂ¦Р В РЎвЂў Р В РЎвЂР РЋР С“Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В Р’В·Р В РЎвЂўР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В РўвЂР В Р’В»Р РЋР РЏ per-cycle Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р РЋРІР‚В¦, Р В Р’ВµР РЋР С“Р В Р’В»Р В РЎвЂ Р В Р вЂ¦Р РЋРЎвЂњР В Р’В¶Р В Р вЂ¦Р В РЎвЂў
       };
   
       gymState.periods[periodId] = period;
       if (!gymState.periodOrder || !Array.isArray(gymState.periodOrder)) gymState.periodOrder = [];
       gymState.periodOrder.push(periodId);
-      // Initialize runtime fresh for the new period — do NOT reuse old runtime data
+      // Initialize runtime fresh for the new period Р Р†Р вЂљРІР‚Сњ do NOT reuse old runtime data
       // Also reset any history/status/progress from old period
       if (!gymState.runtime) gymState.runtime = {};
       // initialize runtime cycles[1] with template days enabled
@@ -5446,7 +5360,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
       gymPersistState();
   
-      // закрываем мастер и открываем экран периода
+      // Р В Р’В·Р В Р’В°Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В РЎВР В Р’В°Р РЋР С“Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљ Р В РЎвЂ Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В°
       if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
       // Re-render periods list to include new period, then open the period screen
       gymOpenPeriodsScreen();
@@ -5458,14 +5372,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
 
-  // экран конкретного периода
+  // Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р В РЎвЂќР В РЎвЂўР В Р вЂ¦Р В РЎвЂќР РЋР вЂљР В Р’ВµР РЋРІР‚С™Р В Р вЂ¦Р В РЎвЂўР В РЎвЂ“Р В РЎвЂў Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В РЎвЂР В РЎвЂўР В РўвЂР В Р’В°
   if (gymEl.backBtn) {
     gymEl.backBtn.addEventListener('click', gymClose);
   }
   // "Save cycle": commit current runtime structure for this cycle to gymState + localStorage.
   // IMPORTANT: Only save current cycle data - do NOT propagate to future cycles
   if (gymEl.saveBtn) {
-    gymEl.saveBtn.textContent = 'Сохранить цикл';
+    gymEl.saveBtn.textContent = 'Р В Р Р‹Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р РЋРІР‚В Р В РЎвЂР В РЎвЂќР В Р’В»';
     gymEl.saveBtn.addEventListener('click', () => {
       const period = gymGetActivePeriod();
       if (!period) return;
@@ -5487,37 +5401,37 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (gymEl.historyBtn) {
     gymEl.historyBtn.addEventListener('click', () => {
-      showAlert('История тренировок появится позже');
+      showAlert('Р В Р’ВР РЋР С“Р РЋРІР‚С™Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР РЏ Р РЋРІР‚С™Р РЋР вЂљР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В РЎвЂўР В РЎвЂќ Р В РЎвЂ”Р В РЎвЂўР РЋР РЏР В Р вЂ Р В РЎвЂР РЋРІР‚С™Р РЋР С“Р РЋР РЏ Р В РЎвЂ”Р В РЎвЂўР В Р’В·Р В Р’В¶Р В Р’Вµ');
     });
   }
   
-  // --- Fitness: Еда - добавление (открытие модалки) ---
+  // --- Fitness: Р В РІР‚СћР В РўвЂР В Р’В° - Р В РўвЂР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ (Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р В РЎвЂР В Р’Вµ Р В РЎВР В РЎвЂўР В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂќР В РЎвЂ) ---
   const fitnessFoodAddBtn = document.getElementById('fitnessFoodAdd');
 
   if (fitnessFoodAddBtn) {
     fitnessFoodAddBtn.addEventListener('click', () => {
-      fitnessOpenFoodModal(null); // открываем нашу объединённую форму (ручной/авто)
+      fitnessOpenFoodModal(null); // Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В Р вЂ¦Р В Р’В°Р РЋРІвЂљВ¬Р РЋРЎвЂњ Р В РЎвЂўР В Р’В±Р РЋР вЂ°Р В Р’ВµР В РўвЂР В РЎвЂР В Р вЂ¦Р РЋРІР‚ВР В Р вЂ¦Р В Р вЂ¦Р РЋРЎвЂњР РЋР вЂ№ Р РЋРІР‚С›Р В РЎвЂўР РЋР вЂљР В РЎВР РЋРЎвЂњ (Р РЋР вЂљР РЋРЎвЂњР РЋРІР‚РЋР В Р вЂ¦Р В РЎвЂўР В РІвЂћвЂ“/Р В Р’В°Р В Р вЂ Р РЋРІР‚С™Р В РЎвЂў)
     });
   }
 
 
   // ========== COLLAPSIBLE FITNESS CARDS ==========
   
-  // Инициализация сворачиваемых карточек
+  // Р В Р’ВР В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В РЎвЂР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР РЋР РЏ Р РЋР С“Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВР РЋРІР‚в„–Р РЋРІР‚В¦ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В Р’ВµР В РЎвЂќ
   function fitnessInitCollapsibleCards() {
     const headers = document.querySelectorAll('.fitness-card-header');
     
     headers.forEach(header => {
-      // Проверяем, не добавлен ли уже обработчик
+      // Р В РЎСџР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’ВµР РЋР вЂљР РЋР РЏР В Р’ВµР В РЎВ, Р В Р вЂ¦Р В Р’Вµ Р В РўвЂР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦ Р В Р’В»Р В РЎвЂ Р РЋРЎвЂњР В Р’В¶Р В Р’Вµ Р В РЎвЂўР В Р’В±Р РЋР вЂљР В Р’В°Р В Р’В±Р В РЎвЂўР РЋРІР‚С™Р РЋРІР‚РЋР В РЎвЂР В РЎвЂќ
       if (header.dataset.collapseInitialized) return;
       header.dataset.collapseInitialized = 'true';
       
       header.addEventListener('click', (e) => {
-        // Не сворачивать при клике на кнопки внутри шапки
+        // Р В РЎСљР В Р’Вµ Р РЋР С“Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р В РЎвЂќР В Р’В»Р В РЎвЂР В РЎвЂќР В Р’Вµ Р В Р вЂ¦Р В Р’В° Р В РЎвЂќР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В РЎвЂ Р В Р вЂ Р В Р вЂ¦Р РЋРЎвЂњР РЋРІР‚С™Р РЋР вЂљР В РЎвЂ Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ”Р В РЎвЂќР В РЎвЂ
         if (e.target.tagName === 'BUTTON' || e.target.closest('BUTTON')) return;
         
-        // ПРЕДОТВРАЩЕНИЕ КОНФЛИКТА: останавливаем всплытие, чтобы клик по header
-        // не вызывал обработчики на родительской карточке (например, открытие попапа энергии)
+        // Р В РЎСџР В Р’В Р В РІР‚СћР В РІР‚СњР В РЎвЂєР В РЎС›Р В РІР‚в„ўР В Р’В Р В РЎвЂ™Р В Р’В©Р В РІР‚СћР В РЎСљР В Р’ВР В РІР‚Сћ Р В РЎв„ўР В РЎвЂєР В РЎСљР В Р’В¤Р В РІР‚С”Р В Р’ВР В РЎв„ўР В РЎС›Р В РЎвЂ™: Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В Р’В°Р В Р вЂ¦Р В Р’В°Р В Р вЂ Р В Р’В»Р В РЎвЂР В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В Р вЂ Р РЋР С“Р В РЎвЂ”Р В Р’В»Р РЋРІР‚в„–Р РЋРІР‚С™Р В РЎвЂР В Р’Вµ, Р РЋРІР‚РЋР РЋРІР‚С™Р В РЎвЂўР В Р’В±Р РЋРІР‚в„– Р В РЎвЂќР В Р’В»Р В РЎвЂР В РЎвЂќ Р В РЎвЂ”Р В РЎвЂў header
+        // Р В Р вЂ¦Р В Р’Вµ Р В Р вЂ Р РЋРІР‚в„–Р В Р’В·Р РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’В» Р В РЎвЂўР В Р’В±Р РЋР вЂљР В Р’В°Р В Р’В±Р В РЎвЂўР РЋРІР‚С™Р РЋРІР‚РЋР В РЎвЂР В РЎвЂќР В РЎвЂ Р В Р вЂ¦Р В Р’В° Р РЋР вЂљР В РЎвЂўР В РўвЂР В РЎвЂР РЋРІР‚С™Р В Р’ВµР В Р’В»Р РЋР Р‰Р РЋР С“Р В РЎвЂќР В РЎвЂўР В РІвЂћвЂ“ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В РЎвЂќР В Р’Вµ (Р В Р вЂ¦Р В Р’В°Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР В РЎВР В Р’ВµР РЋР вЂљ, Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р В РЎвЂР В Р’Вµ Р В РЎвЂ”Р В РЎвЂўР В РЎвЂ”Р В Р’В°Р В РЎвЂ”Р В Р’В° Р РЋР РЉР В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂ“Р В РЎвЂР В РЎвЂ)
         e.stopPropagation();
         
         const card = header.closest('[class*="bg-white/"]');
@@ -5530,11 +5444,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const isCollapsed = body.classList.contains('collapsed');
           
           if (isCollapsed) {
-            // Разворачиваем
+            // Р В Р’В Р В Р’В°Р В Р’В·Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ
             body.classList.remove('collapsed');
             if (chevron) chevron.classList.remove('rotated');
           } else {
-            // Сворачиваем
+            // Р В Р Р‹Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ
             body.classList.add('collapsed');
             if (chevron) chevron.classList.add('rotated');
           }
@@ -5542,27 +5456,27 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
     
-    // РАЗВЕДЕНИЕ КЛИКОВ: для карточки энергии - открытие попапа только при клике по body (не по header)
+    // Р В Р’В Р В РЎвЂ™Р В РІР‚вЂќР В РІР‚в„ўР В РІР‚СћР В РІР‚СњР В РІР‚СћР В РЎСљР В Р’ВР В РІР‚Сћ Р В РЎв„ўР В РІР‚С”Р В Р’ВР В РЎв„ўР В РЎвЂєР В РІР‚в„ў: Р В РўвЂР В Р’В»Р РЋР РЏ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В РЎвЂќР В РЎвЂ Р РЋР РЉР В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂ“Р В РЎвЂР В РЎвЂ - Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р В РЎвЂР В Р’Вµ Р В РЎвЂ”Р В РЎвЂўР В РЎвЂ”Р В Р’В°Р В РЎвЂ”Р В Р’В° Р РЋРІР‚С™Р В РЎвЂўР В Р’В»Р РЋР Р‰Р В РЎвЂќР В РЎвЂў Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р В РЎвЂќР В Р’В»Р В РЎвЂР В РЎвЂќР В Р’Вµ Р В РЎвЂ”Р В РЎвЂў body (Р В Р вЂ¦Р В Р’Вµ Р В РЎвЂ”Р В РЎвЂў header)
     const energyCard = document.getElementById('fitnessCaloriesCard');
     if (energyCard && !energyCard.dataset.popupHandlerAdded) {
       energyCard.dataset.popupHandlerAdded = 'true';
       energyCard.addEventListener('click', (e) => {
-        // Если клик по header - это обрабатывает сворачивание, игнорируем
+        // Р В РІР‚СћР РЋР С“Р В Р’В»Р В РЎвЂ Р В РЎвЂќР В Р’В»Р В РЎвЂР В РЎвЂќ Р В РЎвЂ”Р В РЎвЂў header - Р РЋР РЉР РЋРІР‚С™Р В РЎвЂў Р В РЎвЂўР В Р’В±Р РЋР вЂљР В Р’В°Р В Р’В±Р В Р’В°Р РЋРІР‚С™Р РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР РЋРІР‚С™ Р РЋР С“Р В Р вЂ Р В РЎвЂўР РЋР вЂљР В Р’В°Р РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР В Р’Вµ, Р В РЎвЂР В РЎвЂ“Р В Р вЂ¦Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР вЂљР РЋРЎвЂњР В Р’ВµР В РЎВ
         if (e.target.closest('.fitness-card-header')) return;
-        // Игнорировать клики по кнопкам
+        // Р В Р’ВР В РЎвЂ“Р В Р вЂ¦Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰ Р В РЎвЂќР В Р’В»Р В РЎвЂР В РЎвЂќР В РЎвЂ Р В РЎвЂ”Р В РЎвЂў Р В РЎвЂќР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В Р’В°Р В РЎВ
         if (e.target.closest('button')) return;
-        // Открываем попап детализации энергии
+        // Р В РЎвЂєР РЋРІР‚С™Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В РЎвЂ”Р В РЎвЂўР В РЎвЂ”Р В Р’В°Р В РЎвЂ” Р В РўвЂР В Р’ВµР РЋРІР‚С™Р В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР В РЎвЂ Р РЋР РЉР В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂ“Р В РЎвЂР В РЎвЂ
         if (typeof fitnessOpenEnergyDetails === 'function') {
           fitnessOpenEnergyDetails();
         }
       });
     }
     
-    // Обновляем мини-данные в шапках
+    // Р В РЎвЂєР В Р’В±Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В»Р РЋР РЏР В Р’ВµР В РЎВ Р В РЎВР В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р В Р’Вµ Р В Р вЂ  Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ”Р В РЎвЂќР В Р’В°Р РЋРІР‚В¦
     fitnessUpdateCardSummaries();
   }
   
-  // Обновление мини-данных в шапках карточек
+  // Р В РЎвЂєР В Р’В±Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РЎВР В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р РЋРІР‚В¦ Р В Р вЂ  Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ”Р В РЎвЂќР В Р’В°Р РЋРІР‚В¦ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В Р’ВµР В РЎвЂќ
   function fitnessUpdateCardSummaries() {
     const dateKey = fitnessGetDateKey ? fitnessGetDateKey() : document.getElementById('fitnessDate')?.value;
     if (!dateKey) return;
@@ -5571,17 +5485,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const profile = FS.getFitnessProfile();
     const summary = FS.getCaloriesSummary(profile, dayData);
     
-    // 1. Энергия тела - мини-шкала баланса
+    // 1. Р В Р’В­Р В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂ“Р В РЎвЂР РЋР РЏ Р РЋРІР‚С™Р В Р’ВµР В Р’В»Р В Р’В° - Р В РЎВР В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р РЋРІвЂљВ¬Р В РЎвЂќР В Р’В°Р В Р’В»Р В Р’В° Р В Р’В±Р В Р’В°Р В Р’В»Р В Р’В°Р В Р вЂ¦Р РЋР С“Р В Р’В°
     fitnessUpdateEnergyMiniSummary(dayData, summary);
     
-    // 2. Активность - мини-строка и полоски
+    // 2. Р В РЎвЂ™Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р РЋР Р‰ - Р В РЎВР В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р РЋР С“Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂўР В РЎвЂќР В Р’В° Р В РЎвЂ Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р В РЎвЂўР РЋР С“Р В РЎвЂќР В РЎвЂ
     fitnessUpdateActivityMiniSummary(dayData, summary);
     
-    // 3. Поддержка тела - мини-строка
+    // 3. Р В РЎСџР В РЎвЂўР В РўвЂР В РўвЂР В Р’ВµР РЋР вЂљР В Р’В¶Р В РЎвЂќР В Р’В° Р РЋРІР‚С™Р В Р’ВµР В Р’В»Р В Р’В° - Р В РЎВР В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р РЋР С“Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂўР В РЎвЂќР В Р’В°
     fitnessUpdateSupportMiniSummary(dayData);
   }
   
-  // Обновление мини-шапки Энергии
+  // Р В РЎвЂєР В Р’В±Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РЎВР В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ”Р В РЎвЂќР В РЎвЂ Р В Р’В­Р В Р вЂ¦Р В Р’ВµР РЋР вЂљР В РЎвЂ“Р В РЎвЂР В РЎвЂ
   function fitnessUpdateEnergyMiniSummary(dayData, summary) {
     const energyBalance = summary?.balance || 0;
     const MAX_ABS_BALANCE = 1000;
@@ -5590,32 +5504,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const balanceText = document.getElementById('energyMiniBalanceText');
     
     if (balanceFill && balanceText) {
-      // Цвет: зелёный при дефиците (баланс < 0), красный при профиците (баланс > 0)
+      // Р В Р’В¦Р В Р вЂ Р В Р’ВµР РЋРІР‚С™: Р В Р’В·Р В Р’ВµР В Р’В»Р РЋРІР‚ВР В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р В РўвЂР В Р’ВµР РЋРІР‚С›Р В РЎвЂР РЋРІР‚В Р В РЎвЂР РЋРІР‚С™Р В Р’Вµ (Р В Р’В±Р В Р’В°Р В Р’В»Р В Р’В°Р В Р вЂ¦Р РЋР С“ < 0), Р В РЎвЂќР РЋР вЂљР В Р’В°Р РЋР С“Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В РЎвЂР РЋРІР‚В Р В РЎвЂР РЋРІР‚С™Р В Р’Вµ (Р В Р’В±Р В Р’В°Р В Р’В»Р В Р’В°Р В Р вЂ¦Р РЋР С“ > 0)
       const isDeficit = energyBalance <= 0;
       balanceFill.className = 'fitness-mini-balance-fill ' + (isDeficit ? 'bg-green-400' : 'bg-red-400');
       
-      // Позиционирование: от центра влево или вправо
+      // Р В РЎСџР В РЎвЂўР В Р’В·Р В РЎвЂР РЋРІР‚В Р В РЎвЂР В РЎвЂўР В Р вЂ¦Р В РЎвЂР РЋР вЂљР В РЎвЂўР В Р вЂ Р В Р’В°Р В Р вЂ¦Р В РЎвЂР В Р’Вµ: Р В РЎвЂўР РЋРІР‚С™ Р РЋРІР‚В Р В Р’ВµР В Р вЂ¦Р РЋРІР‚С™Р РЋР вЂљР В Р’В° Р В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ Р В РЎвЂў Р В РЎвЂР В Р’В»Р В РЎвЂ Р В Р вЂ Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р В РЎвЂў
       if (energyBalance === 0) {
         balanceFill.style.left = '50%';
         balanceFill.style.width = '0%';
       } else if (isDeficit) {
-        // Дефицит - влево от центра
+        // Р В РІР‚СњР В Р’ВµР РЋРІР‚С›Р В РЎвЂР РЋРІР‚В Р В РЎвЂР РЋРІР‚С™ - Р В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ Р В РЎвЂў Р В РЎвЂўР РЋРІР‚С™ Р РЋРІР‚В Р В Р’ВµР В Р вЂ¦Р РЋРІР‚С™Р РЋР вЂљР В Р’В°
         balanceFill.style.left = (50 - balancePercent) + '%';
         balanceFill.style.width = balancePercent + '%';
       } else {
-        // Профицит - вправо от центра
+        // Р В РЎСџР РЋР вЂљР В РЎвЂўР РЋРІР‚С›Р В РЎвЂР РЋРІР‚В Р В РЎвЂР РЋРІР‚С™ - Р В Р вЂ Р В РЎвЂ”Р РЋР вЂљР В Р’В°Р В Р вЂ Р В РЎвЂў Р В РЎвЂўР РЋРІР‚С™ Р РЋРІР‚В Р В Р’ВµР В Р вЂ¦Р РЋРІР‚С™Р РЋР вЂљР В Р’В°
         balanceFill.style.left = '50%';
         balanceFill.style.width = balancePercent + '%';
       }
       
-      // Текст: "-350 ккал" или "+200 ккал"
+      // Р В РЎС›Р В Р’ВµР В РЎвЂќР РЋР С“Р РЋРІР‚С™: "-350 Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»" Р В РЎвЂР В Р’В»Р В РЎвЂ "+200 Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»"
       const sign = energyBalance > 0 ? '+' : '';
       balanceText.textContent = sign + energyBalance;
       balanceText.className = 'text-[10px] font-medium ' + (isDeficit ? 'text-green-300' : 'text-red-300');
     }
   }
   
-  // Обновление мини-шапки Активности
+  // Р В РЎвЂєР В Р’В±Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РЎВР В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ”Р В РЎвЂќР В РЎвЂ Р В РЎвЂ™Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР В Р вЂ Р В Р вЂ¦Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В РЎвЂ
   function fitnessUpdateActivityMiniSummary(dayData, summary) {
     const activities = dayData?.activities || [];
     const totals = { gym: 0, cardio: 0, home: 0, steps: 0, count: 0 };
@@ -5638,15 +5552,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const totalActivityCal = totals.gym + totals.cardio + totals.home + totals.steps;
     
-    // Мини-строка (сокращённо)
+    // Р В РЎС™Р В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р РЋР С“Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂўР В РЎвЂќР В Р’В° (Р РЋР С“Р В РЎвЂўР В РЎвЂќР РЋР вЂљР В Р’В°Р РЋРІР‚В°Р РЋРІР‚ВР В Р вЂ¦Р В Р вЂ¦Р В РЎвЂў)
     const activitySummary = document.getElementById('activityMiniSummary');
     if (activitySummary) {
-      activitySummary.textContent = totals.count + ' акт. · ' + totalActivityCal + ' ккал';
+      activitySummary.textContent = totals.count + ' Р В Р’В°Р В РЎвЂќР РЋРІР‚С™. Р вЂ™Р’В· ' + totalActivityCal + ' Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»';
     }
     
-    // Мини-полоски (пропорционально калориям)
+    // Р В РЎС™Р В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р В РЎвЂўР РЋР С“Р В РЎвЂќР В РЎвЂ (Р В РЎвЂ”Р РЋР вЂљР В РЎвЂўР В РЎвЂ”Р В РЎвЂўР РЋР вЂљР РЋРІР‚В Р В РЎвЂР В РЎвЂўР В Р вЂ¦Р В Р’В°Р В Р’В»Р РЋР Р‰Р В Р вЂ¦Р В РЎвЂў Р В РЎвЂќР В Р’В°Р В Р’В»Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР РЏР В РЎВ)
     const maxCal = Math.max(totals.gym, totals.cardio, totals.home, totals.steps, 1);
-    const stripWidth = 40; // макс ширина в px
+    const stripWidth = 40; // Р В РЎВР В Р’В°Р В РЎвЂќР РЋР С“ Р РЋРІвЂљВ¬Р В РЎвЂР РЋР вЂљР В РЎвЂР В Р вЂ¦Р В Р’В° Р В Р вЂ  px
     
     const updateStrip = (id, cal) => {
       const el = document.getElementById(id);
@@ -5663,24 +5577,24 @@ document.addEventListener('DOMContentLoaded', () => {
     updateStrip('miniStripSteps', totals.steps);
   }
   
-  // Обновление мини-шапки Поддержки тела
+  // Р В РЎвЂєР В Р’В±Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В»Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В РЎВР В РЎвЂР В Р вЂ¦Р В РЎвЂ-Р РЋРІвЂљВ¬Р В Р’В°Р В РЎвЂ”Р В РЎвЂќР В РЎвЂ Р В РЎСџР В РЎвЂўР В РўвЂР В РўвЂР В Р’ВµР РЋР вЂљР В Р’В¶Р В РЎвЂќР В РЎвЂ Р РЋРІР‚С™Р В Р’ВµР В Р’В»Р В Р’В°
   function fitnessUpdateSupportMiniSummary(dayData) {
     const dateKey = fitnessGetDateKey ? fitnessGetDateKey() : document.getElementById('fitnessDate')?.value;
     if (!dateKey) return;
     
-    // Еда
+    // Р В РІР‚СћР В РўвЂР В Р’В°
     const eaten = (dayData?.foods || []).reduce((sum, f) => sum + (f.calories || 0), 0);
     
-    // Вода
+    // Р В РІР‚в„ўР В РЎвЂўР В РўвЂР В Р’В°
     const waterData = FS.getWaterData(dateKey);
     const waterCurrent = (waterData?.currentMl || 0) / 1000;
     const waterTarget = ((waterData?.targetMl || 2000)) / 1000;
     
-    // БАДы
+    // Р В РІР‚ВР В РЎвЂ™Р В РІР‚СњР РЋРІР‚в„–
     const supplements = FS.getAllSupplements();
     let suppTaken = 0, suppTotal = 0;
     
-    // Считаем БАДы на сегодня
+    // Р В Р Р‹Р РЋРІР‚РЋР В РЎвЂР РЋРІР‚С™Р В Р’В°Р В Р’ВµР В РЎВ Р В РІР‚ВР В РЎвЂ™Р В РІР‚СњР РЋРІР‚в„– Р В Р вЂ¦Р В Р’В° Р РЋР С“Р В Р’ВµР В РЎвЂ“Р В РЎвЂўР В РўвЂР В Р вЂ¦Р РЋР РЏ
     supplements.forEach(s => {
       if (s.daily) {
         const inInterval = FS.isDateInDailyInterval(s, dateKey);
@@ -5694,26 +5608,26 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const supportSummary = document.getElementById('supportMiniSummary');
     if (supportSummary) {
-      // Еда
-      let text = 'Еда: ' + eaten + ' ккал';
+      // Р В РІР‚СћР В РўвЂР В Р’В°
+      let text = 'Р В РІР‚СћР В РўвЂР В Р’В°: ' + eaten + ' Р В РЎвЂќР В РЎвЂќР В Р’В°Р В Р’В»';
       
-      // Вода (подсвечиваем если выполнена)
+      // Р В РІР‚в„ўР В РЎвЂўР В РўвЂР В Р’В° (Р В РЎвЂ”Р В РЎвЂўР В РўвЂР РЋР С“Р В Р вЂ Р В Р’ВµР РЋРІР‚РЋР В РЎвЂР В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р В Р’ВµР РЋР С“Р В Р’В»Р В РЎвЂ Р В Р вЂ Р РЋРІР‚в„–Р В РЎвЂ”Р В РЎвЂўР В Р’В»Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В Р’В°)
       const waterClass = waterCurrent >= waterTarget ? 'text-emerald-300' : '';
-      text += ' · Вода: <span class="' + waterClass + '">' + waterCurrent.toFixed(1) + ' / ' + waterTarget.toFixed(1) + ' л</span>';
+      text += ' Р вЂ™Р’В· Р В РІР‚в„ўР В РЎвЂўР В РўвЂР В Р’В°: <span class="' + waterClass + '">' + waterCurrent.toFixed(1) + ' / ' + waterTarget.toFixed(1) + ' Р В Р’В»</span>';
       
-      // БАДы
+      // Р В РІР‚ВР В РЎвЂ™Р В РІР‚СњР РЋРІР‚в„–
       if (suppTotal > 0) {
         const suppClass = suppTaken >= suppTotal ? 'text-emerald-300' : (suppTaken < suppTotal ? 'text-amber-300' : '');
-        text += ' · БАДы: <span class="' + suppClass + '">' + suppTaken + ' / ' + suppTotal + '</span>';
+        text += ' Р вЂ™Р’В· Р В РІР‚ВР В РЎвЂ™Р В РІР‚СњР РЋРІР‚в„–: <span class="' + suppClass + '">' + suppTaken + ' / ' + suppTotal + '</span>';
       } else {
-        text += ' · БАДы: 0 / 0';
+        text += ' Р вЂ™Р’В· Р В РІР‚ВР В РЎвЂ™Р В РІР‚СњР РЋРІР‚в„–: 0 / 0';
       }
       
       supportSummary.innerHTML = text;
     }
   }
   
-  // Вызов инициализации при загрузке и при изменении данных
+  // Р В РІР‚в„ўР РЋРІР‚в„–Р В Р’В·Р В РЎвЂўР В Р вЂ  Р В РЎвЂР В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В РЎвЂР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР В РЎвЂ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р В Р’В·Р В Р’В°Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂќР В Р’Вµ Р В РЎвЂ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р В РЎвЂР В Р’В·Р В РЎВР В Р’ВµР В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В РЎвЂ Р В РўвЂР В Р’В°Р В Р вЂ¦Р В Р вЂ¦Р РЋРІР‚в„–Р РЋРІР‚В¦
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       setTimeout(fitnessInitCollapsibleCards, 100);
@@ -5722,8 +5636,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(fitnessInitCollapsibleCards, 100);
   }
 
-  // ========== СВОРАЧИВАНИЕ ПО УМОЛЧАНИЮ ==========
-  // Добавляем класс collapsed ко всем карточкам при инициализации
+  // ========== Р В Р Р‹Р В РІР‚в„ўР В РЎвЂєР В Р’В Р В РЎвЂ™Р В Р’В§Р В Р’ВР В РІР‚в„ўР В РЎвЂ™Р В РЎСљР В Р’ВР В РІР‚Сћ Р В РЎСџР В РЎвЂє Р В Р в‚¬Р В РЎС™Р В РЎвЂєР В РІР‚С”Р В Р’В§Р В РЎвЂ™Р В РЎСљР В Р’ВР В Р’В® ==========
+  // Р В РІР‚СњР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В Р’В»Р РЋР РЏР В Р’ВµР В РЎВ Р В РЎвЂќР В Р’В»Р В Р’В°Р РЋР С“Р РЋР С“ collapsed Р В РЎвЂќР В РЎвЂў Р В Р вЂ Р РЋР С“Р В Р’ВµР В РЎВ Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В РЎвЂўР РЋРІР‚РЋР В РЎвЂќР В Р’В°Р В РЎВ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р В РЎвЂР В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В РЎвЂР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР В РЎвЂ
   function fitnessCollapseAllCards() {
     document.querySelectorAll('.fitness-card-body').forEach(body => {
       body.classList.add('collapsed');
@@ -5733,25 +5647,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Вызываем сразу после инициализации
+  // Р В РІР‚в„ўР РЋРІР‚в„–Р В Р’В·Р РЋРІР‚в„–Р В Р вЂ Р В Р’В°Р В Р’ВµР В РЎВ Р РЋР С“Р РЋР вЂљР В Р’В°Р В Р’В·Р РЋРЎвЂњ Р В РЎвЂ”Р В РЎвЂўР РЋР С“Р В Р’В»Р В Р’Вµ Р В РЎвЂР В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В РЎвЂР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР В РЎвЂ
   setTimeout(fitnessCollapseAllCards, 150);
 
-  // ========== КНОПКА "НАЗАД" ВНУТРИ ДАШБОРДА ==========
+  // ========== Р В РЎв„ўР В РЎСљР В РЎвЂєР В РЎСџР В РЎв„ўР В РЎвЂ™ "Р В РЎСљР В РЎвЂ™Р В РІР‚вЂќР В РЎвЂ™Р В РІР‚Сњ" Р В РІР‚в„ўР В РЎСљР В Р в‚¬Р В РЎС›Р В Р’В Р В Р’В Р В РІР‚СњР В РЎвЂ™Р В Р РѓР В РІР‚ВР В РЎвЂєР В Р’В Р В РІР‚СњР В РЎвЂ™ ==========
   const fitnessBackInDashboard = document.getElementById('fitnessBackInDashboard');
   if (fitnessBackInDashboard) {
     fitnessBackInDashboard.addEventListener('click', () => {
-      // Возвращаемся на главный экран через showMain()
+      // Р В РІР‚в„ўР В РЎвЂўР В Р’В·Р В Р вЂ Р РЋР вЂљР В Р’В°Р РЋРІР‚В°Р В Р’В°Р В Р’ВµР В РЎВР РЋР С“Р РЋР РЏ Р В Р вЂ¦Р В Р’В° Р В РЎвЂ“Р В Р’В»Р В Р’В°Р В Р вЂ Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’ВµР В Р’В· showMain()
       if (typeof showMain === 'function') {
         showMain();
       } else {
-        // Фоллбек - скрыть фитнес-экран
+        // Р В Р’В¤Р В РЎвЂўР В Р’В»Р В Р’В»Р В Р’В±Р В Р’ВµР В РЎвЂќ - Р РЋР С“Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р РЋР Р‰ Р РЋРІР‚С›Р В РЎвЂР РЋРІР‚С™Р В Р вЂ¦Р В Р’ВµР РЋР С“-Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦
         const fitnessScreen = document.getElementById('fitnessScreen');
         if (fitnessScreen) fitnessScreen.classList.add('hidden');
       }
     });
   }
 
-  // ========== ЗАГРУЗКА ФОТО ==========
+  // ========== Р В РІР‚вЂќР В РЎвЂ™Р В РІР‚СљР В Р’В Р В Р в‚¬Р В РІР‚вЂќР В РЎв„ўР В РЎвЂ™ Р В Р’В¤Р В РЎвЂєР В РЎС›Р В РЎвЂє ==========
   const PHOTO_DEBUG_MODE = true;
   const PHOTO_CURRENT_KEY = 'fitness_photo_current';
   const fitnessPhotoUpload = document.getElementById('fitnessPhotoUpload');
@@ -5839,7 +5753,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!file.type.startsWith('image/')) {
         fitnessPhotoDebugLog('photo: error/unsupported (not image)');
-        showAlert('Пожалуйста, выберите изображение');
+        showAlert('Р В РЎСџР В РЎвЂўР В Р’В¶Р В Р’В°Р В Р’В»Р РЋРЎвЂњР В РІвЂћвЂ“Р РЋР С“Р РЋРІР‚С™Р В Р’В°, Р В Р вЂ Р РЋРІР‚в„–Р В Р’В±Р В Р’ВµР РЋР вЂљР В РЎвЂР РЋРІР‚С™Р В Р’Вµ Р В РЎвЂР В Р’В·Р В РЎвЂўР В Р’В±Р РЋР вЂљР В Р’В°Р В Р’В¶Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В Р’Вµ');
         return;
       }
 
@@ -5860,11 +5774,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         fitnessPhotoDebugLog('photo: file read ok, preview shown');
-        showAlert('Фото сохранено!');
+        showAlert('Р В Р’В¤Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂў Р РЋР С“Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂў!');
       } catch (err) {
-        console.warn('Не удалось сохранить фото:', err);
+        console.warn('Р В РЎСљР В Р’Вµ Р РЋРЎвЂњР В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂўР РЋР С“Р РЋР Р‰ Р РЋР С“Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р РЋРІР‚С›Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂў:', err);
         fitnessPhotoDebugLog('photo: error/unsupported (localStorage save failed)');
-        showAlert('Ошибка при чтении или сохранении файла');
+        showAlert('Р В РЎвЂєР РЋРІвЂљВ¬Р В РЎвЂР В Р’В±Р В РЎвЂќР В Р’В° Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р РЋРІР‚РЋР РЋРІР‚С™Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В РЎвЂ Р В РЎвЂР В Р’В»Р В РЎвЂ Р РЋР С“Р В РЎвЂўР РЋРІР‚В¦Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР В РЎвЂ Р РЋРІР‚С›Р В Р’В°Р В РІвЂћвЂ“Р В Р’В»Р В Р’В°');
       }
     });
   }
@@ -5884,7 +5798,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fitnessAvatarPlaceholder) fitnessAvatarPlaceholder.classList.remove('hidden');
       }
     } catch (err) {
-      console.warn('Не удалось загрузить фото:', err);
+      console.warn('Р В РЎСљР В Р’Вµ Р РЋРЎвЂњР В РўвЂР В Р’В°Р В Р’В»Р В РЎвЂўР РЋР С“Р РЋР Р‰ Р В Р’В·Р В Р’В°Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂР РЋРІР‚С™Р РЋР Р‰ Р РЋРІР‚С›Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂў:', err);
       if (fitnessAvatar) fitnessAvatar.classList.add('hidden');
       if (fitnessAvatarPlaceholder) fitnessAvatarPlaceholder.classList.remove('hidden');
     }
@@ -5893,7 +5807,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(fitnessLoadSavedPhoto, 200);
 
 
-  // ========== КНОПКА "ФИТНЕС" НА ГЛАВНОМ ЭКРАНЕ ==========
+  // ========== Р В РЎв„ўР В РЎСљР В РЎвЂєР В РЎСџР В РЎв„ўР В РЎвЂ™ "Р В Р’В¤Р В Р’ВР В РЎС›Р В РЎСљР В РІР‚СћР В Р Р‹" Р В РЎСљР В РЎвЂ™ Р В РІР‚СљР В РІР‚С”Р В РЎвЂ™Р В РІР‚в„ўР В РЎСљР В РЎвЂєР В РЎС™ Р В Р’В­Р В РЎв„ўР В Р’В Р В РЎвЂ™Р В РЎСљР В РІР‚Сћ ==========
   if (el.fitnessBtn && !el.fitnessBtn.dataset.fitnessOpenBound) {
     if (!el.fitnessBtn.dataset.fitnessLegacyBound) {
       el.fitnessBtn.dataset.fitnessLegacyBound = '1';
@@ -5904,15 +5818,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  // ========== КНОПКА "НАЗАД" ВНИЗУ СПРАВА ==========
+  // ========== Р В РЎв„ўР В РЎСљР В РЎвЂєР В РЎСџР В РЎв„ўР В РЎвЂ™ "Р В РЎСљР В РЎвЂ™Р В РІР‚вЂќР В РЎвЂ™Р В РІР‚Сњ" Р В РІР‚в„ўР В РЎСљР В Р’ВР В РІР‚вЂќР В Р в‚¬ Р В Р Р‹Р В РЎСџР В Р’В Р В РЎвЂ™Р В РІР‚в„ўР В РЎвЂ™ ==========
   const fitnessBackInDashboardFixed = document.getElementById('fitnessBackInDashboardFixed');
   if (fitnessBackInDashboardFixed) {
     fitnessBackInDashboardFixed.addEventListener('click', () => {
-      // Возвращаемся на главный экран через showMain()
+      // Р В РІР‚в„ўР В РЎвЂўР В Р’В·Р В Р вЂ Р РЋР вЂљР В Р’В°Р РЋРІР‚В°Р В Р’В°Р В Р’ВµР В РЎВР РЋР С“Р РЋР РЏ Р В Р вЂ¦Р В Р’В° Р В РЎвЂ“Р В Р’В»Р В Р’В°Р В Р вЂ Р В Р вЂ¦Р РЋРІР‚в„–Р В РІвЂћвЂ“ Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦ Р РЋРІР‚РЋР В Р’ВµР РЋР вЂљР В Р’ВµР В Р’В· showMain()
       if (typeof showMain === 'function') {
         showMain();
       } else {
-        // Фоллбек - скрыть фитнес-экран
+        // Р В Р’В¤Р В РЎвЂўР В Р’В»Р В Р’В»Р В Р’В±Р В Р’ВµР В РЎвЂќ - Р РЋР С“Р В РЎвЂќР РЋР вЂљР РЋРІР‚в„–Р РЋРІР‚С™Р РЋР Р‰ Р РЋРІР‚С›Р В РЎвЂР РЋРІР‚С™Р В Р вЂ¦Р В Р’ВµР РЋР С“-Р РЋР РЉР В РЎвЂќР РЋР вЂљР В Р’В°Р В Р вЂ¦
         const fitnessScreen = document.getElementById('fitnessScreen');
         if (fitnessScreen) fitnessScreen.classList.add('hidden');
       }
@@ -5920,11 +5834,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  // ========== ПЕРЕКЛЮЧЕНИЕ ТЕМЫ ==========
+  // ========== Р В РЎСџР В РІР‚СћР В Р’В Р В РІР‚СћР В РЎв„ўР В РІР‚С”Р В Р’В®Р В Р’В§Р В РІР‚СћР В РЎСљР В Р’ВР В РІР‚Сћ Р В РЎС›Р В РІР‚СћР В РЎС™Р В Р’В« ==========
   const THEME_STORAGE_KEY = 'fitnessTheme';
-  const DEFAULT_THEME = 'dark'; // По умолчанию тёмная тема
+  const DEFAULT_THEME = 'dark'; // Р В РЎСџР В РЎвЂў Р РЋРЎвЂњР В РЎВР В РЎвЂўР В Р’В»Р РЋРІР‚РЋР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋР вЂ№ Р РЋРІР‚С™Р РЋРІР‚ВР В РЎВР В Р вЂ¦Р В Р’В°Р РЋР РЏ Р РЋРІР‚С™Р В Р’ВµР В РЎВР В Р’В°
   
-  // Функция применения темы
+  // Р В Р’В¤Р РЋРЎвЂњР В Р вЂ¦Р В РЎвЂќР РЋРІР‚В Р В РЎвЂР РЋР РЏ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂР В РЎВР В Р’ВµР В Р вЂ¦Р В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ Р РЋРІР‚С™Р В Р’ВµР В РЎВР РЋРІР‚в„–
   function fitnessApplyTheme(theme) {
     const root = document.documentElement;
     const themeToggle = document.getElementById('fitnessThemeToggle');
@@ -5933,39 +5847,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainThemeLabel = document.getElementById('mainThemeLabel');
     
     if (theme === 'dark') {
-      // Тёмная тема - добавляем атрибут
+      // Р В РЎС›Р РЋРІР‚ВР В РЎВР В Р вЂ¦Р В Р’В°Р РЋР РЏ Р РЋРІР‚С™Р В Р’ВµР В РЎВР В Р’В° - Р В РўвЂР В РЎвЂўР В Р’В±Р В Р’В°Р В Р вЂ Р В Р’В»Р РЋР РЏР В Р’ВµР В РЎВ Р В Р’В°Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂР В Р’В±Р РЋРЎвЂњР РЋРІР‚С™
       root.setAttribute('data-fitness-theme', 'dark');
       if (themeToggle) {
-        themeToggle.textContent = 'Тёмная';
+        themeToggle.textContent = 'Р В РЎС›Р РЋРІР‚ВР В РЎВР В Р вЂ¦Р В Р’В°Р РЋР РЏ';
         themeToggle.classList.remove('bg-white/20');
         themeToggle.classList.add('bg-indigo-500/50');
       }
-      if (themeLabel) themeLabel.textContent = 'Тёмная';
+      if (themeLabel) themeLabel.textContent = 'Р В РЎС›Р РЋРІР‚ВР В РЎВР В Р вЂ¦Р В Р’В°Р РЋР РЏ';
       if (mainThemeToggle) {
-        mainThemeToggle.textContent = 'Тёмная';
+        mainThemeToggle.textContent = 'Р В РЎС›Р РЋРІР‚ВР В РЎВР В Р вЂ¦Р В Р’В°Р РЋР РЏ';
         mainThemeToggle.classList.remove('bg-white/20');
         mainThemeToggle.classList.add('bg-indigo-500/50');
       }
-      if (mainThemeLabel) mainThemeLabel.textContent = 'Тёмная';
+      if (mainThemeLabel) mainThemeLabel.textContent = 'Р В РЎС›Р РЋРІР‚ВР В РЎВР В Р вЂ¦Р В Р’В°Р РЋР РЏ';
     } else {
-      // Светлая тема - убираем атрибут
+      // Р В Р Р‹Р В Р вЂ Р В Р’ВµР РЋРІР‚С™Р В Р’В»Р В Р’В°Р РЋР РЏ Р РЋРІР‚С™Р В Р’ВµР В РЎВР В Р’В° - Р РЋРЎвЂњР В Р’В±Р В РЎвЂР РЋР вЂљР В Р’В°Р В Р’ВµР В РЎВ Р В Р’В°Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂР В Р’В±Р РЋРЎвЂњР РЋРІР‚С™
       root.removeAttribute('data-fitness-theme');
       if (themeToggle) {
-        themeToggle.textContent = 'Светлая';
+        themeToggle.textContent = 'Р В Р Р‹Р В Р вЂ Р В Р’ВµР РЋРІР‚С™Р В Р’В»Р В Р’В°Р РЋР РЏ';
         themeToggle.classList.remove('bg-indigo-500/50');
         themeToggle.classList.add('bg-white/20');
       }
-      if (themeLabel) themeLabel.textContent = 'Светлая';
+      if (themeLabel) themeLabel.textContent = 'Р В Р Р‹Р В Р вЂ Р В Р’ВµР РЋРІР‚С™Р В Р’В»Р В Р’В°Р РЋР РЏ';
       if (mainThemeToggle) {
-        mainThemeToggle.textContent = 'Светлая';
+        mainThemeToggle.textContent = 'Р В Р Р‹Р В Р вЂ Р В Р’ВµР РЋРІР‚С™Р В Р’В»Р В Р’В°Р РЋР РЏ';
         mainThemeToggle.classList.remove('bg-indigo-500/50');
         mainThemeToggle.classList.add('bg-white/20');
       }
-      if (mainThemeLabel) mainThemeLabel.textContent = 'Светлая';
+      if (mainThemeLabel) mainThemeLabel.textContent = 'Р В Р Р‹Р В Р вЂ Р В Р’ВµР РЋРІР‚С™Р В Р’В»Р В Р’В°Р РЋР РЏ';
     }
   }
   
-  // Функция переключения темы
+  // Р В Р’В¤Р РЋРЎвЂњР В Р вЂ¦Р В РЎвЂќР РЋРІР‚В Р В РЎвЂР РЋР РЏ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР В РЎвЂќР В Р’В»Р РЋР вЂ№Р РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ Р РЋРІР‚С™Р В Р’ВµР В РЎВР РЋРІР‚в„–
   function fitnessToggleTheme() {
     const currentTheme = localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME;
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -5974,13 +5888,13 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessApplyTheme(newTheme);
   }
   
-  // Инициализация темы при загрузке
+  // Р В Р’ВР В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В РЎвЂР В Р’В°Р В Р’В»Р В РЎвЂР В Р’В·Р В Р’В°Р РЋРІР‚В Р В РЎвЂР РЋР РЏ Р РЋРІР‚С™Р В Р’ВµР В РЎВР РЋРІР‚в„– Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р В Р’В·Р В Р’В°Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂќР В Р’Вµ
   function fitnessInitTheme() {
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME;
     fitnessApplyTheme(savedTheme);
   }
   
-  // Обработчик кнопки переключения темы
+  // Р В РЎвЂєР В Р’В±Р РЋР вЂљР В Р’В°Р В Р’В±Р В РЎвЂўР РЋРІР‚С™Р РЋРІР‚РЋР В РЎвЂР В РЎвЂќ Р В РЎвЂќР В Р вЂ¦Р В РЎвЂўР В РЎвЂ”Р В РЎвЂќР В РЎвЂ Р В РЎвЂ”Р В Р’ВµР РЋР вЂљР В Р’ВµР В РЎвЂќР В Р’В»Р РЋР вЂ№Р РЋРІР‚РЋР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋР РЏ Р РЋРІР‚С™Р В Р’ВµР В РЎВР РЋРІР‚в„–
   const fitnessThemeToggle = document.getElementById('fitnessThemeToggle');
   if (fitnessThemeToggle) {
     fitnessThemeToggle.addEventListener('click', fitnessToggleTheme);
@@ -5991,8 +5905,13 @@ document.addEventListener('DOMContentLoaded', () => {
     mainThemeToggle.addEventListener('click', fitnessToggleTheme);
   }
   
-  // Применяем тему при загрузке
+  // Р В РЎСџР РЋР вЂљР В РЎвЂР В РЎВР В Р’ВµР В Р вЂ¦Р РЋР РЏР В Р’ВµР В РЎВ Р РЋРІР‚С™Р В Р’ВµР В РЎВР РЋРЎвЂњ Р В РЎвЂ”Р РЋР вЂљР В РЎвЂ Р В Р’В·Р В Р’В°Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В Р’В·Р В РЎвЂќР В Р’Вµ
   fitnessInitTheme();
 
 
-}); // конец DOMContentLoaded
+}); // Р В РЎвЂќР В РЎвЂўР В Р вЂ¦Р В Р’ВµР РЋРІР‚В  DOMContentLoaded
+
+
+
+
+

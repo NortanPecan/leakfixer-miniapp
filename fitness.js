@@ -418,6 +418,19 @@ function sortSupplementIntakes(intakes) {
   });
 }
 
+function inferLegacyPlannedId(supplement, dateKey, event, plannedIntakes, usedPlannedIds) {
+  if (!event || !plannedIntakes.length) return null;
+  if (typeof event.templateIndex === 'number') {
+    const templateId = buildPlannedIntakeId(supplement.id, dateKey, event.templateIndex);
+    if (!usedPlannedIds.has(templateId)) return templateId;
+  }
+  if (event.time) {
+    const byTime = plannedIntakes.find((planned) => !usedPlannedIds.has(planned.id) && planned.time === event.time);
+    if (byTime) return byTime.id;
+  }
+  return null;
+}
+
 function getSupplementIntakesForDay(supplementId, dateKey) {
   const supplement = getSupplementById(supplementId);
   if (!supplement) return [];
@@ -428,8 +441,19 @@ function getSupplementIntakesForDay(supplementId, dateKey) {
   const plannedIntakes = buildPlannedIntakesForDate(supplement, dateKey);
   const actualEvents = getDayIntakes(supplement, dateKey);
   const actualByPlannedId = new Map();
+  const linkedActualIds = new Set();
+  const usedPlannedIds = new Set();
+
   for (const event of actualEvents) {
-    if (event.plannedId) actualByPlannedId.set(event.plannedId, event);
+    let plannedId = event.plannedId || '';
+    if (!plannedId) {
+      plannedId = inferLegacyPlannedId(supplement, dateKey, event, plannedIntakes, usedPlannedIds) || '';
+    }
+    if (plannedId && !actualByPlannedId.has(plannedId)) {
+      actualByPlannedId.set(plannedId, { ...event, plannedId });
+      linkedActualIds.add(event.id);
+      usedPlannedIds.add(plannedId);
+    }
   }
 
   const merged = [];
@@ -439,7 +463,7 @@ function getSupplementIntakesForDay(supplementId, dateKey) {
     else merged.push(planned);
   }
   for (const event of actualEvents) {
-    if (!event.plannedId || !actualByPlannedId.has(event.plannedId)) {
+    if (!linkedActualIds.has(event.id)) {
       merged.push({ ...event, planned: false });
     }
   }
