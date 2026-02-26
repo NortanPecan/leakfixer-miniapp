@@ -48,10 +48,16 @@ High‑level coverage:
 - Daily data: activities, nutrition, water, daily work intensity and mood.
 - Activities: gym/strength, cardio (indoor/outdoor), home exercises, steps, daily activity.
 - Nutrition: manual input and auto macro/calorie estimation via `/api/nutrition`.
-- Supplements: profile, intake intervals, templates, intake events and history.
+- Supplements:
+  - clear separation between supplement definitions/templates and actual intake events;
+  - planned intakes are generated per day from templates and merged with actual events;
+  - adherence and deviations are available as structured signals for the core leak model.
 - Weight and measurements: logs in `measurements`, chart/history/edit/delete flows.
 - Gym periodization: periods, cycles, days, muscle groups, progress state.
 - Mood/resource: widget plus persistence to `daily_state` and `measurements`.
+- Daily fitness state:
+  - normalized `FitnessDayData` shape with explicit `supplements[]` list;
+  - helper functions ensure that reads/writes always use a consistent structure and propagate into `fitness_daily` and `daily_state.data.fitness`.
 
 ### Social / Coaching / Courses Domains (Planned)
 
@@ -65,7 +71,9 @@ High‑level coverage:
 ### Current Layout
 
 - `index.html`, `main.css`, `fitness.css`: screens and visual shell.
-- `app.js`: orchestration layer (init, navigation, DOM glue, screen flows).
+- `app.js`:
+  - orchestration layer (init, navigation, DOM glue, screen flows),
+  - includes a dedicated “Fitness Settings” panel that exposes fitness configuration (e.g. water baseline and related settings) independently of body/support panels.
 - `fitness.js`: fitness domain logic (state helpers, view‑models, pure helpers).
 - `fitness-sync.js`: sync adapter for fitness data and measurements.
 - `activity-calories.js`: calorie references and calculation helpers.
