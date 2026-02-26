@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Fitness tab: state, pure logic, and persistence.
  * Architecture: this file = state + logic (React-ready); app.js = DOM glue; index.html = markup.
  *
@@ -7,11 +7,11 @@
  * React state or API calls.
  *
  * @typedef {Object} BodyMeasurements
- * @property {number} [waist] - талия (см)
- * @property {number} [hips] - бёдра (см)
- * @property {number} [chest] - грудь (см)
- * @property {number} [bicep] - бицепс (см)
- * @property {number} [thigh] - бедро (см)
+ * @property {number} [waist] - С‚Р°Р»РёСЏ (СЃРј)
+ * @property {number} [hips] - Р±С‘РґСЂР° (СЃРј)
+ * @property {number} [chest] - РіСЂСѓРґСЊ (СЃРј)
+ * @property {number} [bicep] - Р±РёС†РµРїСЃ (СЃРј)
+ * @property {number} [thigh] - Р±РµРґСЂРѕ (СЃРј)
  *
  * @typedef {Object} ProfileFitnessSettings
  * @property {number} [weight] - kg
@@ -19,7 +19,7 @@
  * @property {number} [age] - years
  * @property {number} [targetWeight] - kg
  * @property {'sedentary'|'mixed'|'physical'|'variable'} [workProfile]
- * @property {BodyMeasurements} [measurements] - замеры тела
+ * @property {BodyMeasurements} [measurements] - Р·Р°РјРµСЂС‹ С‚РµР»Р°
  *
  * @typedef {'gym'|'strength'|'cardio'|'cardio_indoor'|'cardio_outdoor'|'home'|'home_exercise'|'steps'|'daily'} ActivityKind
  * @typedef {'light'|'medium'|'high'} GymIntensity
@@ -134,8 +134,8 @@
 /** Supplement definition in user's profile
  * @typedef {Object} Supplement
  * @property {string} id
- * @property {string} name - e.g. "Кленбутерол", "Креатин"
- * @property {'мг'|'г'|'табл'} unit
+ * @property {string} name - e.g. "РљР»РµРЅР±СѓС‚РµСЂРѕР»", "РљСЂРµР°С‚РёРЅ"
+ * @property {'РјРі'|'Рі'|'С‚Р°Р±Р»'} unit
  * @property {boolean} daily - "every day" flag
  * @property {string|null} dailyStartDate - "YYYY-MM-DD" when daily generation starts, null if not set
  * @property {string|null} dailyEndDate - "YYYY-MM-DD" when daily generation ends (inclusive), null for infinite
@@ -159,7 +159,7 @@ const BALANCE_GREEN_MAX = 300;
 const BALANCE_RED_THRESHOLD = 500;
 
 
-// ─── Persistence (Supabase + localStorage cache) ─────────────────────────
+// в”Ђв”Ђв”Ђ Persistence (Supabase + localStorage cache) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 function getProfileStorageKey() {
   const id = window.currentAppUserId || 'anon';
@@ -249,7 +249,7 @@ function updateDayData(dateKey, patch) {
   all[dateKey] = day;
   saveAllFitnessData(all);
 
-  // синхронизация дня в Supabase
+  // СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ РґРЅСЏ РІ Supabase
   if (window.FitnessSync && window.currentAppUserId) {
     window.FitnessSync.saveDay(dateKey, {
       water_ml: day.water?.currentMl || 0,
@@ -640,7 +640,7 @@ function resetAllSupplements() {
 /** Add new supplement to profile
  * @param {Object} params
  * @param {string} params.name
- * @param {'мг'|'г'|'табл'} params.unit
+ * @param {'РјРі'|'Рі'|'С‚Р°Р±Р»'} params.unit
  * @param {boolean} params.daily
  * @param {string|null} params.dailyStartDate - "YYYY-MM-DD" or null
  * @param {string|null} params.dailyEndDate - "YYYY-MM-DD" or null
@@ -750,7 +750,7 @@ function getTotalDoseForDay(intakes) {
   return intakes.reduce((sum, i) => sum + (i.checked ? i.dose : 0), 0);
 }
 
-// ─── Pure: date helpers ───────────────────────────────────────────────────
+// в”Ђв”Ђв”Ђ Pure: date helpers в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 /** @param {Date} date
  *  @returns {string} YYYY-MM-DD */
@@ -780,7 +780,7 @@ function formatTimeHM(date) {
   return `${h}:${m}`;
 }
 
-// ─── Pure: calorie calculations (replace with real formulas later) ───────────
+// в”Ђв”Ђв”Ђ Pure: calorie calculations (replace with real formulas later) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 /**
  * Calculate base metabolism (BMR) using Mifflin-St Jeor formula.
@@ -789,27 +789,30 @@ function formatTimeHM(date) {
  * @returns {number}
  */
 function calculateBaseMetabolism(profile) {
-  // Если есть вес в профиле - используем формулу Миффлина-Сан Жеора
+  if (!profile || typeof profile !== 'object') return 2000;
+  // Р•СЃР»Рё РµСЃС‚СЊ РІРµСЃ РІ РїСЂРѕС„РёР»Рµ - РёСЃРїРѕР»СЊР·СѓРµРј С„РѕСЂРјСѓР»Сѓ РњРёС„С„Р»РёРЅР°-РЎР°РЅ Р–РµРѕСЂР°
   if (profile.weight && profile.weight > 0) {
     const weight = profile.weight;
-    const height = profile.height || 170; // умолчание если нет
-    const age = profile.age || 30; // умолчание если нет
+    const height = profile.height || 170; // СѓРјРѕР»С‡Р°РЅРёРµ РµСЃР»Рё РЅРµС‚
+    const age = profile.age || 30; // СѓРјРѕР»С‡Р°РЅРёРµ РµСЃР»Рё РЅРµС‚
     
-    // По умолчанию мужской пол (можно добавить выбор в профиле)
-    // Формула Миффлина-Сан Жеора для мужчин:
-    // BMR = 10 × вес(кг) + 6.25 × рост(см) − 5 × возраст(лет) + 5
-    let bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+    // РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РјСѓР¶СЃРєРѕР№ РїРѕР» (РјРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ РІС‹Р±РѕСЂ РІ РїСЂРѕС„РёР»Рµ)
+    // Р¤РѕСЂРјСѓР»Р° РњРёС„С„Р»РёРЅР°-РЎР°РЅ Р–РµРѕСЂР° РґР»СЏ РјСѓР¶С‡РёРЅ:
+    // BMR = 10 Г— РІРµСЃ(РєРі) + 6.25 Г— СЂРѕСЃС‚(СЃРј) в€’ 5 Г— РІРѕР·СЂР°СЃС‚(Р»РµС‚) + 5
+    const sex = String(profile.sex || profile.gender || '').toLowerCase();
+    const sexOffset = sex === 'female' || sex === 'f' || sex === 'Р¶РµРЅ' ? -161 : 5;
+    let bmr = 10 * weight + 6.25 * height - 5 * age + sexOffset;
     
-    // Округляем
+    // РћРєСЂСѓРіР»СЏРµРј
     return Math.round(bmr);
   }
   
-  // Если веса нет - используем targetCalories или умолчание
+  // Р•СЃР»Рё РІРµСЃР° РЅРµС‚ - РёСЃРїРѕР»СЊР·СѓРµРј targetCalories РёР»Рё СѓРјРѕР»С‡Р°РЅРёРµ
   if (profile.targetCalories && profile.targetCalories > 0) {
     return Math.round(profile.targetCalories);
   }
   
-  // Умолчание
+  // РЈРјРѕР»С‡Р°РЅРёРµ
   return 2000;
 }
 
@@ -860,7 +863,7 @@ function getBalanceColor(balance) {
  * @returns {CaloriesSummary}
  */
 function getCaloriesSummary(profile, dayData) {
-  // Защита от undefined dayData
+  // Р—Р°С‰РёС‚Р° РѕС‚ undefined dayData
   if (!dayData) {
     return {
       eaten: 0,
@@ -875,7 +878,7 @@ function getCaloriesSummary(profile, dayData) {
   }
   
   const eaten = (dayData.foods || []).reduce((s, f) => s + (f.calories || 0), 0);
-  const baseRest = calculateBaseMetabolism(profile); // чистый BMR
+  const baseRest = calculateBaseMetabolism(profile); // С‡РёСЃС‚С‹Р№ BMR
   const activityCal = calculateActivityCalories(dayData.activities || []);
 
   const workMultiplier = getWorkActivityMultiplier(profile, dayData);
@@ -888,7 +891,7 @@ function getCaloriesSummary(profile, dayData) {
     burned,
     balance,
     balanceColor: getBalanceColor(balance),
-    // Дополнительные поля для детализации
+    // Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РїРѕР»СЏ РґР»СЏ РґРµС‚Р°Р»РёР·Р°С†РёРё
     baseRest,
     baseWithWork,
     activityCal,
@@ -902,20 +905,20 @@ function getCaloriesSummary(profile, dayData) {
  * @returns {number} multiplier
  */
 function getWorkActivityMultiplier(profile, dayData) {
-  let base = 1.2; // по умолчанию сидячий
+  let base = 1.2; // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ СЃРёРґСЏС‡РёР№
   if (profile.workProfile === 'mixed') base = 1.4;
   if (profile.workProfile === 'physical') base = 1.6;
   if (profile.workProfile === 'variable' || !profile.workProfile) base = 1.3;
 
-  // дневная поправка (none = без дополнительной корректировки)
+  // РґРЅРµРІРЅР°СЏ РїРѕРїСЂР°РІРєР° (none = Р±РµР· РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕР№ РєРѕСЂСЂРµРєС‚РёСЂРѕРІРєРё)
   if (dayData.workDay === 'none') {
-    // Без изменений - только базовый множитель
+    // Р‘РµР· РёР·РјРµРЅРµРЅРёР№ - С‚РѕР»СЊРєРѕ Р±Р°Р·РѕРІС‹Р№ РјРЅРѕР¶РёС‚РµР»СЊ
   } else if (dayData.workDay === 'low') {
     base -= 0.1;
   } else if (dayData.workDay === 'high') {
     base += 0.1;
   }
-  // 'normal' или undefined - тоже без изменений
+  // 'normal' РёР»Рё undefined - С‚РѕР¶Рµ Р±РµР· РёР·РјРµРЅРµРЅРёР№
 
   if (base < 1.1) base = 1.1;
   if (base > 1.8) base = 1.8;
@@ -923,107 +926,107 @@ function getWorkActivityMultiplier(profile, dayData) {
 }
 
 
-// ─── Pure: list view models (for rendering; React can map over these) ───────
+// в”Ђв”Ђв”Ђ Pure: list view models (for rendering; React can map over these) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 /** @param {ActivityEntry} a
  *  @returns {string} */
 function getActivityLabel(a) {
   if (!a) return '';
   
-  // Силовая тренировка
+  // РЎРёР»РѕРІР°СЏ С‚СЂРµРЅРёСЂРѕРІРєР°
   if (a.kind === 'gym' || a.kind === 'strength') {
-    const calories = a.calories ? ` · ${a.calories} ккал` : '';
+    const calories = a.calories ? ` В· ${a.calories} РєРєР°Р»` : '';
     if (a.gymData) {
-      return `Силовая тренировка${a.durationMinutes ? ` ${a.durationMinutes} мин` : ''}${calories}`;
+      return `РЎРёР»РѕРІР°СЏ С‚СЂРµРЅРёСЂРѕРІРєР°${a.durationMinutes ? ` ${a.durationMinutes} РјРёРЅ` : ''}${calories}`;
     }
-    return `Силовая ${a.durationMinutes} мин${calories}`;
+    return `РЎРёР»РѕРІР°СЏ ${a.durationMinutes} РјРёРЅ${calories}`;
   }
   
-  // Кардио (зал)
+  // РљР°СЂРґРёРѕ (Р·Р°Р»)
   if (a.kind === 'cardio' || a.kind === 'cardio_indoor') {
-    const calories = a.calories ? ` · ${a.calories} ккал` : '';
+    const calories = a.calories ? ` В· ${a.calories} РєРєР°Р»` : '';
     const typeLabels = {
-      'WALKING_TREADMILL': 'Ходьба на дорожке',
-      'RUNNING_TREADMILL_SLOW': 'Бег на дорожке',
-      'RUNNING_TREADMILL_FAST': 'Бег на дорожке (быстрый)',
-      'ELLIPTICAL_LIGHT': 'Эллипс',
-      'ELLIPTICAL_MODERATE': 'Эллипс',
-      'ELLIPTICAL_VIGOROUS': 'Эллипс (интенсивно)',
-      'STATIONARY_BIKE_LIGHT': 'Велотренажёр',
-      'STATIONARY_BIKE_MODERATE': 'Велотренажёр',
-      'STATIONARY_BIKE_VIGOROUS': 'Велотренажёр (интенсивно)',
-      'ROWING_LIGHT': 'Гребной тренажёр',
-      'ROWING_MODERATE': 'Гребной тренажёр',
-      'ROWING_VIGOROUS': 'Гребной тренажёр (интенсивно)',
-      'STEPPER': 'Степпер',
+      'WALKING_TREADMILL': 'РҐРѕРґСЊР±Р° РЅР° РґРѕСЂРѕР¶РєРµ',
+      'RUNNING_TREADMILL_SLOW': 'Р‘РµРі РЅР° РґРѕСЂРѕР¶РєРµ',
+      'RUNNING_TREADMILL_FAST': 'Р‘РµРі РЅР° РґРѕСЂРѕР¶РєРµ (Р±С‹СЃС‚СЂС‹Р№)',
+      'ELLIPTICAL_LIGHT': 'Р­Р»Р»РёРїСЃ',
+      'ELLIPTICAL_MODERATE': 'Р­Р»Р»РёРїСЃ',
+      'ELLIPTICAL_VIGOROUS': 'Р­Р»Р»РёРїСЃ (РёРЅС‚РµРЅСЃРёРІРЅРѕ)',
+      'STATIONARY_BIKE_LIGHT': 'Р’РµР»РѕС‚СЂРµРЅР°Р¶С‘СЂ',
+      'STATIONARY_BIKE_MODERATE': 'Р’РµР»РѕС‚СЂРµРЅР°Р¶С‘СЂ',
+      'STATIONARY_BIKE_VIGOROUS': 'Р’РµР»РѕС‚СЂРµРЅР°Р¶С‘СЂ (РёРЅС‚РµРЅСЃРёРІРЅРѕ)',
+      'ROWING_LIGHT': 'Р“СЂРµР±РЅРѕР№ С‚СЂРµРЅР°Р¶С‘СЂ',
+      'ROWING_MODERATE': 'Р“СЂРµР±РЅРѕР№ С‚СЂРµРЅР°Р¶С‘СЂ',
+      'ROWING_VIGOROUS': 'Р“СЂРµР±РЅРѕР№ С‚СЂРµРЅР°Р¶С‘СЂ (РёРЅС‚РµРЅСЃРёРІРЅРѕ)',
+      'STEPPER': 'РЎС‚РµРїРїРµСЂ',
     };
-    const typeLabel = typeLabels[a.cardioType] || 'Кардио (зал)';
-    return `${typeLabel} ${a.durationMinutes} мин${calories}`;
+    const typeLabel = typeLabels[a.cardioType] || 'РљР°СЂРґРёРѕ (Р·Р°Р»)';
+    return `${typeLabel} ${a.durationMinutes} РјРёРЅ${calories}`;
   }
 
-  // Кардио (улица)
+  // РљР°СЂРґРёРѕ (СѓР»РёС†Р°)
   if (a.kind === 'cardio_outdoor') {
-    const calories = a.calories ? ` · ${a.calories} ккал` : '';
+    const calories = a.calories ? ` В· ${a.calories} РєРєР°Р»` : '';
     const typeLabels = {
-      'WALKING_LEISURE': 'Прогулочная ходьба',
-      'WALKING_BRISK': 'Быстрая ходьба',
-      'WALKING_RACE': 'Спортивная ходьба',
-      'RUNNING_SLOW': 'Бег (медленный)',
-      'RUNNING_MODERATE': 'Бег (средний)',
-      'RUNNING_FAST': 'Бег (быстрый)',
-      'RUNNING_SPRINT': 'Бег (спринт)',
-      'CYCLING_LEISURE': 'Велосипед (прогулка)',
-      'CYCLING_MODERATE': 'Велосипед',
-      'CYCLING_FAST': 'Велосипед (быстрый)',
-      'CYCLING_RACE': 'Велосипед (гонка)',
-      'SWIMMING_LEISURE': 'Плавание',
-      'SWIMMING_MODERATE': 'Плавание',
-      'SWIMMING_VIGOROUS': 'Плавание (интенсивно)',
-      'SKIING_CROSS_COUNTRY': 'Лыжи классика',
-      'SKIING_SKATING': 'Лыжи коньком',
+      'WALKING_LEISURE': 'РџСЂРѕРіСѓР»РѕС‡РЅР°СЏ С…РѕРґСЊР±Р°',
+      'WALKING_BRISK': 'Р‘С‹СЃС‚СЂР°СЏ С…РѕРґСЊР±Р°',
+      'WALKING_RACE': 'РЎРїРѕСЂС‚РёРІРЅР°СЏ С…РѕРґСЊР±Р°',
+      'RUNNING_SLOW': 'Р‘РµРі (РјРµРґР»РµРЅРЅС‹Р№)',
+      'RUNNING_MODERATE': 'Р‘РµРі (СЃСЂРµРґРЅРёР№)',
+      'RUNNING_FAST': 'Р‘РµРі (Р±С‹СЃС‚СЂС‹Р№)',
+      'RUNNING_SPRINT': 'Р‘РµРі (СЃРїСЂРёРЅС‚)',
+      'CYCLING_LEISURE': 'Р’РµР»РѕСЃРёРїРµРґ (РїСЂРѕРіСѓР»РєР°)',
+      'CYCLING_MODERATE': 'Р’РµР»РѕСЃРёРїРµРґ',
+      'CYCLING_FAST': 'Р’РµР»РѕСЃРёРїРµРґ (Р±С‹СЃС‚СЂС‹Р№)',
+      'CYCLING_RACE': 'Р’РµР»РѕСЃРёРїРµРґ (РіРѕРЅРєР°)',
+      'SWIMMING_LEISURE': 'РџР»Р°РІР°РЅРёРµ',
+      'SWIMMING_MODERATE': 'РџР»Р°РІР°РЅРёРµ',
+      'SWIMMING_VIGOROUS': 'РџР»Р°РІР°РЅРёРµ (РёРЅС‚РµРЅСЃРёРІРЅРѕ)',
+      'SKIING_CROSS_COUNTRY': 'Р›С‹Р¶Рё РєР»Р°СЃСЃРёРєР°',
+      'SKIING_SKATING': 'Р›С‹Р¶Рё РєРѕРЅСЊРєРѕРј',
     };
-    const typeLabel = typeLabels[a.cardioType] || 'Кардио (улица)';
-    const distance = a.distanceKm ? ` · ${a.distanceKm} км` : '';
-    return `${typeLabel} ${a.durationMinutes} мин${distance}${calories}`;
+    const typeLabel = typeLabels[a.cardioType] || 'РљР°СЂРґРёРѕ (СѓР»РёС†Р°)';
+    const distance = a.distanceKm ? ` В· ${a.distanceKm} РєРј` : '';
+    return `${typeLabel} ${a.durationMinutes} РјРёРЅ${distance}${calories}`;
   }
   
-  // Домашние упражнения
+  // Р”РѕРјР°С€РЅРёРµ СѓРїСЂР°Р¶РЅРµРЅРёСЏ
   if (a.kind === 'home' || a.kind === 'home_exercise') {
-    const calories = a.calories ? ` · ${a.calories} ккал` : '';
+    const calories = a.calories ? ` В· ${a.calories} РєРєР°Р»` : '';
     const typeLabels = {
-      'PUSHUPS_MODERATE': 'Отжимания',
-      'PUSHUPS_VIGOROUS': 'Отжимания (интенсивно)',
-      'SQUATS_BODYWEIGHT': 'Приседания',
-      'SQUATS_WEIGHTED': 'Приседания с весом',
-      'LUNGES': 'Выпады',
-      'CRUNCHES': 'Скручивания',
-      'LEG_RAISES': 'Подъёмы ног',
-      'PLANK': 'Планка',
-      'BURPEES': 'Бёрпи',
-      'JUMPING_JACKS': 'Джампинг джек',
-      'MOUNTAIN_CLIMBERS': 'Альпинист',
-      'HIGH_KNEES': 'Бег с высокими коленями',
-      'SHADOW_BOXING': 'Бокс с тенью',
-      'YOGA_LIGHT': 'Йога',
-      'YOGA_MODERATE': 'Йога',
-      'PILATES': 'Пилатес',
-      'STRETCHING': 'Растяжка',
+      'PUSHUPS_MODERATE': 'РћС‚Р¶РёРјР°РЅРёСЏ',
+      'PUSHUPS_VIGOROUS': 'РћС‚Р¶РёРјР°РЅРёСЏ (РёРЅС‚РµРЅСЃРёРІРЅРѕ)',
+      'SQUATS_BODYWEIGHT': 'РџСЂРёСЃРµРґР°РЅРёСЏ',
+      'SQUATS_WEIGHTED': 'РџСЂРёСЃРµРґР°РЅРёСЏ СЃ РІРµСЃРѕРј',
+      'LUNGES': 'Р’С‹РїР°РґС‹',
+      'CRUNCHES': 'РЎРєСЂСѓС‡РёРІР°РЅРёСЏ',
+      'LEG_RAISES': 'РџРѕРґСЉС‘РјС‹ РЅРѕРі',
+      'PLANK': 'РџР»Р°РЅРєР°',
+      'BURPEES': 'Р‘С‘СЂРїРё',
+      'JUMPING_JACKS': 'Р”Р¶Р°РјРїРёРЅРі РґР¶РµРє',
+      'MOUNTAIN_CLIMBERS': 'РђР»СЊРїРёРЅРёСЃС‚',
+      'HIGH_KNEES': 'Р‘РµРі СЃ РІС‹СЃРѕРєРёРјРё РєРѕР»РµРЅСЏРјРё',
+      'SHADOW_BOXING': 'Р‘РѕРєСЃ СЃ С‚РµРЅСЊСЋ',
+      'YOGA_LIGHT': 'Р™РѕРіР°',
+      'YOGA_MODERATE': 'Р™РѕРіР°',
+      'PILATES': 'РџРёР»Р°С‚РµСЃ',
+      'STRETCHING': 'Р Р°СЃС‚СЏР¶РєР°',
     };
-    const typeLabel = typeLabels[a.exerciseType] || 'Домашняя тренировка';
-    const duration = a.durationMinutes ? ` ${a.durationMinutes} мин` : '';
-    const reps = a.repetitions ? ` ${a.repetitions} повт.` : '';
+    const typeLabel = typeLabels[a.exerciseType] || 'Р”РѕРјР°С€РЅСЏСЏ С‚СЂРµРЅРёСЂРѕРІРєР°';
+    const duration = a.durationMinutes ? ` ${a.durationMinutes} РјРёРЅ` : '';
+    const reps = a.repetitions ? ` ${a.repetitions} РїРѕРІС‚.` : '';
     return `${typeLabel}${duration}${reps}${calories}`;
   }
   
-  // Шаги
+  // РЁР°РіРё
   if (a.kind === 'steps') {
-    const calories = a.calories ? ` · ${a.calories} ккал` : '';
-    return `Шаги: ${a.steps?.toLocaleString() || 0}${calories}`;
+    const calories = a.calories ? ` В· ${a.calories} РєРєР°Р»` : '';
+    return `РЁР°РіРё: ${a.steps?.toLocaleString() || 0}${calories}`;
   }
   
-  // Повседневная активность
+  // РџРѕРІСЃРµРґРЅРµРІРЅР°СЏ Р°РєС‚РёРІРЅРѕСЃС‚СЊ
   if (a.kind === 'daily') {
-    return `Активность: ${a.activityType || 'другое'} ${a.durationMinutes} мин`;
+    return `РђРєС‚РёРІРЅРѕСЃС‚СЊ: ${a.activityType || 'РґСЂСѓРіРѕРµ'} ${a.durationMinutes} РјРёРЅ`;
   }
   
   return '';
@@ -1039,18 +1042,18 @@ function getActivityListViewModel(activities) {
  *  @returns {FoodListItem[]} */
 function getFoodListViewModel(foods) {
   return (foods || []).map((f) => {
-    // Build macros text: "Б: X г, Ж: Y г, У: Z г"
+    // Build macros text: "Р‘: X Рі, Р–: Y Рі, РЈ: Z Рі"
     const macros = [];
-    if (f.protein != null) macros.push(`Б: ${f.protein}г`);
-    if (f.fat != null) macros.push(`Ж: ${f.fat}г`);
-    if (f.carbs != null) macros.push(`У: ${f.carbs}г`);
+    if (f.protein != null) macros.push(`Р‘: ${f.protein}Рі`);
+    if (f.fat != null) macros.push(`Р–: ${f.fat}Рі`);
+    if (f.carbs != null) macros.push(`РЈ: ${f.carbs}Рі`);
     const macrosText = macros.length > 0 ? macros.join(', ') : '';
     
     return {
       id: f.id,
       name: f.name,
       amount: f.amount || '',
-      caloriesText: f.calories != null ? `${f.calories} ккал` : '',
+      caloriesText: f.calories != null ? `${f.calories} РєРєР°Р»` : '',
       macrosText,
       timeText: f.time || '',
       source: f.source || 'manual',
@@ -1065,7 +1068,7 @@ function formatWaterLiters(waterMl) {
   return ((waterMl || 0) / 1000).toFixed(1);
 }
 
-// ─── Pure: merge/remove (return new arrays for React immutability) ─────────
+// в”Ђв”Ђв”Ђ Pure: merge/remove (return new arrays for React immutability) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 /** @param {ActivityEntry[]} activities
  *  @param {ActivityEntry} entry
@@ -1105,7 +1108,7 @@ function removeFoodById(foods, id) {
   return (foods || []).filter((f) => f.id !== id);
 }
 
-// ─── Pure: water tracking helpers ─────────────────────────────────────────
+// в”Ђв”Ђв”Ђ Pure: water tracking helpers в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 /** Clamp value between min and max
  * @param {number} x
@@ -1131,9 +1134,9 @@ function getWaterStatus(currentMl, targetMl) {
  * @param {'low'|'normal'|'high'} status
  * @returns {string} */
 function getWaterStatusText(status) {
-  if (status === 'low') return 'Воды меньше обычного.';
-  if (status === 'high') return 'Воды больше обычного.';
-  return 'Вода как обычно.';
+  if (status === 'low') return 'Р’РѕРґС‹ РјРµРЅСЊС€Рµ РѕР±С‹С‡РЅРѕРіРѕ.';
+  if (status === 'high') return 'Р’РѕРґС‹ Р±РѕР»СЊС€Рµ РѕР±С‹С‡РЅРѕРіРѕ.';
+  return 'Р’РѕРґР° РєР°Рє РѕР±С‹С‡РЅРѕ.';
 }
 
 /** Format water in liters with 1 decimal
@@ -1184,7 +1187,7 @@ function formatWaterLitersLegacy(waterMl) {
   return ((waterMl || 0) / 1000).toFixed(1);
 }
 
-// ─── Pure: parse form values → domain objects (React: pass form state here) ──
+// в”Ђв”Ђв”Ђ Pure: parse form values в†’ domain objects (React: pass form state here) в”Ђв”Ђ
 
 /** @param {{ weight?: string|number, height?: string|number, age?: string|number, targetWeight?: string|number, workProfile?: string }} values
  *  @returns {ProfileFitnessSettings} */
@@ -1224,7 +1227,7 @@ function parseProfileFromValues(values) {
 function buildActivityEntry(kind, form, editId) {
   const id = editId || generateId();
   
-  // Силовая тренировка (GYM)
+  // РЎРёР»РѕРІР°СЏ С‚СЂРµРЅРёСЂРѕРІРєР° (GYM)
   if (kind === 'gym' || kind === 'strength') {
     const intensity = ['low', 'medium', 'high'].includes(form.intensity) ? form.intensity : 'medium';
     const entry = {
@@ -1233,11 +1236,11 @@ function buildActivityEntry(kind, form, editId) {
       durationMinutes: Number(form.durationMinutes) || 45,
       intensity,
     };
-    // Если есть связь с GYM-модулем
+    // Р•СЃР»Рё РµСЃС‚СЊ СЃРІСЏР·СЊ СЃ GYM-РјРѕРґСѓР»РµРј
     if (form.gymData) {
       entry.gymData = form.gymData;
     }
-    // Рассчитываем калории если есть ActivityCalories
+    // Р Р°СЃСЃС‡РёС‚С‹РІР°РµРј РєР°Р»РѕСЂРёРё РµСЃР»Рё РµСЃС‚СЊ ActivityCalories
     if (window.ActivityCalories) {
       if (entry.gymData && entry.gymData.exercises) {
         entry.calories = window.ActivityCalories.calculateStrengthCalories(entry.gymData).calories;
@@ -1248,7 +1251,7 @@ function buildActivityEntry(kind, form, editId) {
     return entry;
   }
 
-  // Кардио (зал)
+  // РљР°СЂРґРёРѕ (Р·Р°Р»)
   if (kind === 'cardio' || kind === 'cardio_indoor') {
     const entry = {
       id,
@@ -1271,7 +1274,7 @@ function buildActivityEntry(kind, form, editId) {
     return entry;
   }
   
-  // Кардио (улица)
+  // РљР°СЂРґРёРѕ (СѓР»РёС†Р°)
   if (kind === 'cardio_outdoor') {
     const entry = {
       id,
@@ -1294,7 +1297,7 @@ function buildActivityEntry(kind, form, editId) {
     return entry;
   }
   
-  // Домашние упражнения
+  // Р”РѕРјР°С€РЅРёРµ СѓРїСЂР°Р¶РЅРµРЅРёСЏ
   if (kind === 'home' || kind === 'home_exercise') {
     const entry = {
       id,
@@ -1318,7 +1321,7 @@ function buildActivityEntry(kind, form, editId) {
     return entry;
   }
   
-  // Шаги
+  // РЁР°РіРё
   if (kind === 'steps') {
     const entry = {
       id,
@@ -1331,7 +1334,7 @@ function buildActivityEntry(kind, form, editId) {
     return entry;
   }
   
-  // Повседневная активность
+  // РџРѕРІСЃРµРґРЅРµРІРЅР°СЏ Р°РєС‚РёРІРЅРѕСЃС‚СЊ
   if (kind === 'daily') {
     return {
       id,
@@ -1375,12 +1378,12 @@ function buildFoodEntry(form, editId) {
 }
 
 
-// ─── Public API ───────────────────────────────────────────────────────────
+// в”Ђв”Ђв”Ђ Public API в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
-// ─── API Ninjas Nutrition integration ───────────────────────────────────
+// в”Ђв”Ђв”Ђ API Ninjas Nutrition integration в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 /** Call backend nutrition API
- * @param {string} inputText - food text like "гречка 200г вареная"
+ * @param {string} inputText - food text like "РіСЂРµС‡РєР° 200Рі РІР°СЂРµРЅР°СЏ"
  * @returns {Promise<{kcal: number, b: number, zh: number, u: number}>}
  */
 async function fetchNutritionForInput(inputText) {
@@ -1392,7 +1395,7 @@ async function fetchNutritionForInput(inputText) {
 }
 
 /** Handle food submission with API Ninjas nutrition lookup
- * @param {string} inputText - user input like "гречка 200г вареная"
+ * @param {string} inputText - user input like "РіСЂРµС‡РєР° 200Рі РІР°СЂРµРЅР°СЏ"
  * @param {Date} [time] - optional time, defaults to now
  * @returns {Promise<{success: boolean, entry?: FoodEntry, error?: string}>}
  */
@@ -1426,7 +1429,7 @@ async function onFoodSubmit(inputText, time = new Date()) {
   }
 }
 
-// ─── Weight tracking helpers ─────────────────────────────────────────────
+// в”Ђв”Ђв”Ђ Weight tracking helpers в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 /** Calculate BMI
  * @param {number} weightKg
@@ -1445,11 +1448,11 @@ function calculateBMI(weightKg, heightCm) {
  * @returns {{text: string, trend: 'up'|'down'|'same', diff: number}}
  */
 function formatWeightChange(current, previous) {
-  if (!previous || previous === 0) return { text: '—', trend: 'same', diff: 0 };
+  if (!previous || previous === 0) return { text: 'вЂ”', trend: 'same', diff: 0 };
   const diff = Number((current - previous).toFixed(1));
-  if (Math.abs(diff) < 0.1) return { text: '→ 0.0 кг', trend: 'same', diff: 0 };
-  if (diff > 0) return { text: `↗ +${diff} кг`, trend: 'up', diff };
-  return { text: `↘ ${diff} кг`, trend: 'down', diff };
+  if (Math.abs(diff) < 0.1) return { text: 'в†’ 0.0 РєРі', trend: 'same', diff: 0 };
+  if (diff > 0) return { text: `в†— +${diff} РєРі`, trend: 'up', diff };
+  return { text: `в† ${diff} РєРі`, trend: 'down', diff };
 }
 
 /** Generate SVG polyline points for weight chart
@@ -1544,3 +1547,5 @@ window.FitnessState = {
   // NEW: Daily interval helper
   isDateInDailyInterval,
 };
+
+

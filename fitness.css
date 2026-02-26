@@ -147,9 +147,24 @@ html[data-fitness-theme="dark"] #fitnessBackInDashboardFixed:hover {
 /* Фон экрана - применяется к fitnessScreen */
 #fitnessScreen {
   background: var(--fitness-bg-screen);
+  width: 100%;
   min-height: 100vh;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  z-index: 1200;
+  padding: 1rem;
+}
+
+body.fitness-screen-active {
+  overflow: hidden;
+}
+
+#fitnessSupplementsTracking .supp-intake-check {
   position: relative;
-  z-index: 50;
+  z-index: 2;
+  pointer-events: auto;
 }
 
 /* Основной класс карточки - основа для glassmorphism */
@@ -435,6 +450,17 @@ html[data-fitness-theme="dark"] #fitnessBackInDashboardFixed:hover {
 
 #fitnessAvatarPlaceholder.hidden {
   display: none;
+}
+
+#fitnessPhotoBtn {
+  pointer-events: auto;
+  z-index: 3;
+}
+
+#fitnessPhotoDebug {
+  white-space: pre-wrap;
+  max-height: 7rem;
+  overflow: auto;
 }
 
 /* Проверка состояния input */

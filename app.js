@@ -64,22 +64,32 @@ document.addEventListener('DOMContentLoaded', () => {
     buddy: document.getElementById('buddyScreen'),
   };
 
+  function setFitnessScreenActive(active) {
+    document.body.classList.toggle('fitness-screen-active', Boolean(active));
+  }
+
   function showMain() {
+    setFitnessScreenActive(false);
     if (rootScreens.main) rootScreens.main.classList.remove('hidden');
     if (rootScreens.fitness) rootScreens.fitness.classList.add('hidden');
     if (rootScreens.buddy) rootScreens.buddy.classList.add('hidden');
   }
 
   function showBuddy() {
+    setFitnessScreenActive(false);
     if (rootScreens.main) rootScreens.main.classList.add('hidden');
     if (rootScreens.fitness) rootScreens.fitness.classList.add('hidden');
     if (rootScreens.buddy) rootScreens.buddy.classList.remove('hidden');
   }
 
   function showFitness() {
+    setFitnessScreenActive(true);
     if (rootScreens.main) rootScreens.main.classList.add('hidden');
     if (rootScreens.buddy) rootScreens.buddy.classList.add('hidden');
-    if (rootScreens.fitness) rootScreens.fitness.classList.remove('hidden');
+    if (rootScreens.fitness) {
+      rootScreens.fitness.classList.remove('hidden');
+      rootScreens.fitness.scrollTop = 0;
+    }
     // ВНУТРЕННЮЮ очистку фитнеса добавим позже, когда fitnessEl будет объявлен
   }
 
@@ -969,7 +979,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function fitnessUpdateEnergyMiniSummary() {
     const dateKey = fitnessGetDateKey();
     const dayData = FS.getDayData(dateKey);
-    const summary = FS.getCaloriesSummary(dayData);
+    const profile = FS.getFitnessProfile();
+    const summary = FS.getCaloriesSummary(profile, dayData);
     
     const miniFill = document.getElementById('energyMiniBalanceFill');
     const miniText = document.getElementById('energyMiniBalanceText');
@@ -1233,6 +1244,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   
+  function fitnessSyncProfileWeight(weightValue) {
+    if (!Number.isFinite(weightValue) || weightValue <= 0) return;
+    const profile = FS.getFitnessProfile();
+    profile.weight = weightValue;
+    FS.setFitnessProfile(profile);
+  }
+
   window.fitnessOpenAddWeightModal = function() {
     const now = new Date();
     const today = FS.formatDateKey(now);
@@ -1272,11 +1290,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
           await window.FitnessSync.saveWeightMeasurement(date, weight, time);
-          
-          // NOTE: We intentionally do NOT call FS.setFitnessProfile() here
-          // because saveWeightMeasurement() already updates user_profile.current_weight.
-          // Calling setFitnessProfile would trigger saveProfile() which logs weight
-          // to measurements again, causing duplicates.
+          fitnessSyncProfileWeight(weight);
           
           // Clear chart cache
           weightChartDataCache = null;
@@ -1342,6 +1356,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
           await window.FitnessSync.updateWeightMeasurement(measurementId, weight, date, time);
+          fitnessSyncProfileWeight(weight);
           weightChartDataCache = null;
           
           fitnessCloseModal();
@@ -1953,7 +1968,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Добавить первый БАД</button>
         </div>
       `;
-      document.getElementById('addFirstSupplement')?.addEventListener('click', () => fitnessOpenSupplementProfileModal());
+      fitnessBindSupplementsTrackingHandlers();
       return;
     }
   
@@ -2076,112 +2091,100 @@ document.addEventListener('DOMContentLoaded', () => {
     html += '<button type="button" id="resetAllSupplements" class="w-full py-1 mt-1 rounded-xl bg-red-900/40 text-xs text-red-400 opacity-50 hover:opacity-100">⚠️ УДАЛИТЬ ВСЕ БАДЫ</button>';
 
     fitnessEl.supplementsTracking.innerHTML = html;
-    
-    // Attach event listeners
-    document.getElementById('addNewSupplement')?.addEventListener('click', () => fitnessOpenSupplementProfileModal());
-    document.getElementById('addFirstSupplement')?.addEventListener('click', () => fitnessOpenSupplementProfileModal());
-    
-    // DEV/DEBUG: Clear history button handler
-    document.getElementById('clearSupplementsHistory')?.addEventListener('click', () => {
-      if (confirm('⚠️ ВНИМАНИЕ!\n\nЭто удалит ВСЮ историю приёмов БАДов за все даты.\nСами БАДы (названия, нормы, настройки) останутся.\n\nПродолжить?')) {
-        console.log('[Supplements] BEFORE clear:', FS.getAllSupplements());
-        const success = FS.clearAllSupplementsHistory();
-        console.log('[Supplements] AFTER clear:', FS.getAllSupplements());
-        if (success) {
-          alert('История БАДов очищена. Список БАДов сохранён.');
-          // CRITICAL: Force re-render after clearing
-          fitnessEl.supplementsTracking.innerHTML = '';
-          fitnessRenderSupplementsTracking();
-        } else {
-          alert('Ошибка при очистке истории.');
-        }
+    fitnessBindSupplementsTrackingHandlers();
+  }
+
+  function fitnessBindSupplementsTrackingHandlers() {
+    if (!fitnessEl.supplementsTracking || fitnessEl.supplementsTracking.dataset.bound === '1') return;
+    fitnessEl.supplementsTracking.dataset.bound = '1';
+
+    fitnessEl.supplementsTracking.addEventListener('change', (e) => {
+      const cb = e.target.closest('.supp-intake-check');
+      if (!cb) return;
+
+      const dateKey = fitnessGetDateKey();
+      const suppId = cb.dataset.suppId;
+      const intakeId = cb.dataset.intakeId;
+      if (!suppId || !intakeId) return;
+
+      if (FS.isFutureDate(dateKey)) {
+        cb.checked = !cb.checked;
+        alert('Нельзя отметить приём БАДа в будущем дне. Можно только планировать (менять дозу/время).');
+        return;
       }
+
+      const result = FS.toggleSupplementIntakeChecked(suppId, dateKey, intakeId);
+      if (result === null) {
+        cb.checked = !cb.checked;
+      }
+      fitnessRenderSupplementsTracking();
     });
 
-    // DEV/DEBUG: COMPLETE RESET handler - deletes ALL supplements
-    document.getElementById('resetAllSupplements')?.addEventListener('click', () => {
-      if (confirm('☠️ ПОЛНЫЙ СБРОС\n\nЭто удалит ВСЕ БАДЫ и их историю безвозвратно!\n\nВосстановить будет невозможно.\n\nПродолжить?')) {
-        if (confirm('Вы точно уверены? ВСЕ данные о БАДах будут удалены!')) {
-          console.log('[Supplements] COMPLETE RESET');
+    fitnessEl.supplementsTracking.addEventListener('click', (e) => {
+      const dateKey = fitnessGetDateKey();
+
+      if (e.target.closest('#addNewSupplement') || e.target.closest('#addFirstSupplement')) {
+        fitnessOpenSupplementProfileModal();
+        return;
+      }
+
+      if (e.target.closest('#clearSupplementsHistory')) {
+        if (confirm('⚠️ ВНИМАНИЕ!\n\nЭто удалит ВСЮ историю приёмов БАДов за все даты.\nСами БАДы (названия, нормы, настройки) останутся.\n\nПродолжить?')) {
+          const success = FS.clearAllSupplementsHistory();
+          if (success) {
+            alert('История БАДов очищена. Список БАДов сохранён.');
+            fitnessRenderSupplementsTracking();
+          } else {
+            alert('Ошибка при очистке истории.');
+          }
+        }
+        return;
+      }
+
+      if (e.target.closest('#resetAllSupplements')) {
+        if (confirm('☠️ ПОЛНЫЙ СБРОС\n\nЭто удалит ВСЕ БАДЫ и их историю безвозвратно!\n\nВосстановить будет невозможно.\n\nПродолжить?') &&
+            confirm('Вы точно уверены? ВСЕ данные о БАДах будут удалены!')) {
           FS.resetAllSupplements();
           alert('Все БАДы удалены.');
-          fitnessEl.supplementsTracking.innerHTML = '';
+          fitnessRenderSupplementsTracking();
+        }
+        return;
+      }
+
+      const editIntakeBtn = e.target.closest('.supp-edit-intake');
+      if (editIntakeBtn) {
+        fitnessOpenIntakeEditModal(editIntakeBtn.dataset.suppId, dateKey, editIntakeBtn.dataset.intakeId);
+        return;
+      }
+
+      const addIntakeBtn = e.target.closest('.supp-add-intake');
+      if (addIntakeBtn) {
+        fitnessOpenIntakeAddModal(addIntakeBtn.dataset.suppId, dateKey);
+        return;
+      }
+
+      const editNormBtn = e.target.closest('.supp-edit-norm');
+      if (editNormBtn) {
+        fitnessOpenSupplementProfileModal(editNormBtn.dataset.id);
+        return;
+      }
+
+      const historyBtn = e.target.closest('.supp-history');
+      if (historyBtn) {
+        fitnessOpenSupplementHistoryModal(historyBtn.dataset.id);
+        return;
+      }
+
+      const removeFromDayBtn = e.target.closest('.supp-remove-from-day');
+      if (removeFromDayBtn) {
+        const suppId = removeFromDayBtn.dataset.id;
+        const supp = FS.getSupplementById(suppId);
+        if (!supp) return;
+        if (confirm('Убрать "' + supp.name + '" из этого дня?\n\nВсе приёмы за эту дату будут удалены, но сам БАД останется в профиле.')) {
+          FS.removeAllSupplementIntakesForDay(suppId, dateKey);
           fitnessRenderSupplementsTracking();
         }
       }
-    });
-
-    // Checkbox handlers
-    document.querySelectorAll('.supp-intake-check').forEach(cb => {
-      cb.addEventListener('change', () => {
-        const suppId = cb.dataset.suppId;
-        const intakeId = cb.dataset.intakeId;
-
-        // CRITICAL: Block checkbox changes for future dates
-        if (FS.isFutureDate(dateKey)) {
-          console.log('[Supplements UI] Blocked checkbox change for future date:', dateKey);
-          cb.checked = !cb.checked; // Revert the change
-          alert('Нельзя отметить приём БАДа в будущем дне. Можно только планировать (менять дозу/время).');
-          return;
-        }
-  
-        // CRITICAL: toggleSupplementIntakeChecked sets time only on first check (when time is empty)
-        // It preserves existing time on subsequent toggles
-        const result = FS.toggleSupplementIntakeChecked(suppId, dateKey, intakeId);
-
-        // If result is null, the operation was blocked (e.g., future date in logic layer)
-        if (result === null) {
-          cb.checked = !cb.checked; // Revert UI
-          return;
-        }
-  
-        fitnessRenderSupplementsTracking(); // Re-render to show updated time
-      });
-    });
-    
-    // Edit intake handlers
-    document.querySelectorAll('.supp-edit-intake').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const suppId = btn.dataset.suppId;
-        const intakeId = btn.dataset.intakeId;
-        fitnessOpenIntakeEditModal(suppId, dateKey, intakeId);
-      });
-    });
-  
-    // Add intake handlers
-    document.querySelectorAll('.supp-add-intake').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const suppId = btn.dataset.suppId;
-        fitnessOpenIntakeAddModal(suppId, dateKey);
-      });
-    });
-    
-    // Edit norm handlers
-    document.querySelectorAll('.supp-edit-norm').forEach(btn => {
-      btn.addEventListener('click', () => {
-        fitnessOpenSupplementProfileModal(btn.dataset.id);
-      });
-    });
-    
-    // History handlers
-    document.querySelectorAll('.supp-history').forEach(btn => {
-      btn.addEventListener('click', () => {
-        fitnessOpenSupplementHistoryModal(btn.dataset.id);
-      });
-    });
-
-    // NEW: Remove from day handlers
-    document.querySelectorAll('.supp-remove-from-day').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const suppId = btn.dataset.id;
-        const supp = FS.getSupplementById(suppId);
-        if (!supp) return;
-
-        if (confirm('Убрать "' + supp.name + '" из этого дня?\n\nВсе приёмы за эту дату будут удалены, но сам БАД останется в профиле.')) {
-          FS.removeAllSupplementIntakesForDay(suppId, dateKey);
-          fitnessRenderSupplementsTracking(); // Re-render - supplement will disappear from this day
-        }
-      });
     });
   }
   
@@ -2515,26 +2518,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  document.getElementById('fitnessBtn')?.addEventListener('click', () => {
-    el.main?.classList.add('hidden');
-    el.buddyScreen?.classList.add('hidden');
-    fitnessEl.screen?.classList.remove('hidden');
-    fitnessSelectedDate = new Date();
-    const p = FS.getFitnessProfile();
-    if (!isFitnessSetupDone()) {
-      fitnessEl.profileSetup?.classList.remove('hidden');
-      fitnessEl.dashboard?.classList.add('hidden');
-      if (fitnessEl.weight) fitnessEl.weight.value = p.weight ?? '';
-      if (fitnessEl.height) fitnessEl.height.value = p.height ?? '';
-      if (fitnessEl.age) fitnessEl.age.value = p.age ?? '';
-      if (fitnessEl.targetWeight) fitnessEl.targetWeight.value = p.targetWeight ?? '';
-      fitnessSetSelectedWorkProfile(p.workProfile); // НОВОЕ
-    } else {
-      fitnessEl.profileSetup?.classList.add('hidden');
-      fitnessEl.dashboard?.classList.remove('hidden');
-      fitnessRenderDashboard();
-    }
-  });
+  const fitnessOpenBtn = document.getElementById('fitnessBtn');
+  if (fitnessOpenBtn && !fitnessOpenBtn.dataset.fitnessOpenBound) {
+    fitnessOpenBtn.dataset.fitnessOpenBound = '1';
+    fitnessOpenBtn.addEventListener('click', () => {
+      showFitness();
+      fitnessSelectedDate = new Date();
+      const p = FS.getFitnessProfile();
+      if (!isFitnessSetupDone()) {
+        fitnessEl.profileSetup?.classList.remove('hidden');
+        fitnessEl.dashboard?.classList.add('hidden');
+        if (fitnessEl.weight) fitnessEl.weight.value = p.weight ?? '';
+        if (fitnessEl.height) fitnessEl.height.value = p.height ?? '';
+        if (fitnessEl.age) fitnessEl.age.value = p.age ?? '';
+        if (fitnessEl.targetWeight) fitnessEl.targetWeight.value = p.targetWeight ?? '';
+        fitnessSetSelectedWorkProfile(p.workProfile); // НОВОЕ
+      } else {
+        fitnessEl.profileSetup?.classList.add('hidden');
+        fitnessEl.dashboard?.classList.remove('hidden');
+        fitnessRenderDashboard();
+      }
+    });
+  }
 
   // Note: Old weight input block removed. Weight is now managed through the weight tracker UI only.
 
@@ -2944,10 +2949,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (fitnessBtn) {
-    fitnessBtn.addEventListener('click', () => {
-      showFitnessFull();
-    });
+  if (fitnessBtn && !fitnessBtn.dataset.fitnessOpenBound) {
+    if (!fitnessBtn.dataset.fitnessFullBound) {
+      fitnessBtn.dataset.fitnessFullBound = '1';
+      fitnessBtn.addEventListener('click', () => {
+        showFitnessFull();
+      });
+    }
   }
 
   if (fitnessEl?.backBtn) {
@@ -5677,20 +5685,65 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ========== ЗАГРУЗКА ФОТО ==========
+  const PHOTO_DEBUG_MODE = true;
   const fitnessPhotoUpload = document.getElementById('fitnessPhotoUpload');
+  const fitnessPhotoBtn = document.getElementById('fitnessPhotoBtn');
+  const fitnessPhotoDebug = document.getElementById('fitnessPhotoDebug');
   const fitnessAvatar = document.getElementById('fitnessAvatar');
   const fitnessAvatarPlaceholder = document.getElementById('fitnessAvatarPlaceholder');
+
+  function fitnessPhotoDebugLog(text) {
+    if (!PHOTO_DEBUG_MODE || !fitnessPhotoDebug) return;
+    fitnessPhotoDebug.classList.remove('hidden');
+    const now = new Date();
+    const timestamp = now.toTimeString().slice(0, 8);
+    const line = `[${timestamp}] ${text}`;
+    fitnessPhotoDebug.textContent = line + '\n' + (fitnessPhotoDebug.textContent || '');
+  }
+
+  function fitnessOpenPhotoPicker() {
+    if (!fitnessPhotoUpload) {
+      fitnessPhotoDebugLog('photo: error/unsupported (input missing)');
+      return;
+    }
+    if (fitnessPhotoUpload.disabled) {
+      fitnessPhotoDebugLog('photo: error/unsupported (input disabled)');
+      return;
+    }
+    try {
+      fitnessPhotoDebugLog('photo: button click ok');
+      if (typeof fitnessPhotoUpload.showPicker === 'function') {
+        fitnessPhotoUpload.showPicker();
+        fitnessPhotoDebugLog('photo: input click ok (showPicker)');
+      } else {
+        fitnessPhotoUpload.click();
+        fitnessPhotoDebugLog('photo: input click ok (click)');
+      }
+    } catch (err) {
+      fitnessPhotoDebugLog('photo: error/unsupported (' + (err?.message || 'picker failed') + ')');
+    }
+  }
+
+  fitnessPhotoBtn?.addEventListener('click', () => {
+    fitnessOpenPhotoPicker();
+  });
   
   if (fitnessPhotoUpload) {
     fitnessPhotoUpload.addEventListener('change', async (e) => {
+      fitnessPhotoDebugLog('photo: change event');
       const file = e.target.files[0];
-      if (!file) return;
+      if (!file) {
+        fitnessPhotoDebugLog('photo: change event, no file selected');
+        return;
+      }
       
       // Проверяем, что это изображение
       if (!file.type.startsWith('image/')) {
+        fitnessPhotoDebugLog('photo: error/unsupported (not image)');
         showAlert('Пожалуйста, выберите изображение');
         return;
       }
+      fitnessPhotoDebugLog('photo: change event, file selected (' + file.type + ', ' + file.size + 'b)');
       
       // Читаем файл как Data URL
       const reader = new FileReader();
@@ -5705,6 +5758,7 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem(photoKey, dataUrl);
         } catch (err) {
           console.warn('Не удалось сохранить фото:', err);
+          fitnessPhotoDebugLog('photo: error/unsupported (localStorage save failed)');
         }
         
         // Показываем фото
@@ -5716,9 +5770,11 @@ document.addEventListener('DOMContentLoaded', () => {
           fitnessAvatarPlaceholder.classList.add('hidden');
         }
         
+        fitnessPhotoDebugLog('photo: file read ok, preview shown');
         showAlert('Фото сохранено!');
       };
       reader.onerror = () => {
+        fitnessPhotoDebugLog('photo: error/unsupported (file read error)');
         showAlert('Ошибка при чтении файла');
       };
       reader.readAsDataURL(file);
@@ -5775,38 +5831,14 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(fitnessLoadSavedPhoto, 200);
 
 
-  // ========== ДИАГНОСТИЧЕСКИЙ БЛОК ДЛЯ ФОТО ==========
-  // Используем делегирование, чтобы клики работали даже при переходе на новый день
-  document.addEventListener('click', function(e) {
-    // Ищем клик по чекбоксу или иконке внутри блока БАДов
-    const supplementCheckbox = e.target.closest('.supplement-checkbox');
-    if (supplementCheckbox) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const supplementId = supplementCheckbox.dataset.supplementId;
-      const intakeId = supplementCheckbox.dataset.intakeId;
-      const dateKey = supplementCheckbox.dataset.dateKey;
-      
-      if (supplementId && intakeId && dateKey) {
-        // Вызываем функцию переключения
-        if (typeof toggleSupplementIntakeChecked === 'function') {
-          const result = toggleSupplementIntakeChecked(supplementId, dateKey, intakeId);
-          // Перерендерим блок БАДов
-          if (typeof fitnessRenderSupplementsTracking === 'function') {
-            fitnessRenderSupplementsTracking();
-          }
-        }
-      }
-    }
-  });
-
-
   // ========== КНОПКА "ФИТНЕС" НА ГЛАВНОМ ЭКРАНЕ ==========
-  if (el.fitnessBtn) {
-    el.fitnessBtn.addEventListener('click', () => {
-      showFitness();
-    });
+  if (el.fitnessBtn && !el.fitnessBtn.dataset.fitnessOpenBound) {
+    if (!el.fitnessBtn.dataset.fitnessLegacyBound) {
+      el.fitnessBtn.dataset.fitnessLegacyBound = '1';
+      el.fitnessBtn.addEventListener('click', () => {
+        showFitness();
+      });
+    }
   }
 
 
@@ -5835,6 +5867,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const root = document.documentElement;
     const themeToggle = document.getElementById('fitnessThemeToggle');
     const themeLabel = document.getElementById('fitnessThemeLabel');
+    const mainThemeToggle = document.getElementById('mainThemeToggle');
+    const mainThemeLabel = document.getElementById('mainThemeLabel');
     
     if (theme === 'dark') {
       // Тёмная тема - добавляем атрибут
@@ -5845,6 +5879,12 @@ document.addEventListener('DOMContentLoaded', () => {
         themeToggle.classList.add('bg-indigo-500/50');
       }
       if (themeLabel) themeLabel.textContent = 'Тёмная';
+      if (mainThemeToggle) {
+        mainThemeToggle.textContent = 'Тёмная';
+        mainThemeToggle.classList.remove('bg-white/20');
+        mainThemeToggle.classList.add('bg-indigo-500/50');
+      }
+      if (mainThemeLabel) mainThemeLabel.textContent = 'Тёмная';
     } else {
       // Светлая тема - убираем атрибут
       root.removeAttribute('data-fitness-theme');
@@ -5854,6 +5894,12 @@ document.addEventListener('DOMContentLoaded', () => {
         themeToggle.classList.add('bg-white/20');
       }
       if (themeLabel) themeLabel.textContent = 'Светлая';
+      if (mainThemeToggle) {
+        mainThemeToggle.textContent = 'Светлая';
+        mainThemeToggle.classList.remove('bg-indigo-500/50');
+        mainThemeToggle.classList.add('bg-white/20');
+      }
+      if (mainThemeLabel) mainThemeLabel.textContent = 'Светлая';
     }
   }
   
@@ -5876,6 +5922,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const fitnessThemeToggle = document.getElementById('fitnessThemeToggle');
   if (fitnessThemeToggle) {
     fitnessThemeToggle.addEventListener('click', fitnessToggleTheme);
+  }
+
+  const mainThemeToggle = document.getElementById('mainThemeToggle');
+  if (mainThemeToggle) {
+    mainThemeToggle.addEventListener('click', fitnessToggleTheme);
   }
   
   // Применяем тему при загрузке

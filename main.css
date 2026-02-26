@@ -17,6 +17,7 @@ html[data-fitness-theme="dark"] body {
 /* ===== ГЛАВНЫЙ ЭКРАН ===== */
 #main {
   display: block;
+  min-height: 100vh;
 }
 
 /* ===== ЗАГОЛОВОК ===== */
@@ -342,11 +343,12 @@ html[data-fitness-theme="dark"] input[type="tel"],
 html[data-fitness-theme="dark"] select,
 html[data-fitness-theme="dark"] textarea {
   background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border: 1px solid rgba(148, 163, 184, 0.45);
   color: #e2e8f0;
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
   font-size: 1rem;
+  min-height: 2.8rem;
   transition: all 0.2s ease;
   outline: none;
 }
@@ -354,8 +356,8 @@ html[data-fitness-theme="dark"] textarea {
 html[data-fitness-theme="dark"] input:focus,
 html[data-fitness-theme="dark"] select:focus,
 html[data-fitness-theme="dark"] textarea:focus {
-  border-color: #22d3ee;
-  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.15);
+  border-color: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.25);
   background: rgba(15, 23, 42, 0.95);
 }
 
@@ -369,6 +371,18 @@ html[data-fitness-theme="dark"] select:disabled {
   border-color: rgba(148, 163, 184, 0.15);
   color: rgba(148, 163, 184, 0.5);
   cursor: not-allowed;
+}
+
+#mainSettingsCard {
+  background: var(--fitness-card-bg, rgba(255, 255, 255, 0.15));
+  backdrop-filter: blur(var(--fitness-glass-blur, 12px));
+  -webkit-backdrop-filter: blur(var(--fitness-glass-blur, 12px));
+  border: 1px solid var(--fitness-card-border, rgba(255, 255, 255, 0.1));
+}
+
+html[data-fitness-theme="dark"] #mainSettingsCard {
+  background: var(--fitness-card-bg, rgba(15, 23, 42, 0.65));
+  border: 1px solid var(--fitness-card-border, rgba(148, 163, 184, 0.22));
 }
 
 /* ===== ОТЗЫВЧИВОСТЬ ===== */
