@@ -1,6 +1,7 @@
 ﻿## Module Role in the Platform
 
-The fitness module is the current production vertical of LeakFixer and acts as a reference template for future domains. Its mission is to convert daily user actions (training, nutrition, water, supplements, weight, subjective condition) into measurable progress and connect that progress to the global leak model.
+The fitness module is the current production vertical of LeakFixer and acts as a reference template for future domains.  
+Its mission is to convert daily user actions (training, nutrition, water, supplements, weight, subjective condition) into measurable progress and connect that progress to the global leak model.
 
 ## Fitness Module Goals
 
@@ -42,15 +43,15 @@ The fitness module is the current production vertical of LeakFixer and acts as a
 
 - `Supplement`: profile, unit, daily flag, interval, target daily dose, intake template.
 - `SupplementIntake`: actual intake event (time, dose, checked/edited flags).
-- Per-day history and auto-generated planned intakes for active intervals.
+- Per‑day history and auto‑generated planned intakes for active intervals.
 
 ## Key Flows
 
 ### User Flows (Implemented)
 
 - Complete fitness onboarding or skip it.
-- Track day-by-day data: add/edit/delete activities and foods.
-- Choose manual or auto nutrition mode (text-based macro/calorie estimation).
+- Track day‑by‑day data: add/edit/delete activities and foods.
+- Choose manual or auto nutrition mode (text‑based macro/calorie estimation).
 - Track and adjust hydration (current level and baseline/target).
 - Manage supplements: create profile, mark intakes, edit doses, review history.
 - Manage strength cycles in the gym module (periods, days, exercises, completion).
@@ -68,20 +69,21 @@ These coach flows are not implemented yet as a dedicated interface; current data
 
 ## Connection to Leak System and Global Progress
 
-- The module closes health-related leaks through measurable daily signals.
-- Signal: energy balance.
-- Signal: workout completion and load.
-- Signal: hydration.
-- Signal: nutrition quality and intake.
-- Signal: supplement adherence.
-- Signal: weight trend.
-- Signal: mood/resource dynamics.
-- Fitness aggregates are already written into `daily_state`, which enables cross-domain progress composition.
-- A unified scoring/leak model is still needed in `core` to normalize fitness signals into shared day/week/cycle scores.
+- The module closes health‑related leaks through measurable daily signals.
+- Signals include:
+  - energy balance,
+  - workout completion and load,
+  - hydration,
+  - nutrition quality and intake,
+  - supplement adherence,
+  - weight trend,
+  - mood/resource dynamics.
+- Fitness aggregates are written into `daily_state`, which enables cross‑domain progress composition.
+- A unified scoring / leak model is still needed in `core` to normalize fitness signals into shared day/week/cycle scores.
 
 ## Technical Boundaries Today
 
 - Main domain logic is centralized in `fitness.js` (pure helpers + local state).
 - `app.js` is responsible for UI glue and screen orchestration.
 - Supabase sync is partial and asynchronous via `fitness-sync.js`.
-- Part of the state remains local (localStorage), acceptable for MVP but should be consolidated server-side over time.
+- Part of the state remains local (localStorage), acceptable for MVP but should be consolidated server‑side over time.
