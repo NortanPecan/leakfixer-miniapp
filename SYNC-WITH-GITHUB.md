@@ -1,40 +1,47 @@
-# Синхронизация с GitHub
+﻿# GitHub Sync Guide
 
-Папка была скачана без истории Git. Чтобы снова связать проект с вашим репозиторием:
+If your project folder was downloaded without Git history, use these steps to reconnect it to your GitHub repository.
 
-## 1. Установите Git (если ещё не установлен)
+## 1. Install Git (if needed)
 
-- Скачайте: https://git-scm.com/download/win  
-- Установите и **перезапустите Cursor** (или откройте новый терминал).
+- Download: https://git-scm.com/download/win
+- Install it and restart your terminal/IDE.
 
-## 2. Откройте терминал в папке проекта
+## 2. Open a terminal in the project folder
 
-В Cursor: **Terminal → New Terminal** (уже будет в `leakfixer-miniapp`).
+In Cursor: **Terminal -> New Terminal** (inside `leakfixer-miniapp`).
 
-## 3. Выполните команды по порядку
+## 3. Run setup commands
 
-Подставьте вместо `ВАШ_USERNAME` и `leakfixer-miniapp` (если репозиторий называется иначе) свои данные.
+Replace `YOUR_USERNAME` and repository name if needed.
 
 ```powershell
 git init
 git add .
 git commit -m "Restore project from download"
-git remote add origin https://github.com/ВАШ_USERNAME/leakfixer-miniapp.git
+git remote add origin https://github.com/YOUR_USERNAME/leakfixer-miniapp.git
 git branch -M main
 git pull origin main --rebase
 git push -u origin main
 ```
 
-Если основная ветка у вас `master`, замените `main` на `master` в двух последних строках.
+If your default branch is `master`, replace `main` with `master` in the last two commands.
 
-## 4. Дальнейшая синхронизация
+## 4. Daily sync workflow
 
-- **Отправить изменения на GitHub:** в Cursor нажмите **Source Control** (иконка ветки слева или `Ctrl+Shift+G`) → введите сообщение коммита → **Commit** → **Sync Changes** (или **Push**).
-- Либо в терминале:
-  ```powershell
-  git add .
-  git commit -m "Описание изменений"
-  git push
-  ```
+### Via IDE UI
 
-После этого все изменения можно будет синхронизировать с репозиторием через Cursor или терминал.
+- Open **Source Control** (`Ctrl+Shift+G`).
+- Enter commit message.
+- Click **Commit**.
+- Click **Sync Changes** (or **Push**).
+
+### Via terminal
+
+```powershell
+git add .
+git commit -m "Describe your changes"
+git push
+```
+
+After this, your local changes will sync with GitHub normally.

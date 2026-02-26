@@ -1,173 +1,97 @@
-# LeakFixer Mini App
+﻿# LeakFixer Mini App
 
-Telegram Mini App для бота LeakFixer — приложение для ежедневных уроков и отслеживания прогресса.
+Telegram Mini App for the LeakFixer bot. Current state: daily lessons plus an advanced fitness module (activities, nutrition, water, supplements, weight, and gym periods) with Supabase sync.
 
-## 📁 Структура проекта
+## Project Structure
 
-```
+```text
 leakfixer-miniapp/
-├── index.html          # Разметка (в т.ч. экран Фитнес)
-├── app.js              # Glue: инициализация, навигация, рендер в DOM
-├── fitness.js          # Фитнес: состояние, типы (JSDoc), чистая логика, persistence
+├── index.html
+├── app.js
+├── fitness.js
+├── fitness-sync.js
+├── activity-calories.js
+├── main.css
+├── fitness.css
+├── project-specs.md
+├── fitness-module.md
 ├── api/
-│   └── telegram-avatar.js # Эндпоинт фото Telegram (Vercel)
+│   ├── telegram-avatar.js
+│   └── nutrition.js
 ├── .gitignore
 └── README.md
 ```
 
-**Архитектура фитнеса:** `fitness.js` — типы, селекторы (`getCaloriesSummary`, `get*ListViewModel`), чистые обновления (`merge*`, `remove*ById`, `build*Entry`). `app.js` — только привязка к DOM и события. При переносе в React: типы → `types/fitness.ts`, селекторы и билдеры переиспользовать; состояние — `useState`/API вместо `getDayData`/`updateDayData`.
+## Architecture
 
-## 🎯 Текущее состояние проекта
+- `app.js`: app initialization, Telegram WebApp integration, navigation, and DOM glue.
+- `fitness.js`: fitness domain logic (state helpers, view-model builders, pure merge/build/remove operations).
+- `fitness-sync.js`: fitness sync with Supabase (`user_profile`, `fitness_daily`, `daily_state`, `measurements`).
+- `activity-calories.js`: activity calorie references and calculators.
+- `api/telegram-avatar.js`: server endpoint for real Telegram avatar loading with `initData` validation.
+- `api/nutrition.js`: server endpoint for automatic nutrition estimation (CalorieNinjas).
 
-### ✅ Реализовано
+## Implemented
 
-1. **Инициализация Telegram WebApp**
-   - Безопасная проверка наличия Telegram WebApp SDK
-   - Поддержка работы как внутри Telegram, так и в браузере (демо-режим)
-   - Корректная обработка `initDataUnsafe.user` (используется как свойство, не функция)
+### Core
 
-2. **Главный экран**
-   - Отображение текущего дня (1-30)
-   - Отображение стрика и баллов пользователя
-   - Загрузка урока дня из Supabase
-   - Отображение видео урока (если есть)
+- Safe Telegram WebApp initialization with browser demo fallback.
+- User initialization via Supabase (`app_users` and legacy `users`).
+- Daily lesson screen (`lessons`) and completion logging (`daily_logs`).
+- Header profile UI (name, username, avatar) plus Telegram avatar fetching via API.
+- Global mood widget with persistence to `daily_state` and `measurements`.
+- Habit cards in profile based on `habits` and `habit_logs`.
 
-3. **Кнопка "✅ Выполнено"**
-   - Сохранение выполнения дня в Supabase (`daily_logs`)
-   - Обновление состояния кнопки (disabled после выполнения)
-   - Интеграция с Telegram MainButton (если доступно)
-   - Переход на следующий день
+### Fitness
 
-4. **Навигация**
-   - Кнопка "👥 Бадди" — переход на экран выбора напарника
-   - Кнопка "←" — возврат на главный экран
-   - Кнопка "📊 Привычки" — заглушка (экран не реализован)
+- Body profile onboarding: weight, height, age, target weight, work profile, body measurements.
+- Daily activity tracking: gym/strength, cardio, home, steps, daily.
+- Calories summary: eaten/burned/balance with dashboard cards and mini summaries.
+- Nutrition tracking with manual input.
+- Nutrition tracking with auto mode through `/api/nutrition`.
+- Water tracking: baseline/target, quick adjustments, hydration status.
+- Supplements: profile, intake intervals, templates, actual intakes, history.
+- Weight tracking: logging, history, chart, edit and delete flows.
+- Gym module: periods, cycles, days, muscle groups, progress, calendar mapping.
+- Local persistence (localStorage) with partial Supabase synchronization.
 
-5. **Интеграция с Supabase**
-   - Создание/получение пользователя по `telegram_id`
-   - Загрузка уроков по дню (`lessons` таблица)
-   - Проверка выполнения дня (`daily_logs` таблица)
-   - Обработка ошибок с fallback на демо-режим
+## In Progress
 
-### ⚠️ Не реализовано / В разработке
+- Full habits screen and CRUD (currently only profile widget is available).
+- Full buddy module (relationships, shared goals, interaction flows).
+- Unified progression rules for `streak` and `points` as a dedicated domain layer.
+- Consolidation of legacy/new user entities (`users` and `app_users`).
 
-1. **Экран "Привычки"** — кнопка есть, но функционал не реализован
-2. **Экран "Бадди"** — UI есть, но функционал добавления напарника не реализован
-3. **Обновление баллов и стрика** — данные загружаются, но не обновляются при выполнении дня
-4. **Валидация и обработка ошибок** — базовая обработка есть, можно улучшить
+## Supabase Tables Used (Current Code)
 
-## 🔧 Технические детали
+- Core tables: `app_users`, `users`, `lessons`, `daily_logs`.
+- Fitness tables: `user_profile`, `fitness_daily`, `daily_state`, `measurements`.
+- Habit tables: `habits`, `habit_logs`.
 
-### Telegram WebApp
+## API and Environment Variables
 
-- **SDK**: Загружается из `https://telegram.org/js/telegram-web-app.js`
-- **Версия**: Поддерживается версия 6.0+ (некоторые методы могут быть недоступны)
-- **Инициализация**: 
-  ```javascript
-  const tg = window.Telegram?.WebApp;
-  const user = tg?.initDataUnsafe?.user; // Свойство, не функция!
-  ```
-- **Методы**:
-  - `tg.expand()` — расширение окна
-  - `tg.showAlert()` — уведомления (с fallback на `window.alert`)
-  - `tg.MainButton` — главная кнопка (может быть недоступна в некоторых версиях)
+For server endpoints (`api/*`) set:
 
-### Supabase
+- `TELEGRAM_BOT_TOKEN` for `/api/telegram-avatar`.
+- `CALORIE_NINJAS_API_KEY` for `/api/nutrition`.
 
-- **URL**: `https://zhpwehjbonzffpxdrbyl.supabase.co`
-- **Таблицы**:
-  - `users` — пользователи (поля: `telegram_id`, `username`, `day`, `streak`, `points`)
-  - `lessons` — уроки (поля: `day`, `title`, `description`, `video_url`)
-  - `daily_logs` — логи выполнения (поля: `user_id`, `day`, `completed`)
+Note: `file://` mode does not support `api/*` routes; use a local server or deployment.
 
-### Стилизация
+## Local Run
 
-- **Tailwind CSS**: Загружается из CDN
-- **Дизайн**: Градиентный фон (indigo-500 → purple-600), стеклянный эффект (backdrop-blur)
+```bash
+python -m http.server 8000
+# or
+npx serve
+```
 
-## 📝 Недавние изменения
+Then open the app in browser (demo mode) or through Telegram Mini App URL.
 
-### 2026-02-18
+## Project Docs
 
-1. **Исправлена инициализация Telegram WebApp**
-   - Исправлена ошибка `tg.initDataUnsafe is not a function` — теперь используется как свойство
-   - Добавлена безопасная проверка наличия Telegram WebApp
-   - Добавлен демо-режим для работы в браузере
-
-2. **Исправлены обработчики кнопок**
-   - Все обработчики навешиваются после `DOMContentLoaded`
-   - Используется `addEventListener` вместо `onclick`
-   - Добавлена обработка ошибок для методов Telegram API
-
-3. **Убраны отладочные сообщения**
-   - Удалены все `console.log` для отладки
-   - Удалены alert'ы о нажатии кнопок
-   - Оставлены только важные уведомления (успех выполнения, ошибки)
-
-4. **Вынесен JavaScript в отдельный файл**
-   - Весь код перенесён из `index.html` в `app.js`
-   - Подключение через `<script src="./app.js" defer></script>`
-
-5. **Настроена синхронизация с GitHub**
-   - Инициализирован Git репозиторий
-   - Подключён remote: `https://github.com/NortanPecan/leakfixer-miniapp.git`
-   - Добавлен `.gitignore`
-
-## 🚀 Запуск и разработка
-
-### Локальный запуск
-
-1. Откройте `index.html` в браузере (демо-режим)
-2. Или используйте локальный сервер:
-   ```bash
-   python -m http.server 8000
-   # или
-   npx serve
-   ```
-
-### Тестирование в Telegram
-
-1. Загрузите файлы на хостинг (например, Vercel, GitHub Pages)
-2. Укажите URL в настройках бота через [@BotFather](https://t.me/BotFather)
-3. Откройте Mini App через бота
-
-### Фото профиля из Telegram (Bot API)
-
-Чтобы показывать **реальный аватар Telegram**, добавлен эндпоинт `api/telegram-avatar.js` (под Vercel).
-
-- **Нужно добавить переменную окружения в Vercel**: `TELEGRAM_BOT_TOKEN`
-- Эндпоинт принимает `user_id` и заголовок `x-telegram-init-data` (строка `tg.initData`) и валидирует подпись.
-
-Важно: при открытии файла напрямую как `file://...` запросы к `/api/...` работать не будут — запускайте через локальный сервер или Vercel.
-
-### Разработка
-
-- **Редактирование**: Изменяйте `app.js` для логики, `index.html` для разметки
-- **Синхронизация**: Используйте Git для синхронизации с GitHub
-- **Отладка**: Откройте DevTools в браузере или Telegram Desktop для просмотра консоли
-
-## 🔍 Важные замечания для разработки
-
-1. **Telegram WebApp может быть недоступен** — всегда проверяйте наличие `window.Telegram?.WebApp`
-2. **initDataUnsafe — это свойство**, не функция: `tg.initDataUnsafe.user`, а не `tg.initDataUnsafe().user`
-3. **Некоторые методы Telegram API могут быть недоступны** в старых версиях SDK — используйте try-catch
-4. **Supabase требует авторизации** — используйте API ключ в заголовках запросов
-5. **DOM элементы могут быть недоступны** — используйте проверки перед обращением к элементам
-
-## 📊 Следующие шаги
-
-- [ ] Реализовать экран "Привычки"
-- [ ] Реализовать функционал добавления напарника (экран "Бадди")
-- [ ] Добавить обновление баллов и стрика при выполнении дня
-- [ ] Улучшить обработку ошибок и валидацию
-- [ ] Добавить анимации и улучшить UX
-
-## 🔗 Ссылки
-
-- **Репозиторий**: https://github.com/NortanPecan/leakfixer-miniapp
-- **Деплой**: leakfixer-miniapp.vercel.app
-- **Telegram WebApp SDK**: https://core.telegram.org/bots/webapps
+- System-level specification: `project-specs.md`
+- Fitness module specification: `fitness-module.md`
 
 ---
 
-*Последнее обновление: 2026-02-18*
+Last updated: 2026-02-26
