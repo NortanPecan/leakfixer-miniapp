@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -868,25 +869,20 @@
           </div>
         
         <!-- Блок Настройки -->
-        <div class="bg-white/15 backdrop-blur-md border border-white/10 rounded-2xl p-4">
-          <div class="fitness-card-header flex items-center justify-between" data-card="settings">
-            <div class="flex items-center gap-2 min-w-0">
-              <div class="min-w-0">
-                <h3 class="font-semibold">Настройки</h3>
-                <div class="text-[10px] opacity-70 mt-0.5 whitespace-nowrap" id="settingsMiniSummary">
-                  Тема: <span id="fitnessThemeLabel">Светлая</span>
-                </div>
+                <div class="bg-white/15 backdrop-blur-md border border-white/10 rounded-2xl p-4">
+          <div class="flex items-center justify-between">
+            <div class="min-w-0">
+              <h3 class="font-semibold">Настройки</h3>
+              <div class="text-[10px] opacity-70 mt-0.5 whitespace-nowrap" id="settingsMiniSummary">
+                Тема: <span id="fitnessThemeLabel">Светлая</span>
               </div>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <span class="fitness-card-chevron text-xs opacity-70 shrink-0">˅</span>
-            </div>
           </div>
-          <div class="fitness-card-body">
-            <!-- Переключатель темы -->
-            <div class="bg-white/10 rounded-xl p-3 mt-3">
+          <div class="space-y-3 mt-3">
+            <div class="bg-white/10 rounded-xl p-3">
+              <div class="text-[11px] uppercase tracking-wide opacity-70 mb-2">Глобальные</div>
               <div class="flex items-center justify-between">
-                <span class="text-sm font-medium">Тема</span>
+                <span class="text-sm font-medium">Тема приложения</span>
                 <button 
                   id="fitnessThemeToggle"
                   class="px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-sm font-medium transition"
@@ -895,12 +891,14 @@
                 </button>
               </div>
             </div>
+            <div class="bg-white/10 rounded-xl p-3">
+              <div class="text-[11px] uppercase tracking-wide opacity-70 mb-1">Настройки фитнеса</div>
+              <div class="text-xs opacity-80">Раздел для локальных параметров фитнеса (цели, единицы, расчёты).</div>
+            </div>
           </div>
         </div>
-      </div>
-        
-      <!-- Фиксированная кнопка Назад внизу справа -->
-      <div class="fixed bottom-6 right-6 z-30">
+
+<div class="fixed bottom-6 right-6 z-30">
         <button
           id="fitnessBackInDashboardFixed"
           class="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 hover:bg-white/30 text-sm font-semibold transition shadow-lg"

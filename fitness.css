@@ -167,6 +167,15 @@ body.fitness-screen-active {
   pointer-events: auto;
 }
 
+#fitnessSupplementsTracking {
+  position: relative;
+  z-index: 2;
+}
+
+#fitnessSupplementsTracking * {
+  pointer-events: auto;
+}
+
 /* Основной класс карточки - основа для glassmorphism */
 .fitness-card {
   background: var(--fitness-card-bg);

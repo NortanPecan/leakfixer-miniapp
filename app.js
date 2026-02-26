@@ -1963,6 +1963,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (supplements.length === 0) {
       fitnessEl.supplementsTracking.innerHTML = `
+        <div id="fitnessSupplementsDebug" class="text-[11px] leading-4 bg-black/25 border border-white/10 rounded-lg px-2 py-1 mb-2 hidden"></div>
         <div class="text-center py-4 opacity-70">
           <p class="text-sm mb-2">Нет добавленных БАДов</p>
           <button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Добавить первый БАД</button>
@@ -1972,7 +1973,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
   
-    let html = '';
+    let html = '<div id="fitnessSupplementsDebug" class="text-[11px] leading-4 bg-black/25 border border-white/10 rounded-lg px-2 py-1 mb-2 hidden"></div>';
     
     let visibleCount = 0;
 
@@ -2098,30 +2099,50 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!fitnessEl.supplementsTracking || fitnessEl.supplementsTracking.dataset.bound === '1') return;
     fitnessEl.supplementsTracking.dataset.bound = '1';
 
-    fitnessEl.supplementsTracking.addEventListener('change', (e) => {
-      const cb = e.target.closest('.supp-intake-check');
-      if (!cb) return;
-
-      const dateKey = fitnessGetDateKey();
-      const suppId = cb.dataset.suppId;
-      const intakeId = cb.dataset.intakeId;
-      if (!suppId || !intakeId) return;
-
-      if (FS.isFutureDate(dateKey)) {
-        cb.checked = !cb.checked;
-        alert('Нельзя отметить приём БАДа в будущем дне. Можно только планировать (менять дозу/время).');
-        return;
+    const logSuppDebug = (message) => {
+      let debugEl = document.getElementById('fitnessSupplementsDebug');
+      if (!debugEl) {
+        debugEl = document.createElement('div');
+        debugEl.id = 'fitnessSupplementsDebug';
+        debugEl.className = 'text-[11px] leading-4 bg-black/25 border border-white/10 rounded-lg px-2 py-1 mb-2';
+        fitnessEl.supplementsTracking.prepend(debugEl);
       }
-
-      const result = FS.toggleSupplementIntakeChecked(suppId, dateKey, intakeId);
-      if (result === null) {
-        cb.checked = !cb.checked;
-      }
-      fitnessRenderSupplementsTracking();
-    });
+      const ts = new Date().toTimeString().slice(0, 8);
+      debugEl.textContent = `[${ts}] ${message}\n` + (debugEl.textContent || '');
+    };
 
     fitnessEl.supplementsTracking.addEventListener('click', (e) => {
       const dateKey = fitnessGetDateKey();
+      const cb = e.target.closest('.supp-intake-check');
+
+      if (cb) {
+        e.preventDefault();
+        const suppId = cb.dataset.suppId;
+        const intakeId = cb.dataset.intakeId;
+
+        if (!suppId || !intakeId) {
+          logSuppDebug('supp: click ignored (missing ids)');
+          return;
+        }
+
+        logSuppDebug('supp: click captured, date=' + dateKey);
+
+        if (FS.isFutureDate(dateKey)) {
+          logSuppDebug('supp: blocked by future-date guard');
+          alert('Нельзя отметить приём БАДа в будущем дне. Можно только планировать (менять дозу/время).');
+          return;
+        }
+
+        const result = FS.toggleSupplementIntakeChecked(suppId, dateKey, intakeId);
+        if (result === null) {
+          logSuppDebug('supp: blocked in state layer');
+        } else {
+          logSuppDebug('supp: toggled, checked=' + String(Boolean(result.checked)));
+        }
+
+        fitnessRenderSupplementsTracking();
+        return;
+      }
 
       if (e.target.closest('#addNewSupplement') || e.target.closest('#addFirstSupplement')) {
         fitnessOpenSupplementProfileModal();
@@ -2129,10 +2150,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (e.target.closest('#clearSupplementsHistory')) {
-        if (confirm('⚠️ ВНИМАНИЕ!\n\nЭто удалит ВСЮ историю приёмов БАДов за все даты.\nСами БАДы (названия, нормы, настройки) останутся.\n\nПродолжить?')) {
+        if (confirm('Очистить всю историю БАДов? Сами БАДы останутся.')) {
           const success = FS.clearAllSupplementsHistory();
           if (success) {
-            alert('История БАДов очищена. Список БАДов сохранён.');
+            alert('История БАДов очищена.');
             fitnessRenderSupplementsTracking();
           } else {
             alert('Ошибка при очистке истории.');
@@ -2142,8 +2163,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (e.target.closest('#resetAllSupplements')) {
-        if (confirm('☠️ ПОЛНЫЙ СБРОС\n\nЭто удалит ВСЕ БАДЫ и их историю безвозвратно!\n\nВосстановить будет невозможно.\n\nПродолжить?') &&
-            confirm('Вы точно уверены? ВСЕ данные о БАДах будут удалены!')) {
+        if (confirm('Удалить все БАДы и их историю безвозвратно?') &&
+            confirm('Подтвердите удаление всех БАДов.')) {
           FS.resetAllSupplements();
           alert('Все БАДы удалены.');
           fitnessRenderSupplementsTracking();
@@ -2180,14 +2201,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const suppId = removeFromDayBtn.dataset.id;
         const supp = FS.getSupplementById(suppId);
         if (!supp) return;
-        if (confirm('Убрать "' + supp.name + '" из этого дня?\n\nВсе приёмы за эту дату будут удалены, но сам БАД останется в профиле.')) {
+        if (confirm('Убрать \"' + supp.name + '\" из этого дня?')) {
           FS.removeAllSupplementIntakesForDay(suppId, dateKey);
           fitnessRenderSupplementsTracking();
         }
       }
     });
   }
-  
+
   // NEW: Open modal to add/edit supplement profile
   function fitnessOpenSupplementProfileModal(editId) {
     const existing = editId ? FS.getSupplementById(editId) : null;
@@ -5686,6 +5707,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ========== ЗАГРУЗКА ФОТО ==========
   const PHOTO_DEBUG_MODE = true;
+  const PHOTO_CURRENT_KEY = 'fitness_photo_current';
   const fitnessPhotoUpload = document.getElementById('fitnessPhotoUpload');
   const fitnessPhotoBtn = document.getElementById('fitnessPhotoBtn');
   const fitnessPhotoDebug = document.getElementById('fitnessPhotoDebug');
@@ -5695,8 +5717,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function fitnessPhotoDebugLog(text) {
     if (!PHOTO_DEBUG_MODE || !fitnessPhotoDebug) return;
     fitnessPhotoDebug.classList.remove('hidden');
-    const now = new Date();
-    const timestamp = now.toTimeString().slice(0, 8);
+    const timestamp = new Date().toTimeString().slice(0, 8);
     const line = `[${timestamp}] ${text}`;
     fitnessPhotoDebug.textContent = line + '\n' + (fitnessPhotoDebug.textContent || '');
   }
@@ -5710,6 +5731,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fitnessPhotoDebugLog('photo: error/unsupported (input disabled)');
       return;
     }
+
     try {
       fitnessPhotoDebugLog('photo: button click ok');
       if (typeof fitnessPhotoUpload.showPicker === 'function') {
@@ -5724,10 +5746,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function fitnessReadDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => resolve(String(event.target?.result || ''));
+      reader.onerror = () => reject(new Error('read error'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function fitnessCompressImageDataUrl(dataUrl, maxSide = 1280, quality = 0.82) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = Math.min(1, maxSide / Math.max(img.width || 1, img.height || 1));
+        const width = Math.max(1, Math.round((img.width || 1) * ratio));
+        const height = Math.max(1, Math.round((img.height || 1) * ratio));
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(dataUrl);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
   fitnessPhotoBtn?.addEventListener('click', () => {
     fitnessOpenPhotoPicker();
   });
-  
+
   if (fitnessPhotoUpload) {
     fitnessPhotoUpload.addEventListener('change', async (e) => {
       fitnessPhotoDebugLog('photo: change event');
@@ -5736,32 +5790,21 @@ document.addEventListener('DOMContentLoaded', () => {
         fitnessPhotoDebugLog('photo: change event, no file selected');
         return;
       }
-      
-      // Проверяем, что это изображение
+
       if (!file.type.startsWith('image/')) {
         fitnessPhotoDebugLog('photo: error/unsupported (not image)');
         showAlert('Пожалуйста, выберите изображение');
         return;
       }
+
       fitnessPhotoDebugLog('photo: change event, file selected (' + file.type + ', ' + file.size + 'b)');
-      
-      // Читаем файл как Data URL
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target.result;
-        
-        // Сохраняем в localStorage (или в FS если есть)
-        const dateKey = typeof fitnessGetDateKey === 'function' ? fitnessGetDateKey() : null;
-        const photoKey = dateKey ? `fitness_photo_${dateKey}` : 'fitness_photo_current';
-        
-        try {
-          localStorage.setItem(photoKey, dataUrl);
-        } catch (err) {
-          console.warn('Не удалось сохранить фото:', err);
-          fitnessPhotoDebugLog('photo: error/unsupported (localStorage save failed)');
-        }
-        
-        // Показываем фото
+
+      try {
+        const rawDataUrl = await fitnessReadDataUrl(file);
+        const dataUrl = await fitnessCompressImageDataUrl(rawDataUrl);
+        localStorage.setItem(PHOTO_CURRENT_KEY, dataUrl);
+        fitnessPhotoDebugLog('photo: save ok');
+
         if (fitnessAvatar) {
           fitnessAvatar.src = dataUrl;
           fitnessAvatar.classList.remove('hidden');
@@ -5769,65 +5812,38 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fitnessAvatarPlaceholder) {
           fitnessAvatarPlaceholder.classList.add('hidden');
         }
-        
+
         fitnessPhotoDebugLog('photo: file read ok, preview shown');
         showAlert('Фото сохранено!');
-      };
-      reader.onerror = () => {
-        fitnessPhotoDebugLog('photo: error/unsupported (file read error)');
-        showAlert('Ошибка при чтении файла');
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.warn('Не удалось сохранить фото:', err);
+        fitnessPhotoDebugLog('photo: error/unsupported (localStorage save failed)');
+        showAlert('Ошибка при чтении или сохранении файла');
+      }
     });
   }
-  
-  // Загружаем сохранённое фото при инициализации
-  // Логика: только точное совпадение по дате, без поиска "ближайшего" фото
+
   function fitnessLoadSavedPhoto() {
-    const dateKey = typeof fitnessGetDateKey === 'function' ? fitnessGetDateKey() : null;
-    
-    if (!dateKey) {
-      // Нет даты - показываем заглушку
-      if (fitnessAvatar) {
-        fitnessAvatar.classList.add('hidden');
-      }
-      if (fitnessAvatarPlaceholder) {
-        fitnessAvatarPlaceholder.classList.remove('hidden');
-      }
-      return;
-    }
-    
-    const photoKey = `fitness_photo_${dateKey}`;
-    
     try {
-      // Ищем фото ТОЛЬКО для текущей даты (без fallback на другие даты)
-      const savedPhoto = localStorage.getItem(photoKey);
-      
+      const savedPhoto = localStorage.getItem(PHOTO_CURRENT_KEY);
+
       if (savedPhoto && fitnessAvatar) {
-        // Фото есть для этой даты - показываем
         fitnessAvatar.src = savedPhoto;
         fitnessAvatar.classList.remove('hidden');
         if (fitnessAvatarPlaceholder) {
           fitnessAvatarPlaceholder.classList.add('hidden');
         }
       } else {
-        // Нет фото для этой даты - показываем заглушку (НЕ ищем на других датах!)
-        if (fitnessAvatar) {
-          fitnessAvatar.classList.add('hidden');
-        }
-        if (fitnessAvatarPlaceholder) {
-          fitnessAvatarPlaceholder.classList.remove('hidden');
-        }
+        if (fitnessAvatar) fitnessAvatar.classList.add('hidden');
+        if (fitnessAvatarPlaceholder) fitnessAvatarPlaceholder.classList.remove('hidden');
       }
     } catch (err) {
       console.warn('Не удалось загрузить фото:', err);
-      // При ошибке тоже показываем заглушку
       if (fitnessAvatar) fitnessAvatar.classList.add('hidden');
       if (fitnessAvatarPlaceholder) fitnessAvatarPlaceholder.classList.remove('hidden');
     }
   }
-  
-  // Вызываем при загрузке дашборда
+
   setTimeout(fitnessLoadSavedPhoto, 200);
 
 

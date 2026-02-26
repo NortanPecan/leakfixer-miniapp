@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Fitness tab: state, pure logic, and persistence.
  * Architecture: this file = state + logic (React-ready); app.js = DOM glue; index.html = markup.
  *
