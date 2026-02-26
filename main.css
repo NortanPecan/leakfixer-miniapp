@@ -332,6 +332,45 @@ html[data-fitness-theme="dark"] input::placeholder {
   transition: all 0.3s ease;
 }
 
+/* ===== ПОЛЯ ВВОДА В ТЁМНОЙ ТЕМЕ ===== */
+html[data-fitness-theme="dark"] input[type="text"],
+html[data-fitness-theme="dark"] input[type="number"],
+html[data-fitness-theme="dark"] input[type="date"],
+html[data-fitness-theme="dark"] input[type="email"],
+html[data-fitness-theme="dark"] input[type="password"],
+html[data-fitness-theme="dark"] input[type="tel"],
+html[data-fitness-theme="dark"] select,
+html[data-fitness-theme="dark"] textarea {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+html[data-fitness-theme="dark"] input:focus,
+html[data-fitness-theme="dark"] select:focus,
+html[data-fitness-theme="dark"] textarea:focus {
+  border-color: #22d3ee;
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.15);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+html[data-fitness-theme="dark"] input::placeholder {
+  color: rgba(148, 163, 184, 0.5);
+}
+
+html[data-fitness-theme="dark"] input:disabled,
+html[data-fitness-theme="dark"] select:disabled {
+  background: rgba(15, 23, 42, 0.5);
+  border-color: rgba(148, 163, 184, 0.15);
+  color: rgba(148, 163, 184, 0.5);
+  cursor: not-allowed;
+}
+
 /* ===== ОТЗЫВЧИВОСТЬ ===== */
 @media (max-width: 480px) {
   #main {

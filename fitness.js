@@ -783,18 +783,33 @@ function formatTimeHM(date) {
 // ─── Pure: calorie calculations (replace with real formulas later) ───────────
 
 /**
- * FIXED daily calorie target - no longer depends on weight.
- * Users can set their target manually in profile, or use default.
+ * Calculate base metabolism (BMR) using Mifflin-St Jeor formula.
+ * Uses weight from profile. Falls back to targetCalories or default.
  * @param {ProfileFitnessSettings} profile
  * @returns {number}
  */
 function calculateBaseMetabolism(profile) {
-  // FIXED: Use user's target calories if set, otherwise default
-  // Weight changes no longer automatically adjust calorie target
+  // Если есть вес в профиле - используем формулу Миффлина-Сан Жеора
+  if (profile.weight && profile.weight > 0) {
+    const weight = profile.weight;
+    const height = profile.height || 170; // умолчание если нет
+    const age = profile.age || 30; // умолчание если нет
+    
+    // По умолчанию мужской пол (можно добавить выбор в профиле)
+    // Формула Миффлина-Сан Жеора для мужчин:
+    // BMR = 10 × вес(кг) + 6.25 × рост(см) − 5 × возраст(лет) + 5
+    let bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+    
+    // Округляем
+    return Math.round(bmr);
+  }
+  
+  // Если веса нет - используем targetCalories или умолчание
   if (profile.targetCalories && profile.targetCalories > 0) {
     return Math.round(profile.targetCalories);
   }
-  // Default fixed value - no formula based on weight
+  
+  // Умолчание
   return 2000;
 }
 

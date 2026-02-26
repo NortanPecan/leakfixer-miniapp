@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     habitsBtn: document.getElementById('habitsBtn'),
     buddyBtn: document.getElementById('buddyBtn'),
     backBtn: document.getElementById('backBtn'),
+    fitnessBtn: document.getElementById('fitnessBtn'),
     lessonTitle: document.getElementById('lessonTitle'),
     lessonDesc: document.getElementById('lessonDesc'),
     video: document.getElementById('video'),
@@ -5772,6 +5773,41 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Вызываем при загрузке дашборда
   setTimeout(fitnessLoadSavedPhoto, 200);
+
+
+  // ========== ДИАГНОСТИЧЕСКИЙ БЛОК ДЛЯ ФОТО ==========
+  // Используем делегирование, чтобы клики работали даже при переходе на новый день
+  document.addEventListener('click', function(e) {
+    // Ищем клик по чекбоксу или иконке внутри блока БАДов
+    const supplementCheckbox = e.target.closest('.supplement-checkbox');
+    if (supplementCheckbox) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const supplementId = supplementCheckbox.dataset.supplementId;
+      const intakeId = supplementCheckbox.dataset.intakeId;
+      const dateKey = supplementCheckbox.dataset.dateKey;
+      
+      if (supplementId && intakeId && dateKey) {
+        // Вызываем функцию переключения
+        if (typeof toggleSupplementIntakeChecked === 'function') {
+          const result = toggleSupplementIntakeChecked(supplementId, dateKey, intakeId);
+          // Перерендерим блок БАДов
+          if (typeof fitnessRenderSupplementsTracking === 'function') {
+            fitnessRenderSupplementsTracking();
+          }
+        }
+      }
+    }
+  });
+
+
+  // ========== КНОПКА "ФИТНЕС" НА ГЛАВНОМ ЭКРАНЕ ==========
+  if (el.fitnessBtn) {
+    el.fitnessBtn.addEventListener('click', () => {
+      showFitness();
+    });
+  }
 
 
   // ========== КНОПКА "НАЗАД" ВНИЗУ СПРАВА ==========

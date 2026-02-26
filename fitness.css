@@ -148,6 +148,8 @@ html[data-fitness-theme="dark"] #fitnessBackInDashboardFixed:hover {
 #fitnessScreen {
   background: var(--fitness-bg-screen);
   min-height: 100vh;
+  position: relative;
+  z-index: 50;
 }
 
 /* Основной класс карточки - основа для glassmorphism */
