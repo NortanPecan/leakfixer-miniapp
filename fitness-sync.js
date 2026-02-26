@@ -17,6 +17,12 @@ class FitnessSync {
         },
       });
     }
+
+    upsertHeaders() {
+      return {
+        Prefer: 'resolution=merge-duplicates,return=representation',
+      };
+    }
   
     // ─── PROFILE: user_profile + measurements ─────────────────────────
   
@@ -27,7 +33,7 @@ class FitnessSync {
     async loadProfile() {
       if (!this.appUserId) return null;
       try {
-        const res = await this.request(`/rest/v1/user_profile?app_user_id=eq.${this.appUserId}`);
+        const res = await this.request(`/rest/v1/user_profile?app_user_id=eq.${this.appUserId}&select=*`);
         const rows = await res.json();
         const row = Array.isArray(rows) ? rows[0] : null;
         if (!row) return null;
@@ -72,6 +78,7 @@ class FitnessSync {
         // 1) upsert в user_profile
         await this.request('/rest/v1/user_profile', {
           method: 'POST',
+          headers: this.upsertHeaders(),
           body: JSON.stringify({
             app_user_id: this.appUserId,
             current_weight: typeof weight === 'number' ? weight : null,
@@ -147,16 +154,18 @@ class FitnessSync {
       if (!this.appUserId || !dateKey) return;
       try {
         const now = new Date().toISOString();
+        const dayData = data?.data && typeof data.data === 'object' ? data.data : {};
   
         // 1) fitness_daily (как раньше)
         await this.request('/rest/v1/fitness_daily', {
           method: 'POST',
+          headers: this.upsertHeaders(),
           body: JSON.stringify({
             app_user_id: this.appUserId,
             date_key: dateKey,
             water_ml: data.water_ml ?? 0,
             work_day: data.work_day || 'normal',
-            data: data.data || {},
+            data: dayData,
             updated_at: now,
           }),
         });
@@ -177,6 +186,9 @@ class FitnessSync {
           ...(baseData.fitness || {}),
           water_ml: data.water_ml ?? baseData.fitness?.water_ml ?? 0,
           work_day: data.work_day || baseData.fitness?.work_day || 'normal',
+          activities: Array.isArray(dayData.activities) ? dayData.activities : (baseData.fitness?.activities || []),
+          foods: Array.isArray(dayData.foods) ? dayData.foods : (baseData.fitness?.foods || []),
+          supplements: Array.isArray(dayData.supplements) ? dayData.supplements : (baseData.fitness?.supplements || []),
         };
   
         const nextData = {
@@ -186,6 +198,7 @@ class FitnessSync {
   
         await this.request('/rest/v1/daily_state', {
           method: 'POST',
+          headers: this.upsertHeaders(),
           body: JSON.stringify({
             app_user_id: this.appUserId,
             date: dateOnly,
@@ -223,6 +236,7 @@ class FitnessSync {
   
         await this.request('/rest/v1/daily_state', {
           method: 'POST',
+          headers: this.upsertHeaders(),
           body: JSON.stringify({
             app_user_id: this.appUserId,
             date: dateOnly,
@@ -289,6 +303,7 @@ class FitnessSync {
             // 2) Обновляем актуальный вес в user_profile (последнее измерение)
             await this.request('/rest/v1/user_profile', {
                 method: 'POST',
+                headers: this.upsertHeaders(),
                 body: JSON.stringify({
                     app_user_id: this.appUserId,
                     current_weight: weight,
@@ -372,6 +387,7 @@ class FitnessSync {
             if (lastMeasurement && lastMeasurement.id === measurementId) {
                 await this.request('/rest/v1/user_profile', {
                     method: 'POST',
+                    headers: this.upsertHeaders(),
                     body: JSON.stringify({
                         app_user_id: this.appUserId,
                         current_weight: weight,
@@ -402,6 +418,7 @@ class FitnessSync {
             if (lastMeasurement) {
                 await this.request('/rest/v1/user_profile', {
                     method: 'POST',
+                    headers: this.upsertHeaders(),
                     body: JSON.stringify({
                         app_user_id: this.appUserId,
                         current_weight: lastMeasurement.value,

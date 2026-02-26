@@ -206,7 +206,7 @@ function saveAllFitnessData(data) {
 
 /** @returns {FitnessDayData} */
 function createEmptyDayData() {
-  return { activities: [], foods: [], water: undefined, workDay: undefined };
+  return { activities: [], foods: [], water: undefined, workDay: undefined, supplements: [] };
 }
 
 /** Get water data for a day with defaults from profile
@@ -233,19 +233,28 @@ function getDayData(dateKey) {
   if (!all[dateKey]) {
     all[dateKey] = createEmptyDayData();
   }
-  return all[dateKey];
+  const day = all[dateKey] || {};
+  return {
+    activities: Array.isArray(day.activities) ? day.activities : [],
+    foods: Array.isArray(day.foods) ? day.foods : [],
+    water: day.water && typeof day.water === 'object' ? day.water : undefined,
+    workDay: day.workDay,
+    supplements: Array.isArray(day.supplements) ? day.supplements : [],
+  };
 }
 
 /** @param {string} dateKey
  *  @param {Partial<FitnessDayData>} patch */
 function updateDayData(dateKey, patch) {
   const all = getAllFitnessData();
-  const day = getDayData(dateKey);
-  if (patch.activities !== undefined) day.activities = patch.activities;
-  if (patch.foods !== undefined) day.foods = patch.foods;
-  if (patch.water !== undefined) day.water = patch.water;
-  if (patch.supplements !== undefined) day.supplements = patch.supplements;
-  if (patch.workDay !== undefined) day.workDay = patch.workDay;
+  const current = all[dateKey] || createEmptyDayData();
+  const day = {
+    activities: patch.activities !== undefined ? patch.activities : (Array.isArray(current.activities) ? current.activities : []),
+    foods: patch.foods !== undefined ? patch.foods : (Array.isArray(current.foods) ? current.foods : []),
+    water: patch.water !== undefined ? patch.water : (current.water && typeof current.water === 'object' ? current.water : undefined),
+    supplements: patch.supplements !== undefined ? patch.supplements : (Array.isArray(current.supplements) ? current.supplements : []),
+    workDay: patch.workDay !== undefined ? patch.workDay : current.workDay,
+  };
   all[dateKey] = day;
   saveAllFitnessData(all);
 
@@ -277,24 +286,59 @@ function getSupplementsStorageKey() {
   return `${SUPPLEMENTS_PROFILE_KEY}_${id}`;
 }
 
-/** Load supplements profile from localStorage
- * @returns {SupplementsProfile} */
 function loadSupplementsProfile() {
   try {
     const raw = localStorage.getItem(getSupplementsStorageKey());
-    if (raw) {
-      return JSON.parse(raw);
-    }
+    const parsed = raw ? JSON.parse(raw) : {};
+    const supplements = Array.isArray(parsed?.supplements) ? parsed.supplements : [];
+    return { supplements: supplements.map(normalizeSupplementDefinition) };
   } catch (e) {
     console.error('loadSupplementsProfile error:', e);
+    return { supplements: [] };
   }
-  return { supplements: [] };
 }
   
-/** Save supplements profile to localStorage
- * @param {SupplementsProfile} profile */
 function saveSupplementsProfile(profile) {
-  localStorage.setItem(getSupplementsStorageKey(), JSON.stringify(profile));
+  localStorage.setItem(getSupplementsStorageKey(), JSON.stringify(profile || { supplements: [] }));
+}
+
+function normalizeSupplementDefinition(supplement) {
+  const nowIso = new Date().toISOString();
+  const templateIntakes = Array.isArray(supplement?.templateIntakes) ? supplement.templateIntakes : [];
+  const normalizedTemplates = templateIntakes.length > 0
+    ? templateIntakes.map((template) => ({
+      defaultDose: Number(template?.defaultDose) > 0 ? Number(template.defaultDose) : 1,
+      time: typeof template?.time === 'string' ? template.time : '',
+    }))
+    : [{ defaultDose: Number(supplement?.standardDailyDose) > 0 ? Number(supplement.standardDailyDose) : 1, time: '' }];
+  const history = Array.isArray(supplement?.history) ? supplement.history : [];
+  return {
+    id: supplement?.id || generateId(),
+    name: typeof supplement?.name === 'string' ? supplement.name : '',
+    unit: supplement?.unit || 'mg',
+    daily: Boolean(supplement?.daily),
+    dailyStartDate: supplement?.dailyStartDate || null,
+    dailyEndDate: supplement?.dailyEndDate || null,
+    standardDailyDose: Number(supplement?.standardDailyDose) > 0 ? Number(supplement.standardDailyDose) : normalizedTemplates[0].defaultDose,
+    templateIntakes: normalizedTemplates,
+    history: history.map((day) => ({
+      date: day?.date,
+      intakes: Array.isArray(day?.intakes) ? day.intakes.map(normalizeSupplementIntakeEvent) : [],
+    })).filter((day) => typeof day.date === 'string'),
+    createdAt: supplement?.createdAt || nowIso,
+    updatedAt: supplement?.updatedAt || nowIso,
+  };
+}
+
+function normalizeSupplementIntakeEvent(intake) {
+  return {
+    id: intake?.id || generateId(),
+    plannedId: typeof intake?.plannedId === 'string' ? intake.plannedId : null,
+    time: typeof intake?.time === 'string' ? intake.time : '',
+    dose: Number(intake?.dose) > 0 ? Number(intake.dose) : 1,
+    checked: Boolean(intake?.checked),
+    edited: Boolean(intake?.edited),
+  };
 }
 
 // ===================== SUPPLEMENTS LOGIC =====================
@@ -310,8 +354,7 @@ function getAllSupplements() {
  * @param {string} id
  * @returns {Supplement|undefined} */
 function getSupplementById(id) {
-  const supplements = getAllSupplements();
-  return supplements.find(s => s.id === id);
+  return getAllSupplements().find((supplement) => supplement.id === id);
 }
 
 /** Get or create history entry for a specific date
@@ -319,107 +362,88 @@ function getSupplementById(id) {
  * @param {string} dateKey - "YYYY-MM-DD"
  * @returns {SupplementDayIntakes} */
 function getOrCreateDayIntakes(supplement, dateKey) {
-  let dayIntakes = supplement.history?.find(h => h.date === dateKey);
+  let dayIntakes = supplement.history?.find((h) => h.date === dateKey);
   if (!dayIntakes) {
     dayIntakes = { date: dateKey, intakes: [] };
     supplement.history = supplement.history || [];
     supplement.history.push(dayIntakes);
   }
+  if (!Array.isArray(dayIntakes.intakes)) dayIntakes.intakes = [];
   return dayIntakes;
 }
-  
-/** Check if date is within supplement's daily interval
- * @param {Supplement} supplement
- * @param {string} dateKey - "YYYY-MM-DD"
- * @returns {boolean} */
+
+function getDayIntakes(supplement, dateKey) {
+  const day = supplement.history?.find((h) => h.date === dateKey);
+  return day && Array.isArray(day.intakes) ? day.intakes.map(normalizeSupplementIntakeEvent) : [];
+}
+
+function getCreatedDateKey(supplement) {
+  return supplement.createdAt ? formatDateKey(new Date(supplement.createdAt)) : null;
+}
+
+function buildPlannedIntakeId(supplementId, dateKey, templateIndex) {
+  return `plan_${supplementId}_${dateKey}_${templateIndex}`;
+}
+
 function isDateInDailyInterval(supplement, dateKey) {
   if (!supplement.daily) return false;
-
-  // CRITICAL: If dailyStartDate is not set, treat as NOT in interval
-  // This prevents old supplements without dates from auto-generating plans
-  if (!supplement.dailyStartDate) {
-    console.log('[Supplements] No dailyStartDate for:', supplement.name, 'treating as outside interval');
-    return false;
-  }
-
-  // Check start date
-  if (dateKey < supplement.dailyStartDate) {
-    return false;
-  }
-
-  // Check end date (inclusive)
-  if (supplement.dailyEndDate && dateKey > supplement.dailyEndDate) {
-    return false;
-  }
-
+  if (!supplement.dailyStartDate) return false;
+  if (dateKey < supplement.dailyStartDate) return false;
+  if (supplement.dailyEndDate && dateKey > supplement.dailyEndDate) return false;
   return true;
 }
 
-/** Generate planned intakes for a date based on template (only for daily supplements within interval)
- * @param {Supplement} supplement
- * @param {string} dateKey - "YYYY-MM-DD"
- * @returns {SupplementIntake[]} */
-function generatePlannedIntakes(supplement, dateKey) {
-  // Don't generate for dates before supplement was created
-  const createdDateKey = supplement.createdAt ? formatDateKey(new Date(supplement.createdAt)) : null;
-  if (createdDateKey && dateKey < createdDateKey) {
-    return [];
-  }
-
-  // CRITICAL: Check if date is within daily interval (dailyStartDate to dailyEndDate)
-  if (!isDateInDailyInterval(supplement, dateKey)) {
-    // Outside interval - return existing history if any, but don't generate new
-    const existingDayIntakes = supplement.history?.find(h => h.date === dateKey);
-    return existingDayIntakes?.intakes || [];
-  }
-
-  // For dates within interval: generate or return existing
-  const dayIntakes = getOrCreateDayIntakes(supplement, dateKey);
-
-  // If already has intakes for this day, return existing (don't regenerate)
-  if (dayIntakes.intakes.length > 0) {
-    return dayIntakes.intakes;
-  }
-
-  // Generate from template for dates within interval
-  const intakes = [];
-  for (const template of supplement.templateIntakes) {
-    intakes.push({
-      id: generateId(),
-      time: '', // CRITICAL: Empty time - will be set only when user clicks checkbox
-      dose: template.defaultDose,
-      checked: false,
-      edited: false,
-    });
-  }
-  dayIntakes.intakes = intakes;
-  return intakes;
+function buildPlannedIntakesForDate(supplement, dateKey) {
+  const templates = Array.isArray(supplement.templateIntakes) ? supplement.templateIntakes : [];
+  if (templates.length === 0) return [];
+  if (!supplement.daily || !isDateInDailyInterval(supplement, dateKey)) return [];
+  return templates.map((template, index) => ({
+    id: buildPlannedIntakeId(supplement.id, dateKey, index),
+    plannedId: buildPlannedIntakeId(supplement.id, dateKey, index),
+    time: template.time || '',
+    dose: Number(template.defaultDose) > 0 ? Number(template.defaultDose) : 1,
+    checked: false,
+    edited: false,
+    planned: true,
+    templateIndex: index,
+  }));
 }
 
-/** Get intakes for a specific date
- * @param {string} supplementId
- * @param {string} dateKey - "YYYY-MM-DD"
- * @returns {SupplementIntake[]} */
+function sortSupplementIntakes(intakes) {
+  return [...intakes].sort((a, b) => {
+    const timeA = a.time || '99:99';
+    const timeB = b.time || '99:99';
+    if (timeA !== timeB) return timeA.localeCompare(timeB);
+    return String(a.id || '').localeCompare(String(b.id || ''));
+  });
+}
+
 function getSupplementIntakesForDay(supplementId, dateKey) {
   const supplement = getSupplementById(supplementId);
   if (!supplement) return [];
-  
-  // Don't show supplements for dates before they were created
-  const createdDateKey = supplement.createdAt ? formatDateKey(new Date(supplement.createdAt)) : null;
-  if (createdDateKey && dateKey < createdDateKey) {
-    return [];
+
+  const createdDateKey = getCreatedDateKey(supplement);
+  if (createdDateKey && dateKey < createdDateKey) return [];
+
+  const plannedIntakes = buildPlannedIntakesForDate(supplement, dateKey);
+  const actualEvents = getDayIntakes(supplement, dateKey);
+  const actualByPlannedId = new Map();
+  for (const event of actualEvents) {
+    if (event.plannedId) actualByPlannedId.set(event.plannedId, event);
   }
-  
-  // For daily supplements within their interval, generate plan
-  if (supplement.daily && isDateInDailyInterval(supplement, dateKey)) {
-    return generatePlannedIntakes(supplement, dateKey);
+
+  const merged = [];
+  for (const planned of plannedIntakes) {
+    const actual = actualByPlannedId.get(planned.id);
+    if (actual) merged.push({ ...planned, ...actual, planned: false });
+    else merged.push(planned);
   }
-  
-  // For non-daily supplements or daily supplements outside interval:
-  // - Only show manually added intakes from history (never auto-generate)
-  // - Don't show supplement in this day if no intakes exist
-  const dayIntakes = supplement.history?.find(h => h.date === dateKey);
-  return dayIntakes?.intakes || [];
+  for (const event of actualEvents) {
+    if (!event.plannedId || !actualByPlannedId.has(event.plannedId)) {
+      merged.push({ ...event, planned: false });
+    }
+  }
+  return sortSupplementIntakes(merged);
 }
 
 /** Toggle intake checked status
@@ -462,33 +486,35 @@ function isPastDate(dateKey) {
 }
 
 function toggleSupplementIntakeChecked(supplementId, dateKey, intakeId) {
-  // CRITICAL: Prevent marking as checked in future dates
-  // Future dates allow only planning (editing dose/structure), not marking as taken
-  if (isFutureDate(dateKey)) {
-    console.log('[Supplements] Cannot mark intake as checked in future date:', dateKey);
-    return null; // Signal to UI that operation was blocked
-  }
+  if (isFutureDate(dateKey)) return null;
 
   const profile = loadSupplementsProfile();
-  const supplement = profile.supplements.find(s => s.id === supplementId);
+  const supplement = profile.supplements.find((s) => s.id === supplementId);
   if (!supplement) return undefined;
-  
+
+  const renderedIntakes = getSupplementIntakesForDay(supplementId, dateKey);
+  const rendered = renderedIntakes.find((intake) => intake.id === intakeId);
+  if (!rendered) return undefined;
+
   const dayIntakes = getOrCreateDayIntakes(supplement, dateKey);
-  const intake = dayIntakes.intakes.find(i => i.id === intakeId);
-  if (!intake) return undefined;
-
-  // Toggle checked
-  intake.checked = !intake.checked;
-
-  // CRITICAL: Set time ONLY if checking AND time is empty (first check only)
-  // If time already exists (from previous check), don't change it on re-checks
-  if (intake.checked && !intake.time) {
-    intake.time = formatTimeHM(new Date());
+  let event = dayIntakes.intakes.find((intake) => intake.id === intakeId || intake.plannedId === intakeId);
+  if (!event) {
+    event = {
+      id: generateId(),
+      plannedId: rendered.plannedId || rendered.id || null,
+      time: rendered.time || '',
+      dose: rendered.dose,
+      checked: false,
+      edited: Boolean(rendered.edited),
+    };
+    dayIntakes.intakes.push(event);
   }
-  // Note: If unchecking, we keep the time - user can see when it was taken
 
+  event.checked = !event.checked;
+  if (event.checked && !event.time) event.time = formatTimeHM(new Date());
+  supplement.updatedAt = new Date().toISOString();
   saveSupplementsProfile(profile);
-  return intake;
+  return getSupplementIntakesForDay(supplementId, dateKey).find((item) => item.id === intakeId || item.plannedId === intakeId) || event;
 }
 
 /** Update intake dose/time
@@ -499,43 +525,49 @@ function toggleSupplementIntakeChecked(supplementId, dateKey, intakeId) {
  * @returns {SupplementIntake|undefined|null} updated intake, undefined if not found, null if deleted */
 function updateSupplementIntake(supplementId, dateKey, intakeId, updates) {
   const profile = loadSupplementsProfile();
-  const supplement = profile.supplements.find(s => s.id === supplementId);
+  const supplement = profile.supplements.find((s) => s.id === supplementId);
   if (!supplement) return undefined;
-  
+
+  const rendered = getSupplementIntakesForDay(supplementId, dateKey).find((intake) => intake.id === intakeId || intake.plannedId === intakeId);
+  if (!rendered) return undefined;
+
   const dayIntakes = getOrCreateDayIntakes(supplement, dateKey);
-  const intake = dayIntakes.intakes.find(i => i.id === intakeId);
-  if (!intake) return undefined;
-  
-  // CRITICAL: If dose is 0 or explicitly marked for deletion, remove this intake
+  let intake = dayIntakes.intakes.find((item) => item.id === intakeId || item.plannedId === intakeId);
   if (updates.dose === 0 || updates.dose === '0' || updates._delete === true) {
-    const idx = dayIntakes.intakes.findIndex(i => i.id === intakeId);
+    const idx = dayIntakes.intakes.findIndex((item) => item.id === intakeId || item.plannedId === intakeId);
     if (idx >= 0) {
       dayIntakes.intakes.splice(idx, 1);
+      supplement.updatedAt = new Date().toISOString();
       saveSupplementsProfile(profile);
-      return null; // Signal that intake was deleted
+      return null;
     }
     return undefined;
   }
 
-  // Apply updates - only update provided fields, leave others unchanged
-  if (updates.dose !== undefined) {
-    intake.dose = updates.dose;
-    // Mark as edited if dose differs from template default
-    const templateIdx = dayIntakes.intakes.findIndex(i => i.id === intakeId);
-    if (templateIdx >= 0 && supplement.templateIntakes[templateIdx]) {
-      intake.edited = updates.dose !== supplement.templateIntakes[templateIdx].defaultDose;
-    } else {
-      // Manual intakes are always "edited"
-      intake.edited = true;
-    }
+  if (!intake) {
+    intake = {
+      id: generateId(),
+      plannedId: rendered.plannedId || rendered.id || null,
+      time: rendered.time || '',
+      dose: rendered.dose,
+      checked: Boolean(rendered.checked),
+      edited: Boolean(rendered.edited),
+    };
+    dayIntakes.intakes.push(intake);
   }
-  // CRITICAL: Allow updating time independently of other fields
+
+  if (updates.dose !== undefined) {
+    intake.dose = Number(updates.dose);
+    const templateIndex = rendered.templateIndex;
+    if (typeof templateIndex === 'number' && supplement.templateIntakes[templateIndex]) {
+      intake.edited = intake.dose !== Number(supplement.templateIntakes[templateIndex].defaultDose);
+    } else intake.edited = true;
+  }
   if (updates.time !== undefined) intake.time = updates.time;
-  // CRITICAL: Allow updating checked independently
   if (updates.checked !== undefined) intake.checked = updates.checked;
-  
+  supplement.updatedAt = new Date().toISOString();
   saveSupplementsProfile(profile);
-  return intake;
+  return getSupplementIntakesForDay(supplementId, dateKey).find((item) => item.id === intakeId || item.plannedId === intakeId) || intake;
 }
 
 /** Add new intake for a specific date
@@ -546,19 +578,21 @@ function updateSupplementIntake(supplementId, dateKey, intakeId, updates) {
  * @returns {SupplementIntake} created intake */
 function addSupplementIntake(supplementId, dateKey, dose, time) {
   const profile = loadSupplementsProfile();
-  const supplement = profile.supplements.find(s => s.id === supplementId);
+  const supplement = profile.supplements.find((s) => s.id === supplementId);
   if (!supplement) throw new Error('Supplement not found');
   
   const dayIntakes = getOrCreateDayIntakes(supplement, dateKey);
   const newIntake = {
     id: generateId(),
+    plannedId: null,
     time,
     dose,
     checked: false,
-    edited: true, // Custom intake is always "edited" from template
+    edited: true,
   };
   
   dayIntakes.intakes.push(newIntake);
+  supplement.updatedAt = new Date().toISOString();
   saveSupplementsProfile(profile);
   return newIntake;
 }
@@ -570,16 +604,17 @@ function addSupplementIntake(supplementId, dateKey, dose, time) {
  * @returns {boolean} success */
 function removeSupplementIntake(supplementId, dateKey, intakeId) {
   const profile = loadSupplementsProfile();
-  const supplement = profile.supplements.find(s => s.id === supplementId);
+  const supplement = profile.supplements.find((s) => s.id === supplementId);
   if (!supplement) return false;
 
   const dayIntakes = supplement.history?.find(h => h.date === dateKey);
   if (!dayIntakes) return false;
   
-  const idx = dayIntakes.intakes.findIndex(i => i.id === intakeId);
+  const idx = dayIntakes.intakes.findIndex((i) => i.id === intakeId || i.plannedId === intakeId);
   if (idx < 0) return false;
   
   dayIntakes.intakes.splice(idx, 1);
+  supplement.updatedAt = new Date().toISOString();
   saveSupplementsProfile(profile);
   return true;
 }
@@ -591,18 +626,14 @@ function removeSupplementIntake(supplementId, dateKey, intakeId) {
  * @returns {boolean} success */
 function removeAllSupplementIntakesForDay(supplementId, dateKey) {
   const profile = loadSupplementsProfile();
-  const supplement = profile.supplements.find(s => s.id === supplementId);
+  const supplement = profile.supplements.find((s) => s.id === supplementId);
   if (!supplement) return false;
 
   const dayIntakes = supplement.history?.find(h => h.date === dateKey);
   if (!dayIntakes) return false;
 
-  // Clear all intakes for this day
   dayIntakes.intakes = [];
-
-  // For non-daily supplements, we can optionally remove the day entry entirely
-  // But keeping empty day entry is fine - it will be filtered out by getSupplementIntakesForDay
-
+  supplement.updatedAt = new Date().toISOString();
   saveSupplementsProfile(profile);
   return true;
 }
@@ -614,15 +645,12 @@ function clearAllSupplementsHistory() {
   const profile = loadSupplementsProfile();
   if (!profile || !profile.supplements) return false;
 
-  // Clear history for each supplement but keep the supplement itself and daily settings
   for (const supplement of profile.supplements) {
     supplement.history = [];
-    // CRITICAL: Preserve daily, dailyStartDate, dailyEndDate - only clear history
     supplement.updatedAt = new Date().toISOString();
   }
 
   saveSupplementsProfile(profile);
-  console.log('[Supplements] All history cleared, supplements and daily settings preserved:', profile.supplements.length);
   return true;
 }
 
@@ -633,7 +661,6 @@ function resetAllSupplements() {
   const id = window.currentAppUserId || 'anon';
   const key = `${SUPPLEMENTS_PROFILE_KEY}_${id}`;
   localStorage.removeItem(key);
-  console.log('[Supplements] COMPLETE RESET - all supplements deleted');
   return true;
 }
 
@@ -653,9 +680,14 @@ function createSupplement({ name, unit, daily, dailyStartDate, dailyEndDate, sta
   const nowISO = now.toISOString();
   const todayKey = formatDateKey(now);
   
-  // CRITICAL: Set default daily dates if daily is true but dates not provided
   const finalDailyStartDate = daily ? (dailyStartDate || todayKey) : null;
   const finalDailyEndDate = daily ? (dailyEndDate || null) : null;
+  const normalizedTemplates = Array.isArray(templateIntakes) && templateIntakes.length > 0
+    ? templateIntakes.map((template) => ({
+      defaultDose: Number(template?.defaultDose) > 0 ? Number(template.defaultDose) : 1,
+      time: typeof template?.time === 'string' ? template.time : '',
+    }))
+    : [{ defaultDose: Number(standardDailyDose) > 0 ? Number(standardDailyDose) : 1, time: '' }];
 
   const supplement = {
     id: generateId(),
@@ -664,43 +696,12 @@ function createSupplement({ name, unit, daily, dailyStartDate, dailyEndDate, sta
     daily: daily || false,
     dailyStartDate: finalDailyStartDate,
     dailyEndDate: finalDailyEndDate,
-    standardDailyDose,
-    templateIntakes: templateIntakes || [],
+    standardDailyDose: Number(standardDailyDose) > 0 ? Number(standardDailyDose) : normalizedTemplates[0].defaultDose,
+    templateIntakes: normalizedTemplates,
     history: [],
     createdAt: nowISO,
     updatedAt: nowISO,
   };
-  
-  // Create initial intake(s) for today WITHOUT time - user must check the box to set time
-  // This ensures checkbox works immediately but time is only set on user interaction
-  const initialIntakes = [];
-
-  if (templateIntakes && templateIntakes.length > 0) {
-    // Create one intake per template
-    for (const template of templateIntakes) {
-      initialIntakes.push({
-        id: generateId(),
-        time: '', // CRITICAL: Empty - will be set when user checks the box
-        dose: template.defaultDose,
-        checked: false,
-        edited: false,
-      });
-    }
-  } else {
-    // Create at least one intake with standard dose
-    initialIntakes.push({
-      id: generateId(),
-      time: '', // CRITICAL: Empty - will be set when user checks the box
-      dose: standardDailyDose || 1,
-      checked: false,
-      edited: false,
-    });
-  }
-
-  supplement.history = [{
-    date: todayKey,
-    intakes: initialIntakes,
-  }];
 
   profile.supplements = profile.supplements || [];
   profile.supplements.push(supplement);
@@ -714,7 +715,7 @@ function createSupplement({ name, unit, daily, dailyStartDate, dailyEndDate, sta
  * @returns {Supplement|undefined} updated supplement */
 function updateSupplement(id, updates) {
   const profile = loadSupplementsProfile();
-  const supplement = profile.supplements.find(s => s.id === id);
+  const supplement = profile.supplements.find((s) => s.id === id);
   if (!supplement) return undefined;
   
   if (updates.name !== undefined) supplement.name = updates.name;
@@ -723,7 +724,12 @@ function updateSupplement(id, updates) {
   if (updates.dailyStartDate !== undefined) supplement.dailyStartDate = updates.dailyStartDate;
   if (updates.dailyEndDate !== undefined) supplement.dailyEndDate = updates.dailyEndDate;
   if (updates.standardDailyDose !== undefined) supplement.standardDailyDose = updates.standardDailyDose;
-  if (updates.templateIntakes !== undefined) supplement.templateIntakes = updates.templateIntakes;
+  if (updates.templateIntakes !== undefined) {
+    supplement.templateIntakes = updates.templateIntakes.map((template) => ({
+      defaultDose: Number(template?.defaultDose) > 0 ? Number(template.defaultDose) : 1,
+      time: typeof template?.time === 'string' ? template.time : '',
+    }));
+  }
   
   supplement.updatedAt = new Date().toISOString();
   saveSupplementsProfile(profile);
@@ -771,7 +777,7 @@ function parseDateKey(dateKey) {
 /** @param {Date} date
  *  @returns {string} localized */
 function formatDateLocal(date) {
-  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function formatTimeHM(date) {
@@ -1134,9 +1140,9 @@ function getWaterStatus(currentMl, targetMl) {
  * @param {'low'|'normal'|'high'} status
  * @returns {string} */
 function getWaterStatusText(status) {
-  if (status === 'low') return 'Р’РѕРґС‹ РјРµРЅСЊС€Рµ РѕР±С‹С‡РЅРѕРіРѕ.';
-  if (status === 'high') return 'Р’РѕРґС‹ Р±РѕР»СЊС€Рµ РѕР±С‹С‡РЅРѕРіРѕ.';
-  return 'Р’РѕРґР° РєР°Рє РѕР±С‹С‡РЅРѕ.';
+  if (status === 'low') return 'Hydration is below target.';
+  if (status === 'high') return 'Hydration is above target.';
+  return 'Hydration is on track.';
 }
 
 /** Format water in liters with 1 decimal

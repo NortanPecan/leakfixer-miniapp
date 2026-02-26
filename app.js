@@ -422,6 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const FITNESS_SETUP_DONE_KEY = 'leakfixer_fitness_setup_done';
   let fitnessSelectedDate = new Date();
   const FS = window.FitnessState;
+  const FITNESS_SETTINGS_PANEL_ID = 'fitnessSettingsPanelDynamic';
 
   const fitnessEl = {
     screen: document.getElementById('fitnessScreen'),
@@ -456,6 +457,47 @@ document.addEventListener('DOMContentLoaded', () => {
     weightSave: document.getElementById('fitnessWeightSave'),
     weightStatus: document.getElementById('fitnessWeightStatus'),
   };
+
+  function ensureFitnessSettingsPanel() {
+    if (document.getElementById(FITNESS_SETTINGS_PANEL_ID)) return;
+    const settingsMini = document.getElementById('settingsMiniSummary');
+    const settingsContainer = settingsMini?.closest('.bg-white\\/15');
+    if (!settingsMini || !settingsContainer) return;
+
+    const panel = document.createElement('div');
+    panel.id = FITNESS_SETTINGS_PANEL_ID;
+    panel.className = 'bg-white/10 rounded-xl p-3 mt-3';
+    panel.innerHTML = `
+      <div class="text-[11px] uppercase tracking-wide opacity-70 mb-1">Fitness Settings</div>
+      <div class="text-xs opacity-80 mb-2" id="fitnessSettingsSummary">Water baseline: 2000 ml · Work profile: variable · Target weight: not set</div>
+      <button type="button" id="fitnessSettingsOpen" class="w-full py-2 rounded-xl bg-cyan-500/30 hover:bg-cyan-500/45 text-sm">Open Fitness Settings</button>
+    `;
+    settingsContainer.appendChild(panel);
+    fitnessEl.settingsOpen = document.getElementById('fitnessSettingsOpen');
+    fitnessEl.settingsSummary = document.getElementById('fitnessSettingsSummary');
+    fitnessEl.settingsOpen?.addEventListener('click', () => fitnessOpenWaterBaselineModal());
+  }
+
+  function fitnessApplyEnglishTexts() {
+    document.querySelectorAll('.supp-edit-norm').forEach((elNode) => { elNode.textContent = 'norm'; });
+    document.querySelectorAll('.supp-history').forEach((elNode) => { elNode.textContent = 'history'; });
+    document.querySelectorAll('.supp-add-intake').forEach((elNode) => { elNode.textContent = '+ Add intake'; });
+    document.getElementById('addFirstSupplement')?.replaceChildren(document.createTextNode('+ Add first supplement'));
+    document.getElementById('addNewSupplement')?.replaceChildren(document.createTextNode('+ Add supplement'));
+    document.getElementById('clearSupplementsHistory')?.replaceChildren(document.createTextNode('Clear supplements history'));
+    document.getElementById('resetAllSupplements')?.remove();
+    document.getElementById('fitnessSupplementsDebug')?.remove();
+  }
+
+  function fitnessUpdateSettingsSummary() {
+    const summaryEl = document.getElementById('fitnessSettingsSummary');
+    if (!summaryEl) return;
+    const profile = FS.getFitnessProfile();
+    const water = profile.waterBaselineMl || 2000;
+    const targetWeight = profile.targetWeight ? `${profile.targetWeight} kg` : 'not set';
+    const workProfile = profile.workProfile || 'variable';
+    summaryEl.textContent = `Water baseline: ${water} ml · Work profile: ${workProfile} · Target weight: ${targetWeight}`;
+  }
   
 
   function isFitnessSetupDone() {
@@ -731,6 +773,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         fitnessCloseModal();
         fitnessRenderWater();
+        fitnessUpdateSettingsSummary();
       });
     });
   }
@@ -875,6 +918,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function fitnessRenderDashboard() {
+    ensureFitnessSettingsPanel();
+    fitnessUpdateSettingsSummary();
     const photoEl = document.getElementById('profilePhoto');
     if (fitnessEl.avatar && photoEl?.src) fitnessEl.avatar.src = photoEl.src;
   
@@ -894,6 +939,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessRenderWater();
     fitnessRenderWeightChart();
     fitnessRenderSupplementsTracking();
+    fitnessApplyEnglishTexts();
     fitnessRenderWorkDay();
     
     // Загрузка сохранённого фото для текущей даты
