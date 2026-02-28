@@ -424,6 +424,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const FS = window.FitnessState;
   const FITNESS_SETTINGS_PANEL_ID = 'fitnessSettingsPanelDynamic';
 
+  const fitnessTexts = {
+    en: {
+      settingsSummary: (water, work, target) => `Water baseline: ${water} ml | Work profile: ${work} | Target weight: ${target}`,
+      fitnessSettingsTitle: 'Fitness Settings',
+      waterBaselineLabel: 'Water baseline (ml/day)',
+      workProfileLabel: 'Work profile',
+      targetWeightLabel: 'Target weight (kg)',
+      workProfiles: {
+        sedentary: 'Sedentary (desk)',
+        mixed: 'Mixed (on feet)',
+        physical: 'Physical labor',
+        variable: 'Variable'
+      }
+    }
+  };
+
   const fitnessEl = {
     screen: document.getElementById('fitnessScreen'),
     backBtn: document.getElementById('fitnessBackBtn'),
@@ -478,8 +494,8 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessEl.settingsOpen?.addEventListener('click', () => fitnessOpenWaterBaselineModal());
   }
 
-  function fitnessApplyEnglishTexts() {
-    document.querySelectorAll('.supp-edit-norm').forEach((elNode) => { elNode.textContent = 'norm'; });
+  function fitnessApplyEnglishUILabels() {
+    document.querySelectorAll('.supp-edit-norm').forEach((elNode) => { elNode.textContent = 'Edit'; });
     document.querySelectorAll('.supp-history').forEach((elNode) => { elNode.textContent = 'history'; });
     document.querySelectorAll('.supp-add-intake').forEach((elNode) => { elNode.textContent = '+ Add intake'; });
     document.getElementById('addFirstSupplement')?.replaceChildren(document.createTextNode('+ Add first supplement'));
@@ -496,7 +512,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const water = profile.waterBaselineMl || 2000;
     const targetWeight = profile.targetWeight ? `${profile.targetWeight} kg` : 'not set';
     const workProfile = profile.workProfile || 'variable';
-    summaryEl.textContent = `Water baseline: ${water} ml · Work profile: ${workProfile} · Target weight: ${targetWeight}`;
+    const t = (key, ...args) => {
+      const value = fitnessTexts.en[key];
+      return typeof value === 'function' ? value(...args) : value;
+    };
+    summaryEl.textContent = t('settingsSummary', water, workProfile, targetWeight);
   }
   
 
@@ -667,6 +687,36 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  function fitnessApplyEnglishUILabels() {
+    if (!fitnessEl.activityList) return;
+    const dayData = FS.getDayData(fitnessGetDateKey());
+    const items = FS.getActivityListViewModel(dayData.activities);
+    const empty = '<li class="opacity-70 text-sm">Нет записей</li>';
+    fitnessEl.activityList.innerHTML = items.length
+      ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
+        <span>${item.label}</span>
+        <span>
+          <button type="button" class="fitness-activity-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
+          <button type="button" class="fitness-activity-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
+        </span>
+      </li>`).join('')
+      : empty;
+    fitnessEl.activityList.querySelectorAll('.fitness-activity-edit').forEach((btn) => {
+      btn.addEventListener('click', () => fitnessOpenActivityModal(btn.dataset.id));
+    });
+    fitnessEl.activityList.querySelectorAll('.fitness-activity-delete').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const k = fitnessGetDateKey();
+        const dayData = FS.getDayData(k);
+        const next = FS.removeActivityById(dayData.activities, btn.dataset.id);
+        FS.updateDayData(k, { activities: next });
+        fitnessRenderActivityList();
+        fitnessRenderCalories();
+        fitnessRenderActivityBlock();
+      });
+    });
+  }
   
   function fitnessRenderFoodList() {
     if (!fitnessEl.foodList) return;
@@ -782,24 +832,47 @@ document.addEventListener('DOMContentLoaded', () => {
   function fitnessOpenWaterBaselineModal() {
     const profile = FS.getFitnessProfile();
     const currentBaseline = profile.waterBaselineMl || 2000;
+    const currentTargetWeight = profile.targetWeight ?? '';
+    const currentWork = profile.workProfile || 'variable';
     
-    let html = '<h3 class="font-semibold mb-4">Изменить норму воды</h3>';
+    const t = (key, ...args) => {
+      const value = fitnessTexts.en[key];
+      return typeof value === 'function' ? value(...args) : value;
+    };
+    
+    let html = '<h3 class="font-semibold mb-4">' + t('fitnessSettingsTitle') + '</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Дневная норма в мл</label>';
+    html += '<label class="block text-sm">' + t('waterBaselineLabel') + '</label>';
     html += '<input type="number" id="fmWaterBaseline" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentBaseline + '" placeholder="2000">';
-    html += '<p class="text-xs opacity-70">Примеры: 1800, 2000, 2500 мл</p>';
-    html += '</div>';
-    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmWaterBaselineCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmWaterBaselineSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
+    html += '<label class="block text-sm mt-2">' + t('targetWeightLabel') + '</label>';
+    html += '<input type="number" id="fmTargetWeight" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentTargetWeight + '" placeholder="75">';
+    html += '<label class="block text-sm mt-2">' + t('workProfileLabel') + '</label>';
+    html += '<select id="fmWorkProfile" class="w-full p-3 bg-white/30 rounded-xl text-white">';
+    html += '<option value="sedentary"' + (currentWork === 'sedentary' ? ' selected' : '') + '>' + t('workProfiles').sedentary + '</option>';
+    html += '<option value="mixed"' + (currentWork === 'mixed' ? ' selected' : '') + '>' + t('workProfiles').mixed + '</option>';
+    html += '<option value="physical"' + (currentWork === 'physical' ? ' selected' : '') + '>' + t('workProfiles').physical + '</option>';
+    html += '<option value="variable"' + (currentWork === 'variable' ? ' selected' : '') + '>' + t('workProfiles').variable + '</option>';
+    html += '</select></div>';
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmWaterBaselineCancel" class="flex-1 py-3 rounded-xl bg-white/20">Cancel</button><button type="button" id="fmWaterBaselineSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Save</button></div>';
     
     fitnessOpenModal(html, () => {
       fitnessEl.modalOverlay.querySelector('#fmWaterBaselineCancel')?.addEventListener('click', fitnessCloseModal);
       fitnessEl.modalOverlay.querySelector('#fmWaterBaselineSave')?.addEventListener('click', () => {
         const baselineInput = document.getElementById('fmWaterBaseline')?.value;
         const newBaseline = Number(baselineInput);
+        const targetWeightInput = document.getElementById('fmTargetWeight')?.value;
+        const newTargetWeight = targetWeightInput ? Number(targetWeightInput) : null;
+        const newWorkProfile = document.getElementById('fmWorkProfile')?.value;
         
         if (!Number.isNaN(newBaseline) && newBaseline > 0) {
           // Update profile
           profile.waterBaselineMl = newBaseline;
+          if (newTargetWeight !== null && !Number.isNaN(newTargetWeight)) {
+            profile.targetWeight = newTargetWeight;
+          }
+          if (newWorkProfile) {
+            profile.workProfile = newWorkProfile;
+          }
           FS.setFitnessProfile(profile);
           
           // Update today's target if water exists, or initialize it
@@ -818,6 +891,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         fitnessCloseModal();
         fitnessRenderWater();
+        fitnessUpdateSettingsSummary();
       });
     });
   }
@@ -939,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessRenderWater();
     fitnessRenderWeightChart();
     fitnessRenderSupplementsTracking();
-    fitnessApplyEnglishTexts();
+    fitnessApplyEnglishUILabels();
     fitnessRenderWorkDay();
     
     // Загрузка сохранённого фото для текущей даты
@@ -1815,13 +1889,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // For editing, only show Manual mode with pre-filled values
     const isEditMode = !!editId;
     
-    let html = '<h3 class="font-semibold mb-4">' + (isEditMode ? 'Редактировать приём пищи' : 'Добавить приём пищи') + '</h3>';
+    let html = '<h3 class="font-semibold mb-4">' + (isEditMode ? 'Edit meal' : 'Add meal') + '</h3>';
     
     // Mode toggle (only for new entries)
     if (!isEditMode) {
       html += '<div class="flex gap-2 mb-4">';
-      html += '<button type="button" id="fmModeManual" class="flex-1 py-2 px-3 rounded-lg bg-green-500/50 text-sm font-medium">Ручной ввод</button>';
-      html += '<button type="button" id="fmModeAuto" class="flex-1 py-2 px-3 rounded-lg bg-white/10 text-sm font-medium opacity-70">Авто (текст)</button>';
+      html += '<button type="button" id="fmModeManual" class="flex-1 py-2 px-3 rounded-lg bg-green-500/50 text-sm font-medium">Manual</button>';
+      html += '<button type="button" id="fmModeAuto" class="flex-1 py-2 px-3 rounded-lg bg-white/10 text-sm font-medium opacity-70">Auto (text)</button>';
       html += '</div>';
     }
     
@@ -2659,6 +2733,10 @@ document.addEventListener('DOMContentLoaded', () => {
     fitnessSetSelectedWorkProfile(p.workProfile);
   });
 
+  fitnessEl.settingsOpen?.addEventListener('click', () => {
+    fitnessOpenWaterBaselineModal();
+  });
+
   document.querySelectorAll('.fitness-activity-btn').forEach(btn => {
     btn.addEventListener('click', () => { fitnessOpenActivityModal(null, btn.dataset.activity); });
   });
@@ -3393,6 +3471,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const periodId = gymCreatePeriodId();
       const today = new Date().toISOString().slice(0, 10);
       
+      // Debug logging for period creation
+      console.log('[GYM] Creating new period:', {
+        periodId,
+        name: gymPeriodWizardDraft.name,
+        startDate: today,
+        daysCount: days.length
+      });
+      
       // Собираем дни из DOM (шаг 2 мастера)
       const days = [];
       if (gymEl.periodDaysContainer) {
@@ -3420,7 +3506,7 @@ document.addEventListener('DOMContentLoaded', () => {
         totalCycles: gymPeriodWizardDraft.totalCycles || 8,
         workoutsPerCycle: gymPeriodWizardDraft.workoutsPerCycle || 3,
         days: days,
-        startDate: today, // Устанавливаем текущую дату сразу
+        startDate: today, // Автоматически устанавливаем текущую дату при создании
         // НЕ копируем никакие данные из старых периодов:
         // - нет history
         // - нет completedWorkouts
