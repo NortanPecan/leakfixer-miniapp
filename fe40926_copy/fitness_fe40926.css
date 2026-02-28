@@ -1,0 +1,557 @@
+/**
+ * ========================================
+ * FITNESS SCREEN STYLES
+ * ========================================
+ * Стили фитнес-экрана с поддержкой тёмной темы и glassmorphism
+ * 
+ * Структура:
+ * 1. CSS Variables (токены для тем)
+ * 2. Glass Card System (базовые классы карточек)
+ * 3. Collapsible Cards (сворачиваемые карточки)
+ * 4. Mini Headers (мини-шапки)
+ * 5. Progress Bars (баланс и активность)
+ * 6. Photo Upload (загрузка фото)
+ * 7. Form Elements (input[type="date"])
+ */
+
+/* ========================================
+ * 1. CSS VARIABLES - ТОКЕНЫ ДЛЯ ТЁМНОЙ ТЕМЫ
+ * ======================================== */
+:root {
+  /* ===== Светлая тема (по умолчанию) ===== */
+  --fitness-bg-screen: linear-gradient(to bottom right, #6366f1, #a855f7);
+  
+  /* Карточки */
+  --fitness-card-bg: rgba(255, 255, 255, 0.15);
+  --fitness-card-bg-hover: rgba(255, 255, 255, 0.2);
+  --fitness-card-bg-body: rgba(255, 255, 255, 0.1);
+  --fitness-card-bg-body-alt: rgba(255, 255, 255, 0.05);
+  
+  /* Границы */
+  --fitness-card-border: rgba(255, 255, 255, 0.1);
+  --fitness-card-border-hover: rgba(255, 255, 255, 0.2);
+  
+  /* Текст */
+  --fitness-text-primary: #ffffff;
+  --fitness-text-secondary: rgba(255, 255, 255, 0.7);
+  --fitness-text-muted: rgba(255, 255, 255, 0.5);
+  
+  /* Акцентные цвета */
+  --fitness-accent-green: #22c55e;
+  --fitness-accent-red: #ef4444;
+  --fitness-accent-amber: #f59e0b;
+  --fitness-accent-cyan: #06b6d4;
+  --fitness-accent-fuchsia: #d946ef;
+  --fitness-accent-indigo: #6366f1;
+  --fitness-accent-emerald: #10b981;
+  
+  /* Glassmorphism */
+  --fitness-glass-blur: 12px;
+  --fitness-glass-opacity: 0.2;
+  
+  /* Баланс бар */
+  --fitness-balance-track: rgba(255, 255, 255, 0.18);
+  --fitness-balance-center: rgba(255, 255, 255, 0.6);
+  --fitness-balance-fill-def: #22c55e;
+  --fitness-balance-fill-sur: #ef4444;
+}
+
+/* ===== Тёмная тема (активируется через data-fitness-theme="dark" на html) ===== */
+html[data-fitness-theme="dark"] {
+  /* Спокойный тёмный фон без ярких градиентов */
+  --fitness-bg-screen: linear-gradient(to bottom, #050816 0%, #0a0f1a 50%, #020617 100%);
+  
+  /* Карточки - лёгкое стекло с хорошей читаемостью */
+  --fitness-card-bg: rgba(15, 23, 42, 0.65);
+  --fitness-card-bg-hover: rgba(30, 41, 59, 0.75);
+  --fitness-card-bg-body: rgba(30, 41, 59, 0.5);
+  --fitness-card-bg-body-alt: rgba(30, 41, 59, 0.35);
+  
+  /* Границы - заметные, но не агрессивные */
+  --fitness-card-border: rgba(148, 163, 184, 0.12);
+  --fitness-card-border-hover: rgba(148, 163, 184, 0.22);
+  
+  /* Текст */
+  --fitness-text-primary: #e2e8f0;
+  --fitness-text-secondary: #94a3b8;
+  --fitness-text-muted: #64748b;
+  
+  /* Баланс бар */
+  --fitness-balance-track: rgba(148, 163, 184, 0.2);
+  --fitness-balance-center: rgba(148, 163, 184, 0.5);
+  
+  /* Чистый blur без мутности */
+  --fitness-glass-blur: 12px;
+  
+  /* Более яркие акценты на тёмном фоне */
+  --fitness-accent-green: #4ade80;
+  --fitness-accent-red: #f87171;
+  --fitness-accent-amber: #fbbf24;
+  --fitness-accent-cyan: #22d3ee;
+}
+
+/* Дополнительные стили для тёмной темы */
+html[data-fitness-theme="dark"] {
+  /* Фон экрана */
+  background: var(--fitness-bg-screen);
+  
+  /* Кнопка Назад - адаптация под тёмную тему */
+  --fitness-back-btn-bg: rgba(30, 41, 59, 0.7);
+  --fitness-back-btn-border: rgba(148, 163, 184, 0.2);
+  --fitness-back-btn-hover: rgba(51, 65, 85, 0.8);
+  
+  /* Приглушённые градиенты для прогресс-баров в тёмной теме */
+  --fitness-gradient-gym: linear-gradient(to right, #a855f7, #f97316);
+  --fitness-gradient-cardio: linear-gradient(to right, #0891b2, #059669);
+  --fitness-gradient-cardio-outdoor: linear-gradient(to right, #059669, #0284c7);
+  --fitness-gradient-home: linear-gradient(to right, #d97706, #ea580c);
+  --fitness-gradient-steps: linear-gradient(to right, #d97706, #b45309);
+}
+
+/* Применяем приглушённые градиенты в тёмной теме */
+html[data-fitness-theme="dark"] .fitness-gradient-gym {
+  background: var(--fitness-gradient-gym);
+}
+
+html[data-fitness-theme="dark"] .fitness-gradient-cardio {
+  background: var(--fitness-gradient-cardio);
+}
+
+html[data-fitness-theme="dark"] .fitness-gradient-cardio-outdoor {
+  background: var(--fitness-gradient-cardio-outdoor);
+}
+
+html[data-fitness-theme="dark"] .fitness-gradient-home {
+  background: var(--fitness-gradient-home);
+}
+
+html[data-fitness-theme="dark"] .fitness-gradient-steps {
+  background: var(--fitness-gradient-steps);
+}
+
+/* Стили кнопки Назад в тёмной теме */
+html[data-fitness-theme="dark"] #fitnessBackInDashboardFixed {
+  background: var(--fitness-back-btn-bg, rgba(30, 41, 59, 0.7));
+  border-color: var(--fitness-back-btn-border, rgba(148, 163, 184, 0.2));
+}
+
+html[data-fitness-theme="dark"] #fitnessBackInDashboardFixed:hover {
+  background: var(--fitness-back-btn-hover, rgba(51, 65, 85, 0.8));
+}
+
+
+/* ========================================
+ * 2. GLASS CARD SYSTEM - БАЗОВЫЕ КЛАССЫ
+ * ======================================== */
+
+/* Фон экрана - применяется к fitnessScreen */
+#fitnessScreen {
+  background: var(--fitness-bg-screen);
+  width: 100%;
+  min-height: 100vh;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  z-index: 1200;
+  padding: 1rem;
+}
+
+body.fitness-screen-active {
+  overflow: hidden;
+}
+
+#fitnessSupplementsTracking .supp-intake-check {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+#fitnessSupplementsTracking {
+  position: relative;
+  z-index: 2;
+}
+
+#fitnessSupplementsTracking * {
+  pointer-events: auto;
+}
+
+/* Основной класс карточки - основа для glassmorphism */
+.fitness-card {
+  background: var(--fitness-card-bg);
+  backdrop-filter: blur(var(--fitness-glass-blur));
+  -webkit-backdrop-filter: blur(var(--fitness-glass-blur));
+  border: 1px solid var(--fitness-card-border);
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.fitness-card-hover:hover {
+  background: var(--fitness-card-bg-hover);
+  border-color: var(--fitness-card-border-hover);
+}
+
+/* Внутренние элементы карточек */
+.fitness-card-body {
+  background: var(--fitness-card-bg-body);
+  border-radius: 0.75rem;
+}
+
+.fitness-card-body-alt {
+  background: var(--fitness-card-bg-body-alt);
+  border-radius: 0.75rem;
+}
+
+/* Класс для glass-карточек (альтернативное название) */
+.glass-card {
+  background: var(--fitness-card-bg);
+  backdrop-filter: blur(var(--fitness-glass-blur));
+  -webkit-backdrop-filter: blur(var(--fitness-glass-blur));
+  border: 1px solid var(--fitness-card-border);
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card-hover:hover {
+  background: var(--fitness-card-bg-hover);
+  border-color: var(--fitness-card-border-hover);
+}
+
+.glass-card-body {
+  background: var(--fitness-card-bg-body);
+  border-radius: 0.75rem;
+}
+
+
+/* ========================================
+ * 3. COLLAPSIBLE CARDS - СВОРАЧИВАЕМЫЕ КАРТОЧКИ
+ * ======================================== */
+
+/* Шапка карточки - триггер сворачивания */
+.fitness-card-header {
+  cursor: pointer;
+  user-select: none;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.fitness-card-header:hover {
+  opacity: 0.9;
+}
+
+.fitness-card-header .flex.items-center.gap-2 {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Тело карточки - скрываемое содержимое */
+.fitness-card-body {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.2s ease-out, margin 0.3s ease-out;
+  max-height: 2000px;
+  opacity: 1;
+}
+
+.fitness-card-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Chevron - индикатор состояния */
+.fitness-card-chevron {
+  transition: transform 0.25s ease-out, opacity 0.2s ease;
+  opacity: 0.7;
+  font-size: 10px;
+  line-height: 1;
+  transform: rotate(0deg); /* Развёрнуто */
+}
+
+.fitness-card-chevron.rotated {
+  transform: rotate(180deg); /* Свёрнуто */
+}
+
+/* Pointer events для корректной работы кнопок внутри */
+.fitness-card-body * {
+  pointer-events: auto;
+}
+
+
+/* ========================================
+ * 4. MINI HEADERS - МИНИ-ШАПКИ
+ * ======================================== */
+
+/* Мини-шкала баланса в шапке */
+.fitness-mini-balance-track {
+  position: relative;
+  width: 60px;
+  height: 6px;
+  background: var(--fitness-balance-track);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.fitness-mini-balance-center {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--fitness-balance-center);
+  transform: translateX(-50%);
+}
+
+.fitness-mini-balance-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transition: left 0.3s ease, width 0.3s ease;
+}
+
+/* Мини-полоски активности */
+.fitness-mini-strip {
+  height: 4px;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  min-width: 4px;
+}
+
+/* Текст в мини-шапках - числа всегда видны */
+.fitness-card-header .text-\[10px\] {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+/* Приоритет чисел в мини-тексте */
+.fitness-mini-number {
+  font-variant-numeric: tabular-nums;
+  min-width: 2.5em;
+  display: inline-block;
+  text-align: right;
+}
+
+/* Мини-полоски - компактно */
+#activityMiniStrips {
+  gap: 3px;
+}
+
+
+/* ========================================
+ * 5. PROGRESS BARS - БАЛАНС И АКТИВНОСТЬ
+ * ======================================== */
+
+/* Трек баланса калорий */
+.calorie-balance-bar-track {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: var(--fitness-balance-track);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.calorie-balance-bar-center-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--fitness-balance-center);
+  transform: translateX(-50%);
+}
+
+.calorie-balance-bar-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 35%;
+  background: linear-gradient(90deg, var(--fitness-balance-fill-def), var(--fitness-balance-fill-sur));
+  transform-origin: left center;
+}
+
+/* Прогресс-бары активности */
+.fitness-progress-track {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: var(--fitness-card-bg-body-alt);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.fitness-progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  transition: width 0.5s ease;
+}
+
+/* Градиенты для типов активности */
+.fitness-gradient-gym {
+  background: linear-gradient(to right, #d946ef, #f97316);
+}
+
+.fitness-gradient-cardio {
+  background: linear-gradient(to right, #06b6d4, #10b981);
+}
+
+.fitness-gradient-cardio-outdoor {
+  background: linear-gradient(to right, #10b981, #0ea5e9);
+}
+
+.fitness-gradient-home {
+  background: linear-gradient(to right, #fbbf24, #f97316);
+}
+
+.fitness-gradient-steps {
+  background: linear-gradient(to right, #fbbf24, #d97706);
+}
+
+/* Прогресс-бары внутри кнопок активности (inline styles в HTML) */
+/* Эти стили нужны для полоски посередине прогресс-бара */
+.activity-progress-stripe {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    transparent 50%, 
+    rgba(255,255,255,0.15) 50%, 
+    rgba(255,255,255,0.15) 50.5%, 
+    transparent 50.5%
+  );
+}
+
+
+/* ========================================
+ * 6. PHOTO UPLOAD - ЗАГРУЗКА ФОТО
+ * ======================================== */
+
+/* Скрытый input для загрузки */
+#fitnessPhotoUpload {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+/* Превью фото */
+#fitnessAvatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Заглушка - когда нет фото */
+#fitnessAvatarPlaceholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--fitness-card-bg-body);
+}
+
+#fitnessAvatarPlaceholder.hidden {
+  display: none;
+}
+
+#fitnessPhotoBtn {
+  pointer-events: auto;
+  z-index: 3;
+}
+
+#fitnessPhotoDebug {
+  white-space: pre-wrap;
+  max-height: 7rem;
+  overflow: auto;
+}
+
+/* Проверка состояния input */
+#fitnessPhotoUpload:checked + div {
+  display: flex;
+}
+
+
+/* ========================================
+ * 7. FORM ELEMENTS - ЭЛЕМЕНТЫ ФОРМ
+ * ======================================== */
+
+/* Input[type="date"] - календарь */
+input[type="date"] {
+  background-color: rgba(15, 23, 42, 0.7);
+  color: #e5e7eb;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+/* Иконка календаря - светлая */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* Фокус на инпутах */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--fitness-accent-cyan);
+  outline-offset: 2px;
+}
+
+
+/* ========================================
+ * 8. UTILITY CLASSES - ВСПОМОГАТЕЛЬНЫЕ
+ * ======================================== */
+
+/* Обрезка текста с многоточием */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Минимальная ширина для предотвращения сжатия */
+.shrink-0 {
+  flex-shrink: 0;
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+/* Числа - табличный формат (не прыгают) */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* ========================================
+ * 9. RESPONSIVE - АДАПТИВНОСТЬ
+ * ======================================== */
+
+/* Мобильная ширина */
+@media (max-width: 480px) {
+  .fitness-mini-balance-track {
+    width: 50px;
+    height: 5px;
+  }
+  
+  .fitness-card-header {
+    gap: 4px;
+  }
+  
+  #activityMiniStrips {
+    gap: 2px;
+  }
+  
+  .fitness-mini-strip {
+    height: 3px;
+  }
+}
