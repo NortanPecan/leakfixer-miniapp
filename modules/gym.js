@@ -1,180 +1,19 @@
-﻿
-  document.getElementById('stepsIntensity')?.addEventListener('change', fitnessUpdateStepsCaloriesPreview);
+/**
+ * GYM Module  
+ * Handles workout periods, cycles, days, exercises
+ * Depends on: fitness.js, fitness-sync.js
+ */
+(function() {
+'use strict';
 
-  fitnessEl.foodAdd?.addEventListener('click', () => fitnessOpenFoodModal(null));
-
-  // РљР»РёРє РЅР° РєР°СЂС‚РѕС‡РєСѓ СЌРЅРµСЂРіРёРё вЂ” РѕС‚РєСЂС‹С‚СЊ РґРµС‚Р°Р»РёР·Р°С†РёСЋ
-  document.getElementById('fitnessCaloriesCard')?.addEventListener('click', function(e) {
-    // РќРµ РѕС‚РєСЂС‹РІР°С‚СЊ РµСЃР»Рё РєР»РёРє РїРѕ РєРЅРѕРїРєР°Рј РІРЅСѓС‚СЂРё РєР°СЂС‚РѕС‡РєРё
-    if (e.target.closest('button')) return;
-    fitnessOpenEnergyDetails();
-  });
-
-  // Р—Р°РєСЂС‹С‚РёРµ РјРѕРґР°Р»СЊРЅРѕРіРѕ РѕРєРЅР° СЌРЅРµСЂРіРёРё
-  document.getElementById('energyDetailsCloseBtn')?.addEventListener('click', function() {
-    document.getElementById('energyDetailsModalOverlay')?.classList.add('hidden');
-  });
-  document.getElementById('energyDetailsModalOverlay')?.addEventListener('click', function(e) {
-    if (e.target.id === 'energyDetailsModalOverlay') {
-      document.getElementById('energyDetailsModalOverlay')?.classList.add('hidden');
-    }
-  });
-
-  // UPDATED: Water button handlers - use new fitnessAdjustWater
-  document.querySelectorAll('.fitness-water-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const deltaMl = Number(btn.dataset.water) || 0;
-      fitnessAdjustWater(deltaMl);
-    });
-  });
-
-  // NEW: Water manual adjust link handler
-  document.querySelectorAll('.fitness-water-adjust').forEach((link) => {
-    link.addEventListener('click', () => {
-      fitnessOpenWaterAdjustModal();
-    });
-  });
-
-  // NEW: Water baseline change link handler
-  document.querySelectorAll('.fitness-water-baseline').forEach((link) => {
-    link.addEventListener('click', () => {
-      fitnessOpenWaterBaselineModal();
-    });
-  });
-
-  document.querySelectorAll('.fitness-workday-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const value = btn.dataset.workday; // 'low' | 'normal' | 'high'
-      const k = fitnessGetDateKey();
-      const dayData = FS.getDayData(k);
-      FS.updateDayData(k, { workDay: value });
-      fitnessRenderWorkDay();
-      fitnessRenderCalories(); // С‡С‚РѕР±С‹ РїРµСЂРµСЃС‡РёС‚Р°С‚СЊ РєРєР°Р» СЃ СѓС‡С‘С‚РѕРј workDay
-    });
-  });
-
-  fitnessEl.modalOverlay?.addEventListener('click', (e) => {
-    if (e.target === fitnessEl.modalOverlay) fitnessCloseModal();
-  });
-
-    // --- Р“Р»РѕР±Р°Р»СЊРЅР°СЏ С€РєР°Р»Р° РЅР°СЃС‚СЂРѕРµРЅРёСЏ (РіР»Р°РІРЅС‹Р№ СЌРєСЂР°РЅ) ---
-
-    function renderGlobalMood(moodValue = 7.3, yesterdayValue = 6.5) {
-    const container = document.getElementById('moodScaleContainer');
-    const scoreEl = document.getElementById('moodScore');
-    const yesterdayEl = document.getElementById('moodYesterday');
-    const trendEl = document.getElementById('moodTrend');
-    const statusEl = document.getElementById('moodStatus');
-
-    if (!container || !scoreEl || !yesterdayEl || !trendEl || !statusEl) return;
-
-    const segments = container.querySelectorAll('.mood-segment');
-
-    const value = Math.max(0, Math.min(10, Number(moodValue) || 0));
-    const yesterday = Math.max(0, Math.min(10, Number(yesterdayValue) || 0));
-
-    const fullSegments = Math.floor(value);
-
-    segments.forEach((segment, index) => {
-      const level = 10 - index; // 10 = РІРµСЂС…РЅРёР№
-      segment.innerHTML = '';   // РѕС‡РёС‰Р°РµРј РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№
-
-      // Р±Р°Р·РѕРІС‹Р№ С„РѕРЅ (РЅРµР°РєС‚РёРІРЅС‹Р№)
-      segment.style.backgroundColor = 'rgba(15,23,42,0.6)';
-
-      if (level <= fullSegments) {
-        // Р°РєС‚РёРІРЅС‹Р№ СЃРµРіРјРµРЅС‚
-        const hue = 120 - level * 8; // Р·РµР»С‘РЅС‹Р№ в†’ РєСЂР°СЃРЅС‹Р№
-        const color = `hsl(${hue}, 70%, 50%)`;
-        segment.style.backgroundColor = color;
-      }
-    });
-
-    // С‡РёСЃР»Р°
-    scoreEl.textContent = value.toFixed(1);
-    yesterdayEl.textContent = yesterday.toFixed(1);
-
-    const diff = value - yesterday;
-    if (Math.abs(diff) < 0.1) {
-      trendEl.textContent = 'в†’ 0.0';
-      trendEl.className = 'text-[10px] opacity-70';
-    } else if (diff > 0) {
-      trendEl.textContent = `в†— +${diff.toFixed(1)}`;
-      trendEl.className = 'text-[10px] text-emerald-300';
-    } else {
-      trendEl.textContent = `в† ${diff.toFixed(1)}`;
-      trendEl.className = 'text-[10px] text-red-300';
-    }
-
-    // СЃС‚Р°С‚СѓСЃ
-    let statusText = '';
-    let statusClass = 'text-xs font-medium ';
-    if (value >= 8.5) {
-      statusText = 'РџРёРє, РёСЃРїРѕР»СЊР·СѓР№ РјРѕРјРµРЅС‚';
-      statusClass += 'text-orange-300';
-    } else if (value >= 7) {
-      statusText = 'РҐРѕСЂРѕС€РёР№ С‚РѕРЅ, РµСЃС‚СЊ СЂРµСЃСѓСЂСЃ';
-      statusClass += 'text-emerald-300';
-    } else if (value >= 5) {
-      statusText = 'РќРѕСЂРјР°, РґРµСЂР¶Рё Р±Р°Р·Сѓ';
-      statusClass += 'text-amber-200';
-    } else if (value >= 3) {
-      statusText = 'РЈСЃС‚Р°Р»РѕСЃС‚СЊ, РЅСѓР¶РµРЅ РѕС‚РґС‹С…';
-      statusClass += 'text-red-300';
-    } else {
-      statusText = 'РљСЂРёР·РёСЃ, РЅСѓР¶РЅР° РїРѕРґРґРµСЂР¶РєР°';
-      statusClass += 'text-red-400';
-    }
-    statusEl.textContent = statusText;
-    statusEl.className = statusClass;
-  }
-
-
-  function initGlobalMoodWidget() {
-    const btn = document.getElementById('logMoodBtn');
-    if (btn) {
-      btn.addEventListener('click', async () => {
-        const raw = prompt('РўРµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ (0вЂ“10):', '7');
-        if (raw == null) return;
-        const num = parseFloat(raw);
-        if (Number.isNaN(num)) return;
-  
-        // РѕР±РЅРѕРІР»СЏРµРј UI
-        renderGlobalMood(num, 6.5);
-  
-        // СЃРѕС…СЂР°РЅСЏРµРј РІ Supabase РєР°Рє daily_state + measurements
-        if (window.FitnessSync && window.currentAppUserId) {
-          const todayKey = FS.formatDateKey(new Date()); // YYYY-MM-DD
-          try {
-            await window.FitnessSync.saveMood(todayKey, num);
-          } catch (e) {
-            console.error('saveMood failed', e);
-          }
-        }
-      });
-    }
-  
-    renderGlobalMood(7.3, 6.5);
-  }
-  
-  
-
-
-  // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїСЂРѕС„РёР»СЏ
-  initProfileHeader();
-  // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РіР»РѕР±Р°Р»СЊРЅРѕР№ С€РєР°Р»С‹ РЅР°СЃС‚СЂРѕРµРЅРёСЏ
-  initGlobalMoodWidget();
-
-  // Р—Р°РїСѓСЃРє РїСЂРёР»РѕР¶РµРЅРёСЏ
-  if (supabaseEnabled) initFromSupabase();
-  else initBrowserMode();
+// === GYM CODE ===
 
   let gymCurrentDayIndex = 1;
 
 
-  // --- GYM: РўСЂРµРЅРёСЂРѕРІРєР° РІ Р·Р°Р»Рµ ---------------------------------------------
+  // --- GYM: Тренировка в зале ---------------------------------------------
   const gymEl = {
-    // СЌРєСЂР°РЅ СЃРїРёСЃРєР° РїРµСЂРёРѕРґРѕРІ
+    // экран списка периодов
     periodsScreen: document.getElementById('gymPeriodsScreen'),
     periodsBackBtn: document.getElementById('gymPeriodsBackBtn'),
     noPeriodsState: document.getElementById('gymNoPeriodsState'),
@@ -183,7 +22,7 @@
     createPeriodBtn: document.getElementById('gymCreatePeriodBtn'),
     createPeriodTopBtn: document.getElementById('gymCreatePeriodTopBtn'),
 
-    // СЌРєСЂР°РЅ РјР°СЃС‚РµСЂР° РїРµСЂРёРѕРґР°
+    // экран мастера периода
     periodWizardScreen: document.getElementById('gymPeriodWizardScreen'),
     periodWizardBackBtn: document.getElementById('gymPeriodWizardBackBtn'),
     periodStep1: document.getElementById('gymPeriodStep1'),
@@ -194,7 +33,7 @@
     periodStep2BackBtn: document.getElementById('gymPeriodStep2BackBtn'),
     periodStep2CreateBtn: document.getElementById('gymPeriodStep2CreateBtn'),
 
-    // СЌРєСЂР°РЅ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РїРµСЂРёРѕРґР°
+    // экран конкретного периода
     screen: document.getElementById('gymScreen'),
     backBtn: document.getElementById('gymBackBtn'),
     fromFitnessBtn: document.getElementById('gymBtn'),
@@ -210,10 +49,10 @@
     cycleSelect: document.getElementById('gymCycleSelect'),
   };
 
-  // РґРѕ GYM-Р±Р»РѕРєР°, РїРѕСЃР»Рµ fitnessEl/gymEl
+  // до GYM-блока, после fitnessEl/gymEl
   const fitnessBtn = document.getElementById('fitnessBtn');
 
-  // РїРµСЂРµРѕРїСЂРµРґРµР»СЏРµРј showFitness СЃ СѓС‡С‘С‚РѕРј fitnessEl Рё gymEl
+  // переопределяем showFitness с учётом fitnessEl и gymEl
   const _showFitnessBase = showFitness;
   function showFitnessFull() {
     _showFitnessBase();
@@ -224,10 +63,10 @@
     if (gymEl?.screen) gymEl.screen.classList.add('hidden');
   }
 
-  // РљРЅРѕРїРєРё РЅР° РіР»Р°РІРЅРѕРј СЌРєСЂР°РЅРµ
+  // Кнопки на главном экране
   if (el.habitsBtn) {
     el.habitsBtn.addEventListener('click', () => {
-      showAlert('Р­РєСЂР°РЅ РїСЂРёРІС‹С‡РµРє Р±СѓРґРµС‚ РїРѕР·Р¶Рµ');
+      showAlert('Экран привычек будет позже');
     });
   }
 
@@ -270,31 +109,31 @@
  *
  * 1) Period card
  *    - name, type, manual startDate edits:
- *      в†’ saved immediately to gymState + localStorage on change (low-frequency settings).
+ *      → saved immediately to gymState + localStorage on change (low-frequency settings).
  *
  * 2) Cycle card (whole cycle with all days)
  *    - structural / planning changes for the cycle (days, which are active, how active days propagate to future cycles, etc.)
  *      live in memory/runtime while editing.
  *    - "Save cycle" button:
- *      в†’ commits the current cycle structure and plan to gymState + localStorage,
- *      в†’ used for copying active days to future cycles, updating period progress, etc.
+ *      → commits the current cycle structure and plan to gymState + localStorage,
+ *      → used for copying active days to future cycles, updating period progress, etc.
  *
  * 3) Day card
  *    - editing a day (adding/removing exercises, toggling "day active", etc.)
  *      updates runtime for that day while editing.
  *    - "Save day" button:
- *      в†’ commits that day's structure/settings to gymState + localStorage.
+ *      → commits that day's structure/settings to gymState + localStorage.
  *    - "Day completed" checkbox + completion date:
- *      в†’ saved immediately (no extra button) to gymState.completedWorkouts + backend DB,
+ *      → saved immediately (no extra button) to gymState.completedWorkouts + backend DB,
  *        using "today" if no date is chosen.
  *
  * 4) Exercise card
  *    - Header (right side of exercise name):
  *      - editable working sets: setsCount, repsCount, workWeight.
  *      - when these change:
- *          в†’ update exercise fields in gymState,
- *          в†’ immediately persist to localStorage via gymSaveState,
- *          в†’ immediately send to backend DB (e.g. FitnessSync.saveGymExerciseSets),
+ *          → update exercise fields in gymState,
+ *          → immediately persist to localStorage via gymSaveState,
+ *          → immediately send to backend DB (e.g. FitnessSync.saveGymExerciseSets),
  *            if FitnessSync / currentAppUserId are available.
  *    - Inside expanded exercise body:
  *      - working sets are read-only (display the same setsCount/repsCount/workWeight),
@@ -310,22 +149,22 @@
 
 
   const GYM_STORAGE_KEY = 'leakfixer_gym_data';
-  const GYM_DEFAULT_GROUPS = ['Р“СЂСѓРґСЊ + РўСЂРёС†РµРїСЃ', 'РЎРїРёРЅР° + Р‘РёС†РµРїСЃ', 'РќРѕРіРё + РРєСЂС‹'];
+  const GYM_DEFAULT_GROUPS = ['Грудь + Трицепс', 'Спина + Бицепс', 'Ноги + Икры'];
 
-  // Р¤СѓРЅРєС†РёСЏ С„РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёСЏ РґР°С‚С‹ Р±РµР· РіРѕРґР° РґР»СЏ UI (РґРґ MMM)
+  // Функция форматирования даты без года для UI (дд MMM)
   function gymFormatDateNoYear(dateStr) {
-    if (!dateStr) return 'вЂ”';
+    if (!dateStr) return '—';
     try {
       const d = new Date(dateStr + 'T00:00:00');
-      const months = ['СЏРЅРІ', 'С„РµРІ', 'РјР°СЂ', 'Р°РїСЂ', 'РјР°Р№', 'РёСЋРЅ', 'РёСЋР»', 'Р°РІРі', 'СЃРµРЅ', 'РѕРєС‚', 'РЅРѕСЏ', 'РґРµРє'];
+      const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
       return `${d.getDate()} ${months[d.getMonth()]}`;
     } catch (e) {
       return dateStr;
     }
   }
 
-  // Р¦РµРЅС‚СЂР°Р»РёР·РѕРІР°РЅРЅР°СЏ С„СѓРЅРєС†РёСЏ СЃРѕС…СЂР°РЅРµРЅРёСЏ GYM-СЃРѕСЃС‚РѕСЏРЅРёСЏ
-  // Р’СЃРµ Р·Р°РїРёСЃРё РІ storage РґРѕР»Р¶РЅС‹ РїСЂРѕС…РѕРґРёС‚СЊ С‡РµСЂРµР· СЌС‚Сѓ С„СѓРЅРєС†РёСЋ
+  // Централизованная функция сохранения GYM-состояния
+  // Все записи в storage должны проходить через эту функцию
   function gymPersistState() {
     // Debug logging for key operations
     if (typeof console !== 'undefined' && console.log) {
@@ -346,8 +185,8 @@
     }
   }
 
-  // Р¦РµРЅС‚СЂР°Р»РёР·РѕРІР°РЅРЅР°СЏ С„СѓРЅРєС†РёСЏ СЂРµРЅРґРµСЂР° РІСЃРµРіРѕ GYM UI
-  // Р’С‹Р·С‹РІР°РµС‚ РІСЃРµ РЅРµРѕР±С…РѕРґРёРјС‹Рµ СЂРµРЅРґРµСЂ-С„СѓРЅРєС†РёРё
+  // Централизованная функция рендера всего GYM UI
+  // Вызывает все необходимые рендер-функции
   function gymRenderAll() {
     const period = gymGetActivePeriod();
     
@@ -392,7 +231,7 @@
   }
 
   let gymState = gymLoadState();
-   // РІСЂРµРјРµРЅРЅС‹Р№ Р±СѓС„РµСЂ РґР»СЏ РјР°СЃС‚РµСЂР° РїРµСЂРёРѕРґР°
+   // временный буфер для мастера периода
   let gymPeriodWizardDraft = null;
 
   window.gymDebug = {
@@ -413,7 +252,7 @@
         cycles: {},
       };
   
-      // СЃС‚Р°СЂС‹Р№ С„РѕСЂРјР°С‚: cycles РєР°Рє РјР°СЃСЃРёРІ
+      // старый формат: cycles как массив
       if (Array.isArray(data.cycles)) {
         data.cycles.forEach((c, idx) => {
           if (!c || typeof c !== 'object') return;
@@ -425,7 +264,7 @@
         });
       }
   
-      // РЅРѕРІС‹Р№ С„РѕСЂРјР°С‚: cycles РєР°Рє РѕР±СЉРµРєС‚
+      // новый формат: cycles как объект
       if (data.cycles && !Array.isArray(data.cycles)) {
         Object.entries(data.cycles).forEach(([k, c]) => {
           if (!c || typeof c !== 'object') return;
@@ -436,7 +275,7 @@
         });
       }
   
-      // РіР°СЂР°РЅС‚РёСЂСѓРµРј С…РѕС‚СЏ Р±С‹ С†РёРєР» 1
+      // гарантируем хотя бы цикл 1
       if (!Object.keys(cur.cycles).length) {
         cur.cycles[cur.currentCycle] = { days: {}, groups: {} };
       }
@@ -447,7 +286,7 @@
     return migrated;
   }
   
-  // РїСЂРёРјРµРЅСЏРµРј РјРёРіСЂР°С†РёСЋ
+  // применяем миграцию
   if (!gymState.runtime) gymState.runtime = {};
   gymState.runtime = gymMigrateRuntime(gymState.runtime);
   
@@ -606,7 +445,7 @@
     gymEl.newCycleBtn.addEventListener('click', gymCreateNextCycle);
   }
   
-  // РћР±СЂР°Р±РѕС‚С‡РёРє СЃРѕР·РґР°РЅРёСЏ РЅРѕРІРѕРіРѕ РїРµСЂРёРѕРґР° (РєРЅРѕРїРєР° "РЎРѕР·РґР°С‚СЊ РїРµСЂРёРѕРґ" РІ РјР°СЃС‚РµСЂРµ)
+  // Обработчик создания нового периода (кнопка "Создать период" в мастере)
   if (gymEl.periodStep2CreateBtn) {
     gymEl.periodStep2CreateBtn.addEventListener('click', () => {
       if (!gymPeriodWizardDraft) return;
@@ -622,7 +461,7 @@
         daysCount: days.length
       });
       
-      // РЎРѕР±РёСЂР°РµРј РґРЅРё РёР· DOM (С€Р°Рі 2 РјР°СЃС‚РµСЂР°)
+      // Собираем дни из DOM (шаг 2 мастера)
       const days = [];
       if (gymEl.periodDaysContainer) {
         const dayDivs = gymEl.periodDaysContainer.querySelectorAll('[data-day-index]');
@@ -639,21 +478,21 @@
         });
       }
       
-      // РЎРѕР·РґР°С‘Рј РќРћР’Р«Р™ РїРµСЂРёРѕРґ Р±РµР· РЅР°СЃР»РµРґРѕРІР°РЅРёСЏ РёСЃС‚РѕСЂРёРё РѕС‚ СЃС‚Р°СЂС‹С… РїРµСЂРёРѕРґРѕРІ
+      // Создаём НОВЫЙ период без наследования истории от старых периодов
       const newPeriod = {
         id: periodId,
-        name: gymPeriodWizardDraft.name || 'РџРµСЂРёРѕРґ',
+        name: gymPeriodWizardDraft.name || 'Период',
         type: gymPeriodWizardDraft.type || 'strength',
         splitType: gymPeriodWizardDraft.splitType || 'split',
         cycleLengthDays: gymPeriodWizardDraft.cycleLengthDays || 7,
         totalCycles: gymPeriodWizardDraft.totalCycles || 8,
         workoutsPerCycle: gymPeriodWizardDraft.workoutsPerCycle || 3,
         days: days,
-        startDate: today, // РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј С‚РµРєСѓС‰СѓСЋ РґР°С‚Сѓ РїСЂРё СЃРѕР·РґР°РЅРёРё
-        // РќР• РєРѕРїРёСЂСѓРµРј РЅРёРєР°РєРёРµ РґР°РЅРЅС‹Рµ РёР· СЃС‚Р°СЂС‹С… РїРµСЂРёРѕРґРѕРІ:
-        // - РЅРµС‚ history
-        // - РЅРµС‚ completedWorkouts
-        // - РЅРµС‚ previousPeriodData
+        startDate: today, // Автоматически устанавливаем текущую дату при создании
+        // НЕ копируем никакие данные из старых периодов:
+        // - нет history
+        // - нет completedWorkouts
+        // - нет previousPeriodData
       };
 
       // Debug logging
@@ -666,14 +505,14 @@
         });
       }
       
-      // Р”РѕР±Р°РІР»СЏРµРј РІ state
+      // Добавляем в state
       if (!gymState.periods) gymState.periods = {};
       gymState.periods[periodId] = newPeriod;
       
       if (!gymState.periodOrder) gymState.periodOrder = [];
       gymState.periodOrder.push(periodId);
       
-      // РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј runtime РґР»СЏ РЅРѕРІРѕРіРѕ РїРµСЂРёРѕРґР° - С‡РёСЃС‚С‹Р№, Р±РµР· РґР°РЅРЅС‹С…
+      // Инициализируем runtime для нового периода - чистый, без данных
       if (!gymState.runtime) gymState.runtime = {};
       const initialDays = {};
       days.forEach(d => {
@@ -689,16 +528,16 @@
         },
       };
       
-      // РЎРѕС…СЂР°РЅСЏРµРј Рё СЂРµРЅРґРµСЂРёРј
+      // Сохраняем и рендерим
       gymPersistState();
       
-      // Р—Р°РєСЂС‹РІР°РµРј РјР°СЃС‚РµСЂ Рё РѕС‚РєСЂС‹РІР°РµРј РїРµСЂРёРѕРґ
+      // Закрываем мастер и открываем период
       if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
       
-      // РћС‚РєСЂС‹РІР°РµРј СЃРїРёСЃРѕРє РїРµСЂРёРѕРґРѕРІ - РЅРѕРІС‹Р№ РїРµСЂРёРѕРґ Р±СѓРґРµС‚ РІРёРґРµРЅ
+      // Открываем список периодов - новый период будет виден
       gymOpenPeriodsScreen();
       
-      // РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РѕС‚РєСЂС‹РІР°РµРј СЃРѕР·РґР°РЅРЅС‹Р№ РїРµСЂРёРѕРґ
+      // Автоматически открываем созданный период
       gymSetActivePeriod(periodId);
       gymOpen();
     });
@@ -708,7 +547,7 @@
     const period = gymGetActivePeriod();
     if (!period || !gymEl.groupsContainer) return;
 
-    // Р±Р°Р·РѕРІР°СЏ РєР°СЂС‚Р° С‚РѕР»СЊРєРѕ СЃ dayIndex + muscles
+    // базовая карта только с dayIndex + muscles
     const daysMap = new Map();
     const baseDays = Array.isArray(period.days) ? period.days : [];
     baseDays.forEach((d) => {
@@ -718,7 +557,7 @@
       });
     });
   
-    // РїРѕРІРµСЂС… РЅР°РєР°С‚С‹РІР°РµРј С‚Рѕ, С‡С‚Рѕ СЃРµР№С‡Р°СЃ РІ DOM
+    // поверх накатываем то, что сейчас в DOM
     const wrappers = gymEl.groupsContainer.querySelectorAll('[data-day-index]');
     wrappers.forEach((wrapper) => {
       const dayIndex = Number(wrapper.dataset.dayIndex || '1');
@@ -817,11 +656,11 @@
   function gymOpenPeriodWizardStep1() {
     if (!gymEl.periodWizardScreen) return;
   
-    // РјС‹ СѓР¶Рµ РІРЅСѓС‚СЂРё С„РёС‚РЅРµСЃР°, РїСЂСЏС‡РµРј СЃРїРёСЃРѕРє РїРµСЂРёРѕРґРѕРІ Рё СЌРєСЂР°РЅ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РїРµСЂРёРѕРґР°
+    // мы уже внутри фитнеса, прячем список периодов и экран конкретного периода
     if (gymEl.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
     if (gymEl.screen) gymEl.screen.classList.add('hidden');
   
-    // С„РёС‚РЅРµСЃ-СЌРєСЂР°РЅ РѕСЃС‚Р°С‘С‚СЃСЏ РІРёРґРёРјС‹Рј, РїСЂРѕСЃС‚Рѕ РїРѕРєР°Р·С‹РІР°РµРј РІ РЅС‘Рј РјР°СЃС‚РµСЂ
+    // фитнес-экран остаётся видимым, просто показываем в нём мастер
     if (fitnessEl?.screen) fitnessEl.screen.classList.remove('hidden');
   
     gymEl.periodWizardScreen.classList.remove('hidden');
@@ -830,11 +669,11 @@
   
     gymPeriodWizardDraft = {
       type: 'strength',
-      name: 'РќР° СЃРёР»Сѓ',
+      name: 'На силу',
       splitType: 'split',
       cycleLengthDays: 7,
       totalCycles: 8,
-      workoutsPerCycle: 3,   // РќРћР’РћР•
+      workoutsPerCycle: 3,   // НОВОЕ
       days: [],
     };    
   
@@ -853,11 +692,11 @@
   
   function gymClosePeriodWizard() {
     if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
-    // РІРѕР·РІСЂР°С‰Р°РµРјСЃСЏ Рє СЃРїРёСЃРєСѓ РїРµСЂРёРѕРґРѕРІ
+    // возвращаемся к списку периодов
     gymOpenPeriodsScreen();
   }  
 
-  // РљРЅРѕРїРєР° "Р”РѕР±Р°РІРёС‚СЊ РґРµРЅСЊ РІ С†РёРєР»" РЅР° С€Р°РіРµ 2 РјР°СЃС‚РµСЂР° РїРµСЂРёРѕРґР°
+  // Кнопка "Добавить день в цикл" на шаге 2 мастера периода
   const addDayBtn = document.getElementById('gymPeriodAddDayBtn');
 
   if (addDayBtn && gymEl.periodDaysContainer) {
@@ -872,11 +711,11 @@
 
       dayDiv.innerHTML = `
         <div class="flex items-center justify-between mb-1">
-          <span class="text-sm font-medium text-white">Р”РµРЅСЊ ${nextIndex}</span>
+          <span class="text-sm font-medium text-white">День ${nextIndex}</span>
           <button type="button"
             data-role="deleteDay"
             class="text-11px text-red-300 underline">
-            СѓРґР°Р»РёС‚СЊ
+            удалить
           </button>
         </div>
 
@@ -887,10 +726,10 @@
             class="accent-emerald-400"
             checked
           >
-          <span>Р”РµРЅСЊ Р°РєС‚РёРІРµРЅ</span>
+          <span>День активен</span>
         </label>
 
-        <div class="text-11px text-slate-300 mb-1">Р“СЂСѓРїРїС‹ РјС‹С€С†</div>
+        <div class="text-11px text-slate-300 mb-1">Группы мышц</div>
         <div data-role="muscleList" class="space-y-1"></div>
 
         <button
@@ -898,7 +737,7 @@
           data-role="addMuscleGroup"
           class="mt-1 text-11px text-emerald-300 underline"
         >
-          Р”РѕР±Р°РІРёС‚СЊ РіСЂСѓРїРїСѓ РјС‹С€С†
+          Добавить группу мышц
         </button>
       `;
 
@@ -910,7 +749,7 @@
           <input
             type="text"
             class="flex-1 bg-white/15 rounded-lg px-2 py-1 text-xs text-white"
-            placeholder="Р“СЂСѓРґСЊ, СЃРїРёРЅР°вЂ¦"
+            placeholder="Грудь, спина…"
             data-field="muscleGroupName"
           >
         `;
@@ -934,7 +773,7 @@
             <input
               type="text"
               class="flex-1 bg-white/15 rounded-lg px-2 py-1 text-xs text-white"
-              placeholder="Р“СЂСѓРїРїР° РјС‹С€С†"
+              placeholder="Группа мышц"
               data-field="muscleGroupName"
             >
           `;
@@ -962,9 +801,9 @@
     const totalCycles = Math.max(1, Number(totalCyclesInput?.value || 8));
     const workoutsPerCycle = Math.max(1, Number(wpcInput?.value || 3) || 3);
   
-    let name = 'РџРµСЂРёРѕРґ';
-    if (type === 'strength') name = 'РќР° СЃРёР»Сѓ';
-    else if (type === 'endurance') name = 'РќР° РІС‹РЅРѕСЃР»РёРІРѕСЃС‚СЊ';
+    let name = 'Период';
+    if (type === 'strength') name = 'На силу';
+    else if (type === 'endurance') name = 'На выносливость';
     if (type === 'custom') {
       const v = (customNameInput?.value || '').trim();
       if (v) name = v;
@@ -979,11 +818,11 @@
   
     if (!gymEl.periodDaysContainer) return;
   
-    // РїРµСЂРµРєР»СЋС‡Р°РµРј С€Р°РіРё РјР°СЃС‚РµСЂР°
+    // переключаем шаги мастера
     if (gymEl.periodStep1) gymEl.periodStep1.classList.add('hidden');
     if (gymEl.periodStep2) gymEl.periodStep2.classList.remove('hidden');
   
-    // РіРµРЅРµСЂРёРј N С‚СЂРµРЅРёСЂРѕРІРѕС‡РЅС‹С… РґРЅРµР№ РїРѕ workoutsPerCycle
+    // генерим N тренировочных дней по workoutsPerCycle
     gymEl.periodDaysContainer.innerHTML = '';
     const wpc = gymPeriodWizardDraft.workoutsPerCycle || 3;
   
@@ -993,26 +832,26 @@
       dayDiv.dataset.dayIndex = String(i);
       dayDiv.innerHTML = `
         <div class="flex items-center justify-between">
-          <div class="font-semibold text-white text-sm">Р”РµРЅСЊ ${i}</div>
+          <div class="font-semibold text-white text-sm">День ${i}</div>
           <button type="button" data-role="removeDay" class="text-[11px] text-red-300 underline">
-            СѓРґР°Р»РёС‚СЊ
+            удалить
           </button>
         </div>
         <label class="flex items-center gap-2 text-xs text-slate-200">
           <input type="checkbox" data-field="dayEnabled" class="accent-emerald-400" checked>
-          <span>Р”РµРЅСЊ Р°РєС‚РёРІРµРЅ (РѕСЃРЅРѕРІРЅР°СЏ С‚СЂРµРЅРёСЂРѕРІРєР°)</span>
+          <span>День активен (основная тренировка)</span>
         </label>
         <input
           type="text"
           data-field="muscles"
           class="w-full bg-white/10 rounded-lg px-2 py-1 text-xs text-white"
-          placeholder="Р“СЂСѓРґСЊ, СЃРїРёРЅР°..."
+          placeholder="Грудь, спина..."
         />
       `;
       gymEl.periodDaysContainer.appendChild(dayDiv);
     }
   
-    // РѕР±СЂР°Р±РѕС‚С‡РёРє СѓРґР°Р»РµРЅРёСЏ РґРЅСЏ
+    // обработчик удаления дня
     gymEl.periodDaysContainer
       .querySelectorAll('button[data-role="removeDay"]')
       .forEach((btn) => {
@@ -1023,7 +862,7 @@
       });
   }  
 
-  // СЌРєСЂР°РЅ СЃРїРёСЃРєР° РїРµСЂРёРѕРґРѕРІ
+  // экран списка периодов
   function gymRenderPeriodsList() {
     if (!gymEl.periodsList || !gymState.periods) return;
   
@@ -1034,7 +873,7 @@
     gymEl.periodsList.innerHTML = '';
   
     if (!order.length) {
-      // РЅРµС‚ РїРµСЂРёРѕРґРѕРІ вЂ” РїРѕРєР°Р·С‹РІР°РµРј Р·Р°РіР»СѓС€РєСѓ
+      // нет периодов — показываем заглушку
       if (gymEl.noPeriodsState) gymEl.noPeriodsState.classList.remove('hidden');
       if (gymEl.periodsListWrapper) gymEl.periodsListWrapper.classList.add('hidden');
       return;
@@ -1055,7 +894,7 @@
           <div>
             <div class="text-sm font-semibold text-white">${p.name}</div>
             <div class="text-xs text-slate-300">
-              ${p.cycleLengthDays} РґРЅ В· ${p.totalCycles} С†РёРєР»РѕРІ
+              ${p.cycleLengthDays} дн · ${p.totalCycles} циклов
             </div>
           </div>
           <div class="flex flex-col items-end gap-1">
@@ -1063,22 +902,22 @@
               class="text-xs px-2 py-1 rounded-full bg-indigo-500 text-white"
               data-open-period="${p.id}"
             >
-              РћС‚РєСЂС‹С‚СЊ
+              Открыть
             </button>
             <button
               class="text-[11px] text-red-300 underline"
               data-delete-period="${p.id}"
             >
-              РЈРґР°Р»РёС‚СЊ
+              Удалить
             </button>
           </div>
         </div>
         <div class="mt-2 text-xs text-slate-300">
-          <label class="block mb-1">Р”Р°С‚Р° СЃС‚Р°СЂС‚Р° РїРµСЂРёРѕРґР° (РјРѕР¶РЅРѕ РїРµСЂРµРѕРїСЂРµРґРµР»РёС‚СЊ)</label>
+          <label class="block mb-1">Дата старта периода (можно переопределить)</label>
           <input type="date" class="w-full bg-white/10 rounded-lg px-2 py-1" data-role="periodStartInput" value="${p.startDate || ''}" />
           <div class="mt-2">
-            <div class="text-[11px]">РџР»Р°РЅ: <span data-role="plannedRange">вЂ”</span></div>
-            <div class="text-[11px]">Р¤Р°РєС‚РёС‡РµСЃРєРё: <span data-role="actualRange">вЂ”</span></div>
+            <div class="text-[11px]">План: <span data-role="plannedRange">—</span></div>
+            <div class="text-[11px]">Фактически: <span data-role="actualRange">—</span></div>
           </div>
         </div>
       `;
@@ -1119,10 +958,10 @@
           if (lastStart) {
             const lastStartDate = new Date(lastStart + 'T00:00:00');
             const lastEndDate = new Date(lastStartDate.getTime() + (cycleLen - 1) * 24 * 60 * 60 * 1000);
-            plannedRangeEl.textContent = `${gymFormatDateNoYear(cycleStarts[1])} вЂ” ${gymFormatDateNoYear(lastEndDate.toISOString().slice(0,10))}`;
-          } else plannedRangeEl.textContent = 'вЂ”';
+            plannedRangeEl.textContent = `${gymFormatDateNoYear(cycleStarts[1])} — ${gymFormatDateNoYear(lastEndDate.toISOString().slice(0,10))}`;
+          } else plannedRangeEl.textContent = '—';
         } else {
-          plannedRangeEl.textContent = 'вЂ”';
+          plannedRangeEl.textContent = '—';
         }
       }
 
@@ -1141,12 +980,12 @@
           const completedInLast = cw.filter(e => Number(e.cycleIndex) === lastCycle);
           if (expectedCount > 0 && completedInLast.length >= expectedCount) {
             const lastDates = completedInLast.map(x => x.dateCompleted).filter(Boolean).sort();
-            actualRangeEl.textContent = `${gymFormatDateNoYear(earliest)} вЂ” ${gymFormatDateNoYear(lastDates[lastDates.length-1])}`;
+            actualRangeEl.textContent = `${gymFormatDateNoYear(earliest)} — ${gymFormatDateNoYear(lastDates[lastDates.length-1])}`;
           } else {
-            actualRangeEl.textContent = `${gymFormatDateNoYear(earliest)} вЂ” вЂ”`;
+            actualRangeEl.textContent = `${gymFormatDateNoYear(earliest)} — —`;
           }
         } else {
-          actualRangeEl.textContent = 'вЂ”';
+          actualRangeEl.textContent = '—';
         }
       }
 
@@ -1187,10 +1026,10 @@
               if (lastStart) {
                 const lastStartDate = new Date(lastStart + 'T00:00:00');
                 const lastEndDate = new Date(lastStartDate.getTime() + (cycleLen - 1) * 24 * 60 * 60 * 1000);
-                plannedRangeEl.textContent = `${gymFormatDateNoYear(cycleStarts[1])} вЂ” ${gymFormatDateNoYear(lastEndDate.toISOString().slice(0,10))}`;
-              } else plannedRangeEl.textContent = 'вЂ”';
+                plannedRangeEl.textContent = `${gymFormatDateNoYear(cycleStarts[1])} — ${gymFormatDateNoYear(lastEndDate.toISOString().slice(0,10))}`;
+              } else plannedRangeEl.textContent = '—';
             } else {
-              plannedRangeEl.textContent = 'вЂ”';
+              plannedRangeEl.textContent = '—';
             }
           }
           // Re-render periods list to reflect changes
@@ -1201,24 +1040,24 @@
       gymEl.periodsList.appendChild(card);
     });
   
-    // РѕС‚РєСЂС‹С‚СЊ РїРµСЂРёРѕРґ
+    // открыть период
     gymEl.periodsList.querySelectorAll('button[data-open-period]').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.openPeriod;
         if (!id) return;
         gymSetActivePeriod(id);
-        gymOpen(); // РїРѕРєР°Р·С‹РІР°РµС‚ СЌРєСЂР°РЅ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РїРµСЂРёРѕРґР°
+        gymOpen(); // показывает экран конкретного периода
       });
     });
   
-    // СѓРґР°Р»РёС‚СЊ РїРµСЂРёРѕРґ СЃ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµРј
+    // удалить период с подтверждением
     gymEl.periodsList.querySelectorAll('button[data-delete-period]').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.deletePeriod;
         if (!id) return;
         const p = gymState.periods[id];
-        const name = p?.name || 'РїРµСЂРёРѕРґ';
-        if (!confirm(`РўРѕС‡РЅРѕ СѓРґР°Р»РёС‚СЊ В«${name}В»? Р­С‚Рѕ РґРµР№СЃС‚РІРёРµ РЅРµР»СЊР·СЏ РѕС‚РјРµРЅРёС‚СЊ.`)) {
+        const name = p?.name || 'период';
+        if (!confirm(`Точно удалить «${name}»? Это действие нельзя отменить.`)) {
           return;
         }
   
@@ -1242,16 +1081,16 @@
   function gymOpenPeriodsScreen() {
     if (!gymEl.periodsScreen) return;
   
-    // С„РёС‚РЅРµСЃ-СЌРєСЂР°РЅ РІРєР»СЋС‡С‘РЅ, РЅРѕ СЃР°Рј С„РёС‚РЅРµСЃ-РґР°С€Р±РѕСЂРґ РїСЂСЏС‡РµРј
+    // фитнес-экран включён, но сам фитнес-дашборд прячем
     if (fitnessEl?.screen) fitnessEl.screen.classList.remove('hidden');
     if (fitnessEl?.profileSetup) fitnessEl.profileSetup.classList.add('hidden');
     if (fitnessEl?.dashboard) fitnessEl.dashboard.classList.add('hidden');
   
-    // РїСЂСЏС‡РµРј СЌРєСЂР°РЅ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РїРµСЂРёРѕРґР° Рё РјР°СЃС‚РµСЂ
+    // прячем экран конкретного периода и мастер
     if (gymEl.screen) gymEl.screen.classList.add('hidden');
     if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
   
-    // РїРѕРєР°Р·С‹РІР°РµРј "РЅРѕРІРѕРµ РѕРєРЅРѕ" вЂ“ СЃРїРёСЃРѕРє РїРµСЂРёРѕРґРѕРІ
+    // показываем "новое окно" – список периодов
     gymRenderPeriodsList();
     gymEl.periodsScreen.classList.remove('hidden');
   }
@@ -1261,21 +1100,21 @@
   function gymClosePeriodsScreen() {
     if (gymEl.periodsScreen) gymEl.periodsScreen.classList.add('hidden');
   
-    // РµСЃР»Рё РµСЃС‚СЊ С„РёС‚РЅРµСЃ-СЌРєСЂР°РЅ вЂ“ РІРѕР·РІСЂР°С‰Р°РµРјСЃСЏ Рє С„РёС‚РЅРµСЃ-РґР°С€Р±РѕСЂРґСѓ
+    // если есть фитнес-экран – возвращаемся к фитнес-дашборду
     if (fitnessEl?.screen) {
       fitnessEl.screen.classList.remove('hidden');
   
       if (fitnessEl.profileSetup) fitnessEl.profileSetup.classList.add('hidden');
       if (fitnessEl.dashboard) fitnessEl.dashboard.classList.remove('hidden');
   
-      // РЅР° РІСЃСЏРєРёР№ СЃР»СѓС‡Р°Р№ РїСЂСЏС‡РµРј РјР°СЃС‚РµСЂ Рё СЌРєСЂР°РЅ РїРµСЂРёРѕРґР°
+      // на всякий случай прячем мастер и экран периода
       if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
       if (gymEl.screen) gymEl.screen.classList.add('hidden');
   
       return;
     }
   
-    // fallback: РµСЃР»Рё РїРѕ РєР°РєРѕР№-С‚Рѕ РїСЂРёС‡РёРЅРµ fitnessScreen РЅРµС‚ вЂ“ РІРµСЂРЅС‘РјСЃСЏ РЅР° РіР»Р°РІРЅС‹Р№ СЌРєСЂР°РЅ
+    // fallback: если по какой-то причине fitnessScreen нет – вернёмся на главный экран
     const main = document.getElementById('main');
     if (main) main.classList.remove('hidden');
   }
@@ -1329,7 +1168,7 @@
   
     const period = gymGetActivePeriod();
     if (!period) {
-      gymEl.cycleSelect.innerHTML = '<option value="1">Р¦РёРєР» 1</option>';
+      gymEl.cycleSelect.innerHTML = '<option value="1">Цикл 1</option>';
       gymEl.cycleSelect.value = '1';
       return;
     }
@@ -1346,7 +1185,7 @@
 
     let options = '';
     for (let i = 1; i <= maxCycle; i += 1) {
-      options += `<option value="${i}">Р¦РёРєР» ${i}</option>`;
+      options += `<option value="${i}">Цикл ${i}</option>`;
     }
 
     gymEl.cycleSelect.innerHTML = options;
@@ -1370,7 +1209,7 @@
     
   
     gymEl.cycleInfo.textContent = `${currentCycle}/${totalCycles}`;
-    gymEl.periodInfo.textContent = period.name || 'РџРµСЂРёРѕРґ';
+    gymEl.periodInfo.textContent = period.name || 'Период';
   
     const pct = Math.max(0, Math.min(100, (periodDone / totalCycles) * 100));
     gymEl.progressBar.style.width = `${pct}%`;
@@ -1393,7 +1232,7 @@
     if (!runtime.groups) runtime.groups = {};
     if (!runtime.days) runtime.days = {};
   
-    // UI-СЃРѕСЃС‚РѕСЏРЅРёРµ СЃРІРѕСЂР°С‡РёРІР°РЅРёСЏ Рё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
+    // UI-состояние сворачивания и редактирования
     if (!gymState.uiCollapse) gymState.uiCollapse = {};
     const uiKey = `period-${period.id || 'default'}`;
     if (!gymState.uiCollapse[uiKey]) {
@@ -1420,15 +1259,15 @@
 
     const daysToRender = Array.from(daysMap.values()).sort((a,b)=>a.dayIndex-b.dayIndex);
     
-    // --- Р Р•РќР”Р•Р  Р”РќР•Р™ ---
+    // --- РЕНДЕР ДНЕЙ ---
     daysToRender.forEach((day) => {
       const dayIndex = day.dayIndex;
     
-      // С‡РёС‚Р°РµРј enabled РёР· runtime, РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ true
+      // читаем enabled из runtime, по умолчанию true
       const runtimeDayRaw = runtime && runtime.days ? runtime.days[dayIndex] : null;
       const enabled = runtimeDayRaw ? runtimeDayRaw.enabled !== false : true;
     
-      // РµСЃР»Рё РґРµРЅСЊ РІС‹РєР»СЋС‡РµРЅ Рё РЅРµ РІ СЂРµР¶РёРјРµ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ вЂ” РїСЂРѕРїСѓСЃРєР°РµРј
+      // если день выключен и не в режиме редактирования — пропускаем
       // if (!enabled && !ui.editDays[dayIndex]) return;
     
       if (!runtime.days[dayIndex]) runtime.days[dayIndex] = { groups: {} };
@@ -1441,14 +1280,14 @@
       dayWrapper.className = 'bg-white/5 rounded-2xl px-3 py-3 space-y-2';
       dayWrapper.dataset.dayIndex = String(dayIndex);
 
-      // --- РЁРђРџРљРђ Р”РќРЇ ---
+      // --- ШАПКА ДНЯ ---
       const title = document.createElement('div');
       title.className = 'flex items-center justify-between mb-2';
   
       const left = document.createElement('div');
       left.className = 'flex items-center gap-2 flex-1';
   
-      // С‡РµРєР±РѕРєСЃ С‚РѕР»СЊРєРѕ РІ СЂРµР¶РёРјРµ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
+      // чекбокс только в режиме редактирования
       if (isEditing) {
         const checkboxLabel = document.createElement('label');
         checkboxLabel.className = 'flex items-center gap-1 text-xs text-slate-200';
@@ -1459,7 +1298,7 @@
         checkbox.dataset.role = 'dayEnabled';
         checkbox.dataset.dayIndex = String(dayIndex);
       
-        // С‡РёС‚Р°РµРј СЃРѕСЃС‚РѕСЏРЅРёРµ РёР· runtime С‚РµРєСѓС‰РµРіРѕ С†РёРєР»Р°
+        // читаем состояние из runtime текущего цикла
         const runtimeDay = runtime.days[dayIndex] || {};
         if (runtimeDay.enabled !== false) {
           checkbox.checked = true;
@@ -1468,7 +1307,7 @@
         }
       
         const span = document.createElement('span');
-        span.textContent = 'РђРєС‚РёРІРµРЅ';
+        span.textContent = 'Активен';
       
         checkboxLabel.appendChild(checkbox);
         checkboxLabel.appendChild(span);
@@ -1483,12 +1322,12 @@
       titleBtn.dataset.role = 'toggleDay';
       titleBtn.dataset.dayIndex = String(dayIndex);
       // titleBtn.innerHTML = `
-      //   <div class="text-sm font-semibold text-white">Р”РµРЅСЊ ${day.dayIndex}</div>
+      //   <div class="text-sm font-semibold text-white">День ${day.dayIndex}</div>
       //   <div class="text-xs text-slate-300" data-role="dayMusclesView">
       //     ${
       //       day.muscles && day.muscles.length
       //         ? day.muscles.join(', ')
-      //         : 'РќР°Р¶РјРё "Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ", С‡С‚РѕР±С‹ РІС‹Р±СЂР°С‚СЊ РіСЂСѓРїРїС‹'
+      //         : 'Нажми "Редактировать", чтобы выбрать группы'
       //     }
       //   </div>
       // `;
@@ -1498,13 +1337,13 @@
 
       titleBtn.innerHTML = `
         <div class="flex items-center justify-between">
-          <div class="text-sm font-semibold text-white">Р”РµРЅСЊ ${day.dayIndex}</div>
+          <div class="text-sm font-semibold text-white">День ${day.dayIndex}</div>
         </div>
         <div class="text-xs text-slate-300" data-role="dayMusclesView">
           ${
             day.muscles && day.muscles.length
               ? day.muscles.join(', ')
-              : 'РќР°Р¶РјРё "Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ", С‡С‚РѕР±С‹ РІС‹Р±СЂР°С‚СЊ РіСЂСѓРїРїС‹'
+              : 'Нажми "Редактировать", чтобы выбрать группы'
           }
         </div>
       `;
@@ -1574,21 +1413,21 @@
         saveBtn.className = 'text-[11px] text-emerald-300 underline';
         saveBtn.dataset.role = 'daySave';
         saveBtn.dataset.dayIndex = String(dayIndex);
-        saveBtn.textContent = 'РЎРѕС…СЂР°РЅРёС‚СЊ';
+        saveBtn.textContent = 'Сохранить';
   
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'text-[11px] text-red-300 underline';
         deleteBtn.dataset.role = 'dayDelete';
         deleteBtn.dataset.dayIndex = String(dayIndex);
-        deleteBtn.textContent = 'РЈРґР°Р»РёС‚СЊ РґРµРЅСЊ';
+        deleteBtn.textContent = 'Удалить день';
   
         const cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
         cancelBtn.className = 'text-[11px] text-slate-300 underline';
         cancelBtn.dataset.role = 'dayCancel';
         cancelBtn.dataset.dayIndex = String(dayIndex);
-        cancelBtn.textContent = 'РќР°Р·Р°Рґ';
+        cancelBtn.textContent = 'Назад';
   
         right.appendChild(saveBtn);
         right.appendChild(deleteBtn);
@@ -1599,7 +1438,7 @@
         editBtn.className = 'text-[11px] text-emerald-300 underline';
         editBtn.dataset.role = 'dayEdit';
         editBtn.dataset.dayIndex = String(dayIndex);
-        editBtn.textContent = 'Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ';
+        editBtn.textContent = 'Редактировать';
   
         right.appendChild(editBtn);
       }
@@ -1608,18 +1447,18 @@
       title.appendChild(right);
       dayWrapper.appendChild(title);
   
-      // --- РЎРўР РћРљРђ Р Р•Р”РђРљРўРР РћР’РђРќРРЇ Р“Р РЈРџРџ РњР«РЁР¦ (РўРћР›Р¬РљРћ Р’ Р Р•Р–РРњР• Р Р•Р”РђРљРўРР РћР’РђРќРРЇ) ---
+      // --- СТРОКА РЕДАКТИРОВАНИЯ ГРУПП МЫШЦ (ТОЛЬКО В РЕЖИМЕ РЕДАКТИРОВАНИЯ) ---
       if (isEditing) {
         const musclesRow = document.createElement('div');
         musclesRow.className = 'mb-2';
   
         musclesRow.innerHTML = `
           <div class="text-[11px] text-slate-300 mb-1">
-            Р“СЂСѓРїРїС‹ РјС‹С€С† С‡РµСЂРµР· Р·Р°РїСЏС‚СѓСЋ
+            Группы мышц через запятую
           </div>
           <input
             class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
-            placeholder="Р“СЂСѓРґСЊ, РїР»РµС‡Рё, СЃРїРёРЅР°"
+            placeholder="Грудь, плечи, спина"
             data-role="dayMusclesInput"
             data-day-index="${dayIndex}"
             value="${
@@ -1633,7 +1472,7 @@
         dayWrapper.appendChild(musclesRow);
       }
   
-      // --- РўР•Р›Рћ Р”РќРЇ ---
+      // --- ТЕЛО ДНЯ ---
       const dayBody = document.createElement('div');
       const dayExpanded = ui.days[dayIndex] === true;
       dayBody.className = 'space-y-2' + (dayExpanded ? '' : ' hidden');
@@ -1650,7 +1489,7 @@
         const header = document.createElement('div');
         header.className = 'flex items-center justify-between mb-1';
   
-        // РЅР°Р·РІР°РЅРёРµ РіСЂСѓРїРїС‹
+        // название группы
         const groupBtn = document.createElement('button');
         groupBtn.type = 'button';
         groupBtn.className = 'flex-1 text-left text-sm text-slate-100 font-medium';
@@ -1660,7 +1499,7 @@
   
         header.appendChild(groupBtn);
   
-        // РєРЅРѕРїРєРё РґР»СЏ РіСЂСѓРїРї вЂ” С‚РѕР»СЊРєРѕ РІ СЂРµР¶РёРјРµ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
+        // кнопки для групп — только в режиме редактирования
         if (isEditing) {
           const groupActions = document.createElement('div');
           groupActions.className = 'flex items-center gap-2';
@@ -1670,14 +1509,14 @@
           addExBtn.className = 'text-xs px-2 py-1 rounded-full bg-emerald-500 text-white';
           addExBtn.dataset.role = 'addExercise';
           addExBtn.dataset.group = groupName;
-          addExBtn.textContent = '+ РЈРїСЂР°Р¶РЅРµРЅРёРµ';
+          addExBtn.textContent = '+ Упражнение';
   
           const delGroupBtn = document.createElement('button');
           delGroupBtn.type = 'button';
           delGroupBtn.className = 'text-[11px] text-red-300 underline';
           delGroupBtn.dataset.role = 'deleteGroup';
           delGroupBtn.dataset.group = groupName;
-          delGroupBtn.textContent = 'СѓРґР°Р»РёС‚СЊ';
+          delGroupBtn.textContent = 'удалить';
   
           groupActions.appendChild(addExBtn);
           groupActions.appendChild(delGroupBtn);
@@ -1698,7 +1537,7 @@
         if (!exercises.length) {
           const empty = document.createElement('div');
           empty.className = 'text-xs text-slate-400';
-          empty.textContent = 'Р”РѕР±Р°РІСЊ СѓРїСЂР°Р¶РЅРµРЅРёРµ РґР»СЏ СЌС‚РѕР№ РіСЂСѓРїРїС‹.';
+          empty.textContent = 'Добавь упражнение для этой группы.';
           listContainer.appendChild(empty);
         } else {
           exercises.forEach((ex, idx) => {
@@ -1706,7 +1545,7 @@
             card.className = 'bg-slate-900/80 rounded-xl px-3 py-3 space-y-2';
             card.dataset.index = String(idx);
   
-            // --- РЁРђРџРљРђ РЈРџР РђР–РќР•РќРРЇ ---
+            // --- ШАПКА УПРАЖНЕНИЯ ---
             const exHeader = document.createElement('div');
             exHeader.className = 'flex items-center justify-between text-xs mb-1';
 
@@ -1752,40 +1591,40 @@
 
 
             if (isEditing) {
-              // Р РµРґР°РєС‚РёСЂСѓРµРјРѕРµ РЅР°Р·РІР°РЅРёРµ
+              // Редактируемое название
               const nameInput = document.createElement('input');
               nameInput.type = 'text';
               nameInput.className = 'w-full bg-transparent text-left text-slate-100 text-xs font-semibold border-b border-white/10 focus:outline-none';
-              nameInput.placeholder = 'РќР°Р·РІР°РЅРёРµ (Р–РёРј РіР°РЅС‚РµР»РµР№)';
+              nameInput.placeholder = 'Название (Жим гантелей)';
               nameInput.value = ex.name || '';
               nameInput.dataset.field = 'name';
               titleWrap.appendChild(nameInput);
             } else {
-              // РўРѕР»СЊРєРѕ С‚РµРєСЃС‚ (РєРЅРѕРїРєР° СЃРІРѕСЂР°С‡РёРІР°РЅРёСЏ)
+              // Только текст (кнопка сворачивания)
               const nameBtn = document.createElement('button');
               nameBtn.type = 'button';
               nameBtn.className = 'text-left flex-1 text-slate-100';
               nameBtn.dataset.role = 'toggleExercise';
-              nameBtn.textContent = ex.name || 'РЈРїСЂР°Р¶РЅРµРЅРёРµ ' + (idx + 1);
+              nameBtn.textContent = ex.name || 'Упражнение ' + (idx + 1);
               titleWrap.appendChild(nameBtn);
             }
 
             exHeader.appendChild(titleWrap);
 
-            // РљРЅРѕРїРєР° СѓРґР°Р»РµРЅРёСЏ СѓРїСЂР°Р¶РЅРµРЅРёСЏ вЂ” РўРћР›Р¬РљРћ РІ СЂРµР¶РёРјРµ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ РґРЅСЏ
+            // Кнопка удаления упражнения — ТОЛЬКО в режиме редактирования дня
             if (isEditing) {
               const delBtn = document.createElement('button');
               delBtn.type = 'button';
               delBtn.className = 'text-[11px] text-red-300 underline';
               delBtn.dataset.delete = '1';
-              delBtn.textContent = 'РЈРґР°Р»РёС‚СЊ';
+              delBtn.textContent = 'Удалить';
               exHeader.appendChild(delBtn);
             }
 
             card.appendChild(exHeader);
 
   
-            // --- РўР•Р›Рћ РЈРџР РђР–РќР•РќРРЇ ---
+            // --- ТЕЛО УПРАЖНЕНИЯ ---
             const body = document.createElement('div');
             body.className = 'space-y-2 hidden';
             body.dataset.role = 'exerciseBody';
@@ -1793,19 +1632,19 @@
             body.innerHTML = `
               <div class="flex gap-4 text-xs text-slate-300 mb-2">
                 <div>
-                  <span class="text-slate-400">РџРѕРґС…РѕРґС‹:</span> ${ex.setsCount || 'вЂ”'}
+                  <span class="text-slate-400">Подходы:</span> ${ex.setsCount || '—'}
                 </div>
                 <div>
-                  <span class="text-slate-400">РџРѕРІС‚РѕСЂРµРЅРёСЏ:</span> ${ex.repsCount || 'вЂ”'}
+                  <span class="text-slate-400">Повторения:</span> ${ex.repsCount || '—'}
                 </div>
                 <div>
-                  <span class="text-slate-400">Р’РµСЃ:</span> ${ex.workWeight || 'вЂ”'}
+                  <span class="text-slate-400">Вес:</span> ${ex.workWeight || '—'}
                 </div>
               </div>
 
               <div class="flex gap-2 text-xs">
                 <div class="flex-1">
-                  <div class="text-slate-400 mb-1">Р Р°Р·РјРёРЅРєР° (РѕРїС†.)</div>
+                  <div class="text-slate-400 mb-1">Разминка (опц.)</div>
                   <input
                     class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
                     placeholder="2x15"
@@ -1817,7 +1656,7 @@
 
               <div class="flex items-center justify-between text-xs">
                 <div class="flex-1 mr-2">
-                  <div class="text-slate-400 mb-1">RPE 1вЂ“10</div>
+                  <div class="text-slate-400 mb-1">RPE 1–10</div>
                   <div class="flex items-center gap-2">
                     <input
                       type="range"
@@ -1839,19 +1678,19 @@
 
               <div class="flex gap-2 text-xs">
                 <div class="flex-1">
-                  <div class="text-slate-400 mb-1">РџСЂРѕРіСЂРµСЃСЃ Р·Р° РїРµСЂРёРѕРґ</div>
+                  <div class="text-slate-400 mb-1">Прогресс за период</div>
                   <input
                     class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                    placeholder="+5 РєРі СЃ РЅР°С‡Р°Р»Р°"
+                    placeholder="+5 кг с начала"
                     value="${ex.progressNote || ''}"
                     data-field="progressNote"
                   />
                 </div>
                 <div class="flex-1">
-                  <div class="text-slate-400 mb-1">РџР»Р°РЅ РЅР° СЃР»РµРґ. С†РёРєР»</div>
+                  <div class="text-slate-400 mb-1">План на след. цикл</div>
                   <input
                     class="w-full bg-white/10 text-white rounded-lg px-2 py-1"
-                    placeholder="РЎР»РµРґ. С†РёРєР»: 37 РєРі"
+                    placeholder="След. цикл: 37 кг"
                     value="${ex.nextCyclePlan || ''}"
                     data-field="nextCyclePlan"
                   />
@@ -1872,7 +1711,7 @@
       gymEl.groupsContainer.appendChild(dayWrapper);
     });
   
-    // --- РљРќРћРџРљРђ/Р¤РћР РњРђ "Р”РћР‘РђР’РРўР¬ Р”Р•РќР¬" (РєР°Рє СЂР°РЅСЊС€Рµ) ---
+    // --- КНОПКА/ФОРМА "ДОБАВИТЬ ДЕНЬ" (как раньше) ---
     const addDayContainer = document.createElement('div');
     addDayContainer.className = 'mt-3 space-y-2 text-xs text-slate-200';
     addDayContainer.innerHTML = `
@@ -1882,7 +1721,7 @@
       >
         <div class="flex items-center justify-between mb-2">
           <div class="text-sm font-semibold text-white">
-            РќРѕРІС‹Р№ РґРµРЅСЊ
+            Новый день
           </div>
           <label class="flex items-center gap-1 text-[11px] text-slate-200">
             <input
@@ -1891,15 +1730,15 @@
               data-role="newDayEnabled"
               checked
             />
-            <span>Р”РµРЅСЊ Р°РєС‚РёРІРµРЅ</span>
+            <span>День активен</span>
           </label>
         </div>
   
         <div class="space-y-1">
-          <div class="text-[11px] text-slate-300">Р“СЂСѓРїРїС‹ РјС‹С€С† С‡РµСЂРµР· Р·Р°РїСЏС‚СѓСЋ</div>
+          <div class="text-[11px] text-slate-300">Группы мышц через запятую</div>
           <input
             class="w-full bg-white/10 text-white text-xs rounded-lg px-2 py-1"
-            placeholder="Р“СЂСѓРґСЊ, РїР»РµС‡Рё, СЃРїРёРЅР°"
+            placeholder="Грудь, плечи, спина"
             data-role="newDayMuscles"
           />
         </div>
@@ -1910,14 +1749,14 @@
             class="flex-1 bg-emerald-500 hover:bg-emerald-600 py-2 rounded-xl font-semibold text-sm"
             data-role="createDaySubmit"
           >
-            РЎРѕС…СЂР°РЅРёС‚СЊ РґРµРЅСЊ
+            Сохранить день
           </button>
           <button
             type="button"
             class="flex-1 bg-white/10 py-2 rounded-xl text-sm"
             data-role="createDayCancel"
           >
-            РћС‚РјРµРЅР°
+            Отмена
           </button>
         </div>
       </div>
@@ -1927,12 +1766,12 @@
         class="w-full bg-transparent border border-emerald-500/60 py-2 rounded-xl font-semibold text-sm"
         data-role="addDayFromScreen"
       >
-        + Р”РѕР±Р°РІРёС‚СЊ РґРµРЅСЊ
+        + Добавить день
       </button>
     `;
     gymEl.groupsContainer.appendChild(addDayContainer);
   
-    // ---- РћР‘Р РђР‘РћРўР§РРљР "РќРћР’Р«Р™ Р”Р•РќР¬" ----
+    // ---- ОБРАБОТЧИКИ "НОВЫЙ ДЕНЬ" ----
     {
       const addBtn = addDayContainer.querySelector('[data-role="addDayFromScreen"]');
       const form = addDayContainer.querySelector('[data-role="newDayForm"]');
@@ -1995,7 +1834,7 @@
       }
     }
   
-    // ---- РџР•Р Р•РљР›Р®Р§Р•РќРР• Р Р•Р–РРњРђ Р”РќРЇ ----
+    // ---- ПЕРЕКЛЮЧЕНИЕ РЕЖИМА ДНЯ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="dayEdit"]')
       .forEach((btn) => {
@@ -2018,7 +1857,7 @@
         });
       });
   
-    // ---- РЎРћРҐР РђРќРРўР¬ Р”Р•РќР¬ ----
+    // ---- СОХРАНИТЬ ДЕНЬ ----
     // "Save day": commit this day's structure/settings to gymState + localStorage.
 
     gymEl.groupsContainer
@@ -2074,7 +1913,7 @@
       });
 
   
-    // ---- РЈР”РђР›РРўР¬ Р”Р•РќР¬ ----
+    // ---- УДАЛИТЬ ДЕНЬ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="dayDelete"]')
       .forEach((btn) => {
@@ -2097,7 +1936,7 @@
         });
       });
   
-    // ---- РЎР’Р•Р РќРЈРўР¬/Р РђР—Р’Р•Р РќРЈРўР¬ Р”Р•РќР¬ ----
+    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ ДЕНЬ ----
     gymEl.groupsContainer
       .querySelectorAll('[data-role="toggleDay"]')
       .forEach((btn) => {
@@ -2116,7 +1955,7 @@
         });
       });
   
-    // ---- РЎР’Р•Р РќРЈРўР¬/Р РђР—Р’Р•Р РќРЈРўР¬ Р“Р РЈРџРџРЈ ----
+    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ ГРУППУ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="toggleGroup"]')
       .forEach((btn) => {
@@ -2139,7 +1978,7 @@
         });
       });
   
-    // ---- Р”РћР‘РђР’РРўР¬ РЈРџР РђР–РќР•РќРР• ----
+    // ---- ДОБАВИТЬ УПРАЖНЕНИЕ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="addExercise"]')
       .forEach((btn) => {
@@ -2170,7 +2009,7 @@
         });
       });
   
-    // ---- РЈР”РђР›РРўР¬ Р“Р РЈРџРџРЈ ----
+    // ---- УДАЛИТЬ ГРУППУ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="deleteGroup"]')
       .forEach((btn) => {
@@ -2195,7 +2034,7 @@
         });
       });
   
-    // ---- РР—РњР•РќР•РќРРЇ Р’ РџРћР›РЇРҐ РЈРџР РђР–РќР•РќРР™ (РІРєР»СЋС‡Р°СЏ name) ----
+    // ---- ИЗМЕНЕНИЯ В ПОЛЯХ УПРАЖНЕНИЙ (включая name) ----
     gymEl.groupsContainer
       .querySelectorAll('[data-field]')
       .forEach((input) => {
@@ -2250,7 +2089,7 @@
             }
           }
 
-          // UX: "РџР»Р°РЅ РЅР° СЃР»РµРґ С†РёРєР»" - apply only on blur (when user finishes typing)
+          // UX: "План на след цикл" - apply only on blur (when user finishes typing)
           // Using 'change' event instead of 'input' - triggers when user leaves the field
           if (field === 'nextCyclePlan') {
             // The actual sync to next cycle will happen on 'change' event, handled separately below
@@ -2314,7 +2153,7 @@
         }
       });
   
-    // ---- РЎР’Р•Р РќРЈРўР¬/Р РђР—Р’Р•Р РќРЈРўР¬ РЈРџР РђР–РќР•РќРР• ----
+    // ---- СВЕРНУТЬ/РАЗВЕРНУТЬ УПРАЖНЕНИЕ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-role="toggleExercise"]')
       .forEach((btn) => {
@@ -2327,7 +2166,7 @@
         });
       });
   
-    // ---- РЈР”РђР›Р•РќРР• РЈРџР РђР–РќР•РќРРЇ ----
+    // ---- УДАЛЕНИЕ УПРАЖНЕНИЯ ----
     gymEl.groupsContainer
       .querySelectorAll('button[data-delete]')
       .forEach((btn) => {
@@ -2371,12 +2210,12 @@
       const period = gymGetActivePeriod();
       if (!period) return;
   
-      // РїСЂРёРІСЏР·РєР° РІР°СЂРёР°РЅС‚РѕРІ Рє РёРЅРґРµРєСЃСѓ РґРЅСЏ С†РёРєР»Р°
+      // привязка вариантов к индексу дня цикла
       const value = gymEl.daySelect.value;
-      if (value === 'РЎРµРіРѕРґРЅСЏ') {
-        gymCurrentDayIndex = 1; // MVP: РІСЃРµРіРґР° Р”РµРЅСЊ 1, РїРѕР·Р¶Рµ РїСЂРёРІСЏР¶РµРј Рє РєР°Р»РµРЅРґР°СЂСЋ
+      if (value === 'Сегодня') {
+        gymCurrentDayIndex = 1; // MVP: всегда День 1, позже привяжем к календарю
       } else {
-        // РµСЃР»Рё РѕРїС†РёРё Р±СѓРґСѓС‚ РІРёРґР° "Р”РµРЅСЊ 1", "Р”РµРЅСЊ 2" Рё С‚.Рї.
+        // если опции будут вида "День 1", "День 2" и т.п.
         const match = value.match(/\d+/);
         gymCurrentDayIndex = match ? Number(match[0]) : 1;
       }
@@ -2392,7 +2231,7 @@
   
     const period = gymGetActivePeriod();
     if (period) {
-      gymCurrentDayIndex = 1; // РІСЃРµРіРґР° РЅР°С‡РёРЅР°РµРј СЃ Р”РЅСЏ 1 С†РёРєР»Р°
+      gymCurrentDayIndex = 1; // всегда начинаем с Дня 1 цикла
     }
   
     gymRenderHeader();
@@ -2406,7 +2245,7 @@
     if (gymEl.periodsScreen) gymEl.periodsScreen.classList.remove('hidden');
   }
 
-  // РєРЅРѕРїРєР° "Р¤РёС‚РЅРµСЃ в†’ Р—Р°Р»"
+  // кнопка "Фитнес → Зал"
   if (gymEl.fromFitnessBtn) {
     gymEl.fromFitnessBtn.addEventListener('click', gymOpenPeriodsScreen);
   }
@@ -2431,7 +2270,7 @@
       if (!p) return;
       const opt = document.createElement('option');
       opt.value = id;
-      opt.textContent = `${p.name} (${p.cycleLengthDays}d В· ${p.totalCycles} cyc)`;
+      opt.textContent = `${p.name} (${p.cycleLengthDays}d · ${p.totalCycles} cyc)`;
       gymCalendarPeriodSelect.appendChild(opt);
     });
   }
@@ -2542,16 +2381,16 @@
         gymCalendarOutput.textContent = res.error;
         return;
       }
-      gymCalendarOutput.textContent = `Р”Р°С‚Р° ${dateVal} в†’ Р¦РёРєР» ${res.cycleIndex}, Р”РµРЅСЊ ${res.dayOfCycle} (РґРЅРµР№ СЃ РЅР°С‡Р°Р»Р°: ${res.daysSince})`;
+      gymCalendarOutput.textContent = `Дата ${dateVal} → Цикл ${res.cycleIndex}, День ${res.dayOfCycle} (дней с начала: ${res.daysSince})`;
     });
   }
 
-  // СЃРїРёСЃРѕРє РїРµСЂРёРѕРґРѕРІ: РЅР°Р·Р°Рґ
+  // список периодов: назад
   if (gymEl.periodsBackBtn) {
     gymEl.periodsBackBtn.addEventListener('click', gymClosePeriodsScreen);
   }
 
-  // РєРЅРѕРїРєРё "РЎРѕР·РґР°С‚СЊ РїРµСЂРёРѕРґ"
+  // кнопки "Создать период"
   if (gymEl.createPeriodBtn) {
     gymEl.createPeriodBtn.addEventListener('click', () => {
       gymOpenPeriodWizardStep1();
@@ -2564,7 +2403,7 @@
   }
 
 
-  // РјР°СЃС‚РµСЂ РїРµСЂРёРѕРґР°: РЅР°РІРёРіР°С†РёСЏ Рё РґРµР№СЃС‚РІРёСЏ
+  // мастер периода: навигация и действия
   if (gymEl.periodWizardBackBtn) {
     gymEl.periodWizardBackBtn.addEventListener('click', () => {
       gymClosePeriodWizard();
@@ -2582,7 +2421,7 @@
   }
   if (gymEl.periodStep2BackBtn) {
     gymEl.periodStep2BackBtn.addEventListener('click', () => {
-      // РЅР°Р·Р°Рґ РЅР° С€Р°Рі 1
+      // назад на шаг 1
       if (gymEl.periodStep2) gymEl.periodStep2.classList.add('hidden');
       if (gymEl.periodStep1) gymEl.periodStep1.classList.remove('hidden');
     });
@@ -2592,7 +2431,7 @@
       if (!gymPeriodWizardDraft) return;
       if (!gymEl.periodDaysContainer) return;
   
-      // РЎРѕР±РёСЂР°РµРј РґРЅРё РёР· UI
+      // Собираем дни из UI
       const dayDivs = gymEl.periodDaysContainer.querySelectorAll('[data-day-index]');
       const rawDays = [];
       dayDivs.forEach((div) => {
@@ -2610,31 +2449,31 @@
         rawDays.push({ dayIndex, enabled, muscles });
       });
       
-      // РІ РјРѕРґРµР»СЊ РїРµСЂРёРѕРґР° СЃРѕС…СЂР°РЅСЏРµРј С‚РѕР»СЊРєРѕ РІРєР»СЋС‡С‘РЅРЅС‹Рµ РґРЅРё
+      // в модель периода сохраняем только включённые дни
       const days = rawDays.filter((d) => d.enabled);
       gymPeriodWizardDraft.days = days;
   
       gymPeriodWizardDraft.days = days;
   
-      // РЎРѕР·РґР°С‘Рј РїРµСЂРёРѕРґ РІ gymState
+      // Создаём период в gymState
       const periodId = gymCreatePeriodId();
       const period = {
         id: periodId,
-        name: gymPeriodWizardDraft.name || 'РџРµСЂРёРѕРґ',
+        name: gymPeriodWizardDraft.name || 'Период',
         type: gymPeriodWizardDraft.type,
         splitType: gymPeriodWizardDraft.splitType,
         cycleLengthDays: gymPeriodWizardDraft.cycleLengthDays,
         totalCycles: gymPeriodWizardDraft.totalCycles,
-        workoutsPerCycle: gymPeriodWizardDraft.workoutsPerCycle || days.length, // РќРћР’РћР•
+        workoutsPerCycle: gymPeriodWizardDraft.workoutsPerCycle || days.length, // НОВОЕ
         days,
-        cycles: {}, // РїРѕРєР° С†РёРєР»С‹ С…СЂР°РЅРёРј С‚СѓС‚, РґР°Р»СЊС€Рµ СЂР°СЃС€РёСЂРёРј
-        runtime: {}, // РјРѕР¶РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РґР»СЏ per-cycle РґР°РЅРЅС‹С…, РµСЃР»Рё РЅСѓР¶РЅРѕ
+        cycles: {}, // пока циклы храним тут, дальше расширим
+        runtime: {}, // можно использовать для per-cycle данных, если нужно
       };
   
       gymState.periods[periodId] = period;
       if (!gymState.periodOrder || !Array.isArray(gymState.periodOrder)) gymState.periodOrder = [];
       gymState.periodOrder.push(periodId);
-      // Initialize runtime fresh for the new period вЂ” do NOT reuse old runtime data
+      // Initialize runtime fresh for the new period — do NOT reuse old runtime data
       // Also reset any history/status/progress from old period
       if (!gymState.runtime) gymState.runtime = {};
       // initialize runtime cycles[1] with template days enabled
@@ -2675,7 +2514,7 @@
   
       gymPersistState();
   
-      // Р·Р°РєСЂС‹РІР°РµРј РјР°СЃС‚РµСЂ Рё РѕС‚РєСЂС‹РІР°РµРј СЌРєСЂР°РЅ РїРµСЂРёРѕРґР°
+      // закрываем мастер и открываем экран периода
       if (gymEl.periodWizardScreen) gymEl.periodWizardScreen.classList.add('hidden');
       // Re-render periods list to include new period, then open the period screen
       gymOpenPeriodsScreen();
@@ -2687,14 +2526,14 @@
   }
   
 
-  // СЌРєСЂР°РЅ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РїРµСЂРёРѕРґР°
+  // экран конкретного периода
   if (gymEl.backBtn) {
     gymEl.backBtn.addEventListener('click', gymClose);
   }
   // "Save cycle": commit current runtime structure for this cycle to gymState + localStorage.
   // IMPORTANT: Only save current cycle data - do NOT propagate to future cycles
   if (gymEl.saveBtn) {
-    gymEl.saveBtn.textContent = 'РЎРѕС…СЂР°РЅРёС‚СЊ С†РёРєР»';
+    gymEl.saveBtn.textContent = 'Сохранить цикл';
     gymEl.saveBtn.addEventListener('click', () => {
       const period = gymGetActivePeriod();
       if (!period) return;
@@ -2716,37 +2555,37 @@
   
   if (gymEl.historyBtn) {
     gymEl.historyBtn.addEventListener('click', () => {
-      showAlert('РСЃС‚РѕСЂРёСЏ С‚СЂРµРЅРёСЂРѕРІРѕРє РїРѕСЏРІРёС‚СЃСЏ РїРѕР·Р¶Рµ');
+      showAlert('История тренировок появится позже');
     });
   }
   
-  // --- Fitness: Р•РґР° - РґРѕР±Р°РІР»РµРЅРёРµ (РѕС‚РєСЂС‹С‚РёРµ РјРѕРґР°Р»РєРё) ---
+  // --- Fitness: Еда - добавление (открытие модалки) ---
   const fitnessFoodAddBtn = document.getElementById('fitnessFoodAdd');
 
   if (fitnessFoodAddBtn) {
     fitnessFoodAddBtn.addEventListener('click', () => {
-      fitnessOpenFoodModal(null); // РѕС‚РєСЂС‹РІР°РµРј РЅР°С€Сѓ РѕР±СЉРµРґРёРЅС‘РЅРЅСѓСЋ С„РѕСЂРјСѓ (СЂСѓС‡РЅРѕР№/Р°РІС‚Рѕ)
+      fitnessOpenFoodModal(null); // открываем нашу объединённую форму (ручной/авто)
     });
   }
 
 
   // ========== COLLAPSIBLE FITNESS CARDS ==========
   
-  // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃРІРѕСЂР°С‡РёРІР°РµРјС‹С… РєР°СЂС‚РѕС‡РµРє
+  // Инициализация сворачиваемых карточек
   function fitnessInitCollapsibleCards() {
     const headers = document.querySelectorAll('.fitness-card-header');
     
     headers.forEach(header => {
-      // РџСЂРѕРІРµСЂСЏРµРј, РЅРµ РґРѕР±Р°РІР»РµРЅ Р»Рё СѓР¶Рµ РѕР±СЂР°Р±РѕС‚С‡РёРє
+      // Проверяем, не добавлен ли уже обработчик
       if (header.dataset.collapseInitialized) return;
       header.dataset.collapseInitialized = 'true';
       
       header.addEventListener('click', (e) => {
-        // РќРµ СЃРІРѕСЂР°С‡РёРІР°С‚СЊ РїСЂРё РєР»РёРєРµ РЅР° РєРЅРѕРїРєРё РІРЅСѓС‚СЂРё С€Р°РїРєРё
+        // Не сворачивать при клике на кнопки внутри шапки
         if (e.target.tagName === 'BUTTON' || e.target.closest('BUTTON')) return;
         
-        // РџР Р•Р”РћРўР’Р РђР©Р•РќРР• РљРћРќР¤Р›РРљРўРђ: РѕСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІСЃРїР»С‹С‚РёРµ, С‡С‚РѕР±С‹ РєР»РёРє РїРѕ header
-        // РЅРµ РІС‹Р·С‹РІР°Р» РѕР±СЂР°Р±РѕС‚С‡РёРєРё РЅР° СЂРѕРґРёС‚РµР»СЊСЃРєРѕР№ РєР°СЂС‚РѕС‡РєРµ (РЅР°РїСЂРёРјРµСЂ, РѕС‚РєСЂС‹С‚РёРµ РїРѕРїР°РїР° СЌРЅРµСЂРіРёРё)
+        // ПРЕДОТВРАЩЕНИЕ КОНФЛИКТА: останавливаем всплытие, чтобы клик по header
+        // не вызывал обработчики на родительской карточке (например, открытие попапа энергии)
         e.stopPropagation();
         
         const card = header.closest('[class*="bg-white/"]');
@@ -2759,11 +2598,11 @@
           const isCollapsed = body.classList.contains('collapsed');
           
           if (isCollapsed) {
-            // Р Р°Р·РІРѕСЂР°С‡РёРІР°РµРј
+            // Разворачиваем
             body.classList.remove('collapsed');
             if (chevron) chevron.classList.remove('rotated');
           } else {
-            // РЎРІРѕСЂР°С‡РёРІР°РµРј
+            // Сворачиваем
             body.classList.add('collapsed');
             if (chevron) chevron.classList.add('rotated');
           }
@@ -2771,27 +2610,27 @@
       });
     });
     
-    // Р РђР—Р’Р•Р”Р•РќРР• РљР›РРљРћР’: РґР»СЏ РєР°СЂС‚РѕС‡РєРё СЌРЅРµСЂРіРёРё - РѕС‚РєСЂС‹С‚РёРµ РїРѕРїР°РїР° С‚РѕР»СЊРєРѕ РїСЂРё РєР»РёРєРµ РїРѕ body (РЅРµ РїРѕ header)
+    // РАЗВЕДЕНИЕ КЛИКОВ: для карточки энергии - открытие попапа только при клике по body (не по header)
     const energyCard = document.getElementById('fitnessCaloriesCard');
     if (energyCard && !energyCard.dataset.popupHandlerAdded) {
       energyCard.dataset.popupHandlerAdded = 'true';
       energyCard.addEventListener('click', (e) => {
-        // Р•СЃР»Рё РєР»РёРє РїРѕ header - СЌС‚Рѕ РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ СЃРІРѕСЂР°С‡РёРІР°РЅРёРµ, РёРіРЅРѕСЂРёСЂСѓРµРј
+        // Если клик по header - это обрабатывает сворачивание, игнорируем
         if (e.target.closest('.fitness-card-header')) return;
-        // РРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ РєР»РёРєРё РїРѕ РєРЅРѕРїРєР°Рј
+        // Игнорировать клики по кнопкам
         if (e.target.closest('button')) return;
-        // РћС‚РєСЂС‹РІР°РµРј РїРѕРїР°Рї РґРµС‚Р°Р»РёР·Р°С†РёРё СЌРЅРµСЂРіРёРё
+        // Открываем попап детализации энергии
         if (typeof fitnessOpenEnergyDetails === 'function') {
           fitnessOpenEnergyDetails();
         }
       });
     }
     
-    // РћР±РЅРѕРІР»СЏРµРј РјРёРЅРё-РґР°РЅРЅС‹Рµ РІ С€Р°РїРєР°С…
+    // Обновляем мини-данные в шапках
     fitnessUpdateCardSummaries();
   }
   
-  // РћР±РЅРѕРІР»РµРЅРёРµ РјРёРЅРё-РґР°РЅРЅС‹С… РІ С€Р°РїРєР°С… РєР°СЂС‚РѕС‡РµРє
+  // Обновление мини-данных в шапках карточек
   function fitnessUpdateCardSummaries() {
     const dateKey = fitnessGetDateKey ? fitnessGetDateKey() : document.getElementById('fitnessDate')?.value;
     if (!dateKey) return;
@@ -2800,17 +2639,17 @@
     const profile = FS.getFitnessProfile();
     const summary = FS.getCaloriesSummary(profile, dayData);
     
-    // 1. Р­РЅРµСЂРіРёСЏ С‚РµР»Р° - РјРёРЅРё-С€РєР°Р»Р° Р±Р°Р»Р°РЅСЃР°
+    // 1. Энергия тела - мини-шкала баланса
     fitnessUpdateEnergyMiniSummary(dayData, summary);
     
-    // 2. РђРєС‚РёРІРЅРѕСЃС‚СЊ - РјРёРЅРё-СЃС‚СЂРѕРєР° Рё РїРѕР»РѕСЃРєРё
+    // 2. Активность - мини-строка и полоски
     fitnessUpdateActivityMiniSummary(dayData, summary);
     
-    // 3. РџРѕРґРґРµСЂР¶РєР° С‚РµР»Р° - РјРёРЅРё-СЃС‚СЂРѕРєР°
+    // 3. Поддержка тела - мини-строка
     fitnessUpdateSupportMiniSummary(dayData);
   }
   
-  // РћР±РЅРѕРІР»РµРЅРёРµ РјРёРЅРё-С€Р°РїРєРё Р­РЅРµСЂРіРёРё
+  // Обновление мини-шапки Энергии
   function fitnessUpdateEnergyMiniSummary(dayData, summary) {
     const energyBalance = summary?.balance || 0;
     const MAX_ABS_BALANCE = 1000;
@@ -2819,32 +2658,32 @@
     const balanceText = document.getElementById('energyMiniBalanceText');
     
     if (balanceFill && balanceText) {
-      // Р¦РІРµС‚: Р·РµР»С‘РЅС‹Р№ РїСЂРё РґРµС„РёС†РёС‚Рµ (Р±Р°Р»Р°РЅСЃ < 0), РєСЂР°СЃРЅС‹Р№ РїСЂРё РїСЂРѕС„РёС†РёС‚Рµ (Р±Р°Р»Р°РЅСЃ > 0)
+      // Цвет: зелёный при дефиците (баланс < 0), красный при профиците (баланс > 0)
       const isDeficit = energyBalance <= 0;
       balanceFill.className = 'fitness-mini-balance-fill ' + (isDeficit ? 'bg-green-400' : 'bg-red-400');
       
-      // РџРѕР·РёС†РёРѕРЅРёСЂРѕРІР°РЅРёРµ: РѕС‚ С†РµРЅС‚СЂР° РІР»РµРІРѕ РёР»Рё РІРїСЂР°РІРѕ
+      // Позиционирование: от центра влево или вправо
       if (energyBalance === 0) {
         balanceFill.style.left = '50%';
         balanceFill.style.width = '0%';
       } else if (isDeficit) {
-        // Р”РµС„РёС†РёС‚ - РІР»РµРІРѕ РѕС‚ С†РµРЅС‚СЂР°
+        // Дефицит - влево от центра
         balanceFill.style.left = (50 - balancePercent) + '%';
         balanceFill.style.width = balancePercent + '%';
       } else {
-        // РџСЂРѕС„РёС†РёС‚ - РІРїСЂР°РІРѕ РѕС‚ С†РµРЅС‚СЂР°
+        // Профицит - вправо от центра
         balanceFill.style.left = '50%';
         balanceFill.style.width = balancePercent + '%';
       }
       
-      // РўРµРєСЃС‚: "-350 РєРєР°Р»" РёР»Рё "+200 РєРєР°Р»"
+      // Текст: "-350 ккал" или "+200 ккал"
       const sign = energyBalance > 0 ? '+' : '';
       balanceText.textContent = sign + energyBalance;
       balanceText.className = 'text-[10px] font-medium ' + (isDeficit ? 'text-green-300' : 'text-red-300');
     }
   }
   
-  // РћР±РЅРѕРІР»РµРЅРёРµ РјРёРЅРё-С€Р°РїРєРё РђРєС‚РёРІРЅРѕСЃС‚Рё
+  // Обновление мини-шапки Активности
   function fitnessUpdateActivityMiniSummary(dayData, summary) {
     const activities = dayData?.activities || [];
     const totals = { gym: 0, cardio: 0, home: 0, steps: 0, count: 0 };
@@ -2867,15 +2706,15 @@
     
     const totalActivityCal = totals.gym + totals.cardio + totals.home + totals.steps;
     
-    // РњРёРЅРё-СЃС‚СЂРѕРєР° (СЃРѕРєСЂР°С‰С‘РЅРЅРѕ)
+    // Мини-строка (сокращённо)
     const activitySummary = document.getElementById('activityMiniSummary');
     if (activitySummary) {
-      activitySummary.textContent = totals.count + ' Р°РєС‚. В· ' + totalActivityCal + ' РєРєР°Р»';
+      activitySummary.textContent = totals.count + ' акт. · ' + totalActivityCal + ' ккал';
     }
     
-    // РњРёРЅРё-РїРѕР»РѕСЃРєРё (РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅРѕ РєР°Р»РѕСЂРёСЏРј)
+    // Мини-полоски (пропорционально калориям)
     const maxCal = Math.max(totals.gym, totals.cardio, totals.home, totals.steps, 1);
-    const stripWidth = 40; // РјР°РєСЃ С€РёСЂРёРЅР° РІ px
+    const stripWidth = 40; // макс ширина в px
     
     const updateStrip = (id, cal) => {
       const el = document.getElementById(id);
@@ -2892,24 +2731,24 @@
     updateStrip('miniStripSteps', totals.steps);
   }
   
-  // РћР±РЅРѕРІР»РµРЅРёРµ РјРёРЅРё-С€Р°РїРєРё РџРѕРґРґРµСЂР¶РєРё С‚РµР»Р°
+  // Обновление мини-шапки Поддержки тела
   function fitnessUpdateSupportMiniSummary(dayData) {
     const dateKey = fitnessGetDateKey ? fitnessGetDateKey() : document.getElementById('fitnessDate')?.value;
     if (!dateKey) return;
     
-    // Р•РґР°
+    // Еда
     const eaten = (dayData?.foods || []).reduce((sum, f) => sum + (f.calories || 0), 0);
     
-    // Р’РѕРґР°
+    // Вода
     const waterData = FS.getWaterData(dateKey);
     const waterCurrent = (waterData?.currentMl || 0) / 1000;
     const waterTarget = ((waterData?.targetMl || 2000)) / 1000;
     
-    // Р‘РђР”С‹
+    // БАДы
     const supplements = FS.getAllSupplements();
     let suppTaken = 0, suppTotal = 0;
     
-    // РЎС‡РёС‚Р°РµРј Р‘РђР”С‹ РЅР° СЃРµРіРѕРґРЅСЏ
+    // Считаем БАДы на сегодня
     supplements.forEach(s => {
       if (s.daily) {
         const inInterval = FS.isDateInDailyInterval(s, dateKey);
@@ -2923,26 +2762,26 @@
     
     const supportSummary = document.getElementById('supportMiniSummary');
     if (supportSummary) {
-      // Р•РґР°
-      let text = 'Р•РґР°: ' + eaten + ' РєРєР°Р»';
+      // Еда
+      let text = 'Еда: ' + eaten + ' ккал';
       
-      // Р’РѕРґР° (РїРѕРґСЃРІРµС‡РёРІР°РµРј РµСЃР»Рё РІС‹РїРѕР»РЅРµРЅР°)
+      // Вода (подсвечиваем если выполнена)
       const waterClass = waterCurrent >= waterTarget ? 'text-emerald-300' : '';
-      text += ' В· Р’РѕРґР°: <span class="' + waterClass + '">' + waterCurrent.toFixed(1) + ' / ' + waterTarget.toFixed(1) + ' Р»</span>';
+      text += ' · Вода: <span class="' + waterClass + '">' + waterCurrent.toFixed(1) + ' / ' + waterTarget.toFixed(1) + ' л</span>';
       
-      // Р‘РђР”С‹
+      // БАДы
       if (suppTotal > 0) {
         const suppClass = suppTaken >= suppTotal ? 'text-emerald-300' : (suppTaken < suppTotal ? 'text-amber-300' : '');
-        text += ' В· Р‘РђР”С‹: <span class="' + suppClass + '">' + suppTaken + ' / ' + suppTotal + '</span>';
+        text += ' · БАДы: <span class="' + suppClass + '">' + suppTaken + ' / ' + suppTotal + '</span>';
       } else {
-        text += ' В· Р‘РђР”С‹: 0 / 0';
+        text += ' · БАДы: 0 / 0';
       }
       
       supportSummary.innerHTML = text;
     }
   }
   
-  // Р’С‹Р·РѕРІ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РїСЂРё Р·Р°РіСЂСѓР·РєРµ Рё РїСЂРё РёР·РјРµРЅРµРЅРёРё РґР°РЅРЅС‹С…
+  // Вызов инициализации при загрузке и при изменении данных
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       setTimeout(fitnessInitCollapsibleCards, 100);
@@ -2951,8 +2790,8 @@
     setTimeout(fitnessInitCollapsibleCards, 100);
   }
 
-  // ========== РЎР’РћР РђР§РР’РђРќРР• РџРћ РЈРњРћР›Р§РђРќРР® ==========
-  // Р”РѕР±Р°РІР»СЏРµРј РєР»Р°СЃСЃ collapsed РєРѕ РІСЃРµРј РєР°СЂС‚РѕС‡РєР°Рј РїСЂРё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
+  // ========== СВОРАЧИВАНИЕ ПО УМОЛЧАНИЮ ==========
+  // Добавляем класс collapsed ко всем карточкам при инициализации
   function fitnessCollapseAllCards() {
     document.querySelectorAll('.fitness-card-body').forEach(body => {
       body.classList.add('collapsed');
@@ -2962,25 +2801,25 @@
     });
   }
 
-  // Р’С‹Р·С‹РІР°РµРј СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё
+  // Вызываем сразу после инициализации
   setTimeout(fitnessCollapseAllCards, 150);
 
-  // ========== РљРќРћРџРљРђ "РќРђР—РђР”" Р’РќРЈРўР Р Р”РђРЁР‘РћР Р”Рђ ==========
+  // ========== КНОПКА "НАЗАД" ВНУТРИ ДАШБОРДА ==========
   const fitnessBackInDashboard = document.getElementById('fitnessBackInDashboard');
   if (fitnessBackInDashboard) {
     fitnessBackInDashboard.addEventListener('click', () => {
-      // Р’РѕР·РІСЂР°С‰Р°РµРјСЃСЏ РЅР° РіР»Р°РІРЅС‹Р№ СЌРєСЂР°РЅ С‡РµСЂРµР· showMain()
+      // Возвращаемся на главный экран через showMain()
       if (typeof showMain === 'function') {
         showMain();
       } else {
-        // Р¤РѕР»Р»Р±РµРє - СЃРєСЂС‹С‚СЊ С„РёС‚РЅРµСЃ-СЌРєСЂР°РЅ
+        // Фоллбек - скрыть фитнес-экран
         const fitnessScreen = document.getElementById('fitnessScreen');
         if (fitnessScreen) fitnessScreen.classList.add('hidden');
       }
     });
   }
 
-  // ========== Р—РђР“Р РЈР—РљРђ Р¤РћРўРћ ==========
+  // ========== ЗАГРУЗКА ФОТО ==========
   const PHOTO_DEBUG_MODE = true;
   const PHOTO_CURRENT_KEY = 'fitness_photo_current';
   const fitnessPhotoUpload = document.getElementById('fitnessPhotoUpload');
@@ -3068,7 +2907,7 @@
 
       if (!file.type.startsWith('image/')) {
         fitnessPhotoDebugLog('photo: error/unsupported (not image)');
-        showAlert('РџРѕР¶Р°Р»СѓР№СЃС‚Р°, РІС‹Р±РµСЂРёС‚Рµ РёР·РѕР±СЂР°Р¶РµРЅРёРµ');
+        showAlert('Пожалуйста, выберите изображение');
         return;
       }
 
@@ -3089,11 +2928,11 @@
         }
 
         fitnessPhotoDebugLog('photo: file read ok, preview shown');
-        showAlert('Р¤РѕС‚Рѕ СЃРѕС…СЂР°РЅРµРЅРѕ!');
+        showAlert('Фото сохранено!');
       } catch (err) {
-        console.warn('РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ С„РѕС‚Рѕ:', err);
+        console.warn('Не удалось сохранить фото:', err);
         fitnessPhotoDebugLog('photo: error/unsupported (localStorage save failed)');
-        showAlert('РћС€РёР±РєР° РїСЂРё С‡С‚РµРЅРёРё РёР»Рё СЃРѕС…СЂР°РЅРµРЅРёРё С„Р°Р№Р»Р°');
+        showAlert('Ошибка при чтении или сохранении файла');
       }
     });
   }
@@ -3113,7 +2952,7 @@
         if (fitnessAvatarPlaceholder) fitnessAvatarPlaceholder.classList.remove('hidden');
       }
     } catch (err) {
-      console.warn('РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ С„РѕС‚Рѕ:', err);
+      console.warn('Не удалось загрузить фото:', err);
       if (fitnessAvatar) fitnessAvatar.classList.add('hidden');
       if (fitnessAvatarPlaceholder) fitnessAvatarPlaceholder.classList.remove('hidden');
     }
@@ -3122,107 +2961,11 @@
   setTimeout(fitnessLoadSavedPhoto, 200);
 
 
-  // ========== РљРќРћРџРљРђ "Р¤РРўРќР•РЎ" РќРђ Р“Р›РђР’РќРћРњ Р­РљР РђРќР• ==========
+  // ========== КНОПКА "ФИТНЕС" НА ГЛАВНОМ ЭКРАНЕ ==========
   if (el.fitnessBtn && !el.fitnessBtn.dataset.fitnessOpenBound) {
-    if (!el.fitnessBtn.dataset.fitnessLegacyBound) {
-      el.fitnessBtn.dataset.fitnessLegacyBound = '1';
-      el.fitnessBtn.addEventListener('click', () => {
-        showFitness();
-      });
-    }
-  }
 
-
-  // ========== РљРќРћРџРљРђ "РќРђР—РђР”" Р’РќРР—РЈ РЎРџР РђР’Рђ ==========
-  const fitnessBackInDashboardFixed = document.getElementById('fitnessBackInDashboardFixed');
-  if (fitnessBackInDashboardFixed) {
-    fitnessBackInDashboardFixed.addEventListener('click', () => {
-      // Р’РѕР·РІСЂР°С‰Р°РµРјСЃСЏ РЅР° РіР»Р°РІРЅС‹Р№ СЌРєСЂР°РЅ С‡РµСЂРµР· showMain()
-      if (typeof showMain === 'function') {
-        showMain();
-      } else {
-        // Р¤РѕР»Р»Р±РµРє - СЃРєСЂС‹С‚СЊ С„РёС‚РЅРµСЃ-СЌРєСЂР°РЅ
-        const fitnessScreen = document.getElementById('fitnessScreen');
-        if (fitnessScreen) fitnessScreen.classList.add('hidden');
-      }
-    });
-  }
-
-
-  // ========== РџР•Р Р•РљР›Р®Р§Р•РќРР• РўР•РњР« ==========
-  const THEME_STORAGE_KEY = 'fitnessTheme';
-  const DEFAULT_THEME = 'dark'; // РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ С‚С‘РјРЅР°СЏ С‚РµРјР°
-  
-  // Р¤СѓРЅРєС†РёСЏ РїСЂРёРјРµРЅРµРЅРёСЏ С‚РµРјС‹
-  function fitnessApplyTheme(theme) {
-    const root = document.documentElement;
-    const themeToggle = document.getElementById('fitnessThemeToggle');
-    const themeLabel = document.getElementById('fitnessThemeLabel');
-    const mainThemeToggle = document.getElementById('mainThemeToggle');
-    const mainThemeLabel = document.getElementById('mainThemeLabel');
-    
-    if (theme === 'dark') {
-      // РўС‘РјРЅР°СЏ С‚РµРјР° - РґРѕР±Р°РІР»СЏРµРј Р°С‚СЂРёР±СѓС‚
-      root.setAttribute('data-fitness-theme', 'dark');
-      if (themeToggle) {
-        themeToggle.textContent = 'РўС‘РјРЅР°СЏ';
-        themeToggle.classList.remove('bg-white/20');
-        themeToggle.classList.add('bg-indigo-500/50');
-      }
-      if (themeLabel) themeLabel.textContent = 'РўС‘РјРЅР°СЏ';
-      if (mainThemeToggle) {
-        mainThemeToggle.textContent = 'РўС‘РјРЅР°СЏ';
-        mainThemeToggle.classList.remove('bg-white/20');
-        mainThemeToggle.classList.add('bg-indigo-500/50');
-      }
-      if (mainThemeLabel) mainThemeLabel.textContent = 'РўС‘РјРЅР°СЏ';
-    } else {
-      // РЎРІРµС‚Р»Р°СЏ С‚РµРјР° - СѓР±РёСЂР°РµРј Р°С‚СЂРёР±СѓС‚
-      root.removeAttribute('data-fitness-theme');
-      if (themeToggle) {
-        themeToggle.textContent = 'РЎРІРµС‚Р»Р°СЏ';
-        themeToggle.classList.remove('bg-indigo-500/50');
-        themeToggle.classList.add('bg-white/20');
-      }
-      if (themeLabel) themeLabel.textContent = 'РЎРІРµС‚Р»Р°СЏ';
-      if (mainThemeToggle) {
-        mainThemeToggle.textContent = 'РЎРІРµС‚Р»Р°СЏ';
-        mainThemeToggle.classList.remove('bg-indigo-500/50');
-        mainThemeToggle.classList.add('bg-white/20');
-      }
-      if (mainThemeLabel) mainThemeLabel.textContent = 'РЎРІРµС‚Р»Р°СЏ';
-    }
-  }
-  
-  // Р¤СѓРЅРєС†РёСЏ РїРµСЂРµРєР»СЋС‡РµРЅРёСЏ С‚РµРјС‹
-  function fitnessToggleTheme() {
-    const currentTheme = localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME;
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-    fitnessApplyTheme(newTheme);
-  }
-  
-  // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ С‚РµРјС‹ РїСЂРё Р·Р°РіСЂСѓР·РєРµ
-  function fitnessInitTheme() {
-    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME;
-    fitnessApplyTheme(savedTheme);
-  }
-  
-  // РћР±СЂР°Р±РѕС‚С‡РёРє РєРЅРѕРїРєРё РїРµСЂРµРєР»СЋС‡РµРЅРёСЏ С‚РµРјС‹
-  const fitnessThemeToggle = document.getElementById('fitnessThemeToggle');
-  if (fitnessThemeToggle) {
-    fitnessThemeToggle.addEventListener('click', fitnessToggleTheme);
-  }
-
-  const mainThemeToggle = document.getElementById('mainThemeToggle');
-  if (mainThemeToggle) {
-    mainThemeToggle.addEventListener('click', fitnessToggleTheme);
-  }
-  
-  // РџСЂРёРјРµРЅСЏРµРј С‚РµРјСѓ РїСЂРё Р·Р°РіСЂСѓР·РєРµ
-  fitnessInitTheme();
-
-
-}); // РєРѕРЅРµС† DOMContentLoaded
-
+// === EXPORTS ===
+window.GymModule = {
+  init: typeof initGymModule !== 'undefined' ? initGymModule : null,
+};
+})();

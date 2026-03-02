@@ -1216,10 +1216,24 @@
     </div>
   </div>
 
-  <script src="./app.js" defer></script>
+  <!-- Modular Architecture (Simplified for Production) -->
+  
+  <!-- Fitness logic modules (must load before app.js) -->
   <script src="./activity-calories.js"></script>
-  <script src="./fitness.js"></script>  
+  <script src="./fitness.js"></script>
   <script src="./fitness-sync.js"></script>
+  
+  <!-- Main application (contains all UI code) -->
+  <script src="./app.js"></script>
+  
+  <!-- 
+    NOTE: Extracted modules available for future refactoring:
+    - modules/fitness-ui.js (~2600 lines) - Fitness UI code
+    - modules/gym.js (~3000 lines) - GYM module code
+    - app-core.js (~450 lines) - Core initialization
+    See REFACTORING.md for details
+  -->
+
 
   <!-- Модальное окно: Детализация Энергии тела -->
   <div id="energyDetailsModalOverlay" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-40">

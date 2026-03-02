@@ -1,428 +1,34 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
-  const tg = window.Telegram?.WebApp;
-  const isTelegram = Boolean(tg && typeof tg === 'object');
-  
-  if (isTelegram) {
-    tg?.ready();
-  }
-  
-  const tgUser = tg?.initDataUnsafe?.user ?? null;
-  const isDemoUser = !(tgUser && tgUser.id);
-  const user = !isDemoUser ? tgUser : { id: 123, username: 'demo_user', first_name: 'Demo User' };
-  const supabaseEnabled = Boolean(isTelegram && !isDemoUser && user?.id);
-  const fitnessModalOverlay = document.getElementById('fitnessModalOverlay');
-  const fitnessModalContent = document.getElementById('fitnessModalContent');
-  const cycleSelect = document.getElementById('gymCycleSelect');
+/**
+ * Fitness UI Module
+ * Handles fitness dashboard, modals, and user interactions
+ * Depends on: fitness.js, fitness-sync.js
+ */
+(function() {
+'use strict';
 
-
-  const showAlert = (message) => {
-    if (isTelegram && typeof tg?.showAlert === 'function') {
-      try {
-        tg.showAlert(message);
-      } catch (e) {
-        window.alert(message);
-      }
-    } else {
-      window.alert(message);
-    }
-  };
-
-  if (isTelegram) {
-    try {
-      if (typeof tg.expand === 'function') tg.expand();
-    } catch (e) {}
-  }
-
-  const SUPABASE_URL = 'https://zhpwehjbonzffpxdrbyl.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpocHdlaGpib256ZmZweGRyYnlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNzM3MjAsImV4cCI6MjA4Njk0OTcyMH0.em0tBA_YArxA2QQO-r5CWCFnyiknre88Mn6wsrX2ARs';
-  window.currentAppUserId = null; // РґР»СЏ fitness СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё
-
-  let currentUser = null;
-  let currentDay = 1;
-  let currentAppUserId = null; // РµРґРёРЅС‹Р№ ID РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РІ РЅР°С€РµРј РїСЂРёР»РѕР¶РµРЅРёРё
-
-  const el = {
-    main: document.getElementById('main'),
-    buddyScreen: document.getElementById('buddyScreen'),
-    completeBtn: document.getElementById('completeBtn'),
-    habitsBtn: document.getElementById('habitsBtn'),
-    buddyBtn: document.getElementById('buddyBtn'),
-    backBtn: document.getElementById('backBtn'),
-    fitnessBtn: document.getElementById('fitnessBtn'),
-    lessonTitle: document.getElementById('lessonTitle'),
-    lessonDesc: document.getElementById('lessonDesc'),
-    video: document.getElementById('video'),
-    currentDay: document.getElementById('currentDay'),
-    streak: document.getElementById('streak'),
-    points: document.getElementById('points'),
-  };
-
-  // РєРѕСЂРЅРµРІС‹Рµ СЌРєСЂР°РЅС‹
-  const rootScreens = {
-    main: document.getElementById('main'),
-    fitness: document.getElementById('fitnessScreen'),
-    buddy: document.getElementById('buddyScreen'),
-  };
-
-  function setFitnessScreenActive(active) {
-    document.body.classList.toggle('fitness-screen-active', Boolean(active));
-  }
-
-  function showMain() {
-    setFitnessScreenActive(false);
-    if (rootScreens.main) rootScreens.main.classList.remove('hidden');
-    if (rootScreens.fitness) rootScreens.fitness.classList.add('hidden');
-    if (rootScreens.buddy) rootScreens.buddy.classList.add('hidden');
-  }
-
-  function showBuddy() {
-    setFitnessScreenActive(false);
-    if (rootScreens.main) rootScreens.main.classList.add('hidden');
-    if (rootScreens.fitness) rootScreens.fitness.classList.add('hidden');
-    if (rootScreens.buddy) rootScreens.buddy.classList.remove('hidden');
-  }
-
-  function showFitness() {
-    setFitnessScreenActive(true);
-    if (rootScreens.main) rootScreens.main.classList.add('hidden');
-    if (rootScreens.buddy) rootScreens.buddy.classList.add('hidden');
-    if (rootScreens.fitness) {
-      rootScreens.fitness.classList.remove('hidden');
-      rootScreens.fitness.scrollTop = 0;
-    }
-    // Р’РќРЈРўР Р•РќРќР®Р® РѕС‡РёСЃС‚РєСѓ С„РёС‚РЅРµСЃР° РґРѕР±Р°РІРёРј РїРѕР·Р¶Рµ, РєРѕРіРґР° fitnessEl Р±СѓРґРµС‚ РѕР±СЉСЏРІР»РµРЅ
-  }
-
-  function showBuddy() {
-    if (rootScreens.main) rootScreens.main.classList.add('hidden');
-    if (rootScreens.fitness) rootScreens.fitness.classList.add('hidden');
-    if (rootScreens.buddy) rootScreens.buddy.classList.remove('hidden');
-  }
-
-
-  function setCompleteButtonState({ completed }) {
-    if (!el.completeBtn) return;
-    if (completed) {
-      el.completeBtn.textContent = 'вњ… Р’С‹РїРѕР»РЅРµРЅРѕ!';
-      el.completeBtn.disabled = true;
-      el.completeBtn.className = 'w-full bg-green-400 py-3 rounded-xl font-semibold text-lg cursor-not-allowed';
-    } else {
-      el.completeBtn.textContent = 'вњ… Р’С‹РїРѕР»РЅРµРЅРѕ';
-      el.completeBtn.disabled = false;
-      el.completeBtn.className = 'w-full bg-green-500 hover:bg-green-600 py-3 rounded-xl font-semibold text-lg';
-    }
-  }
-
-  function updateUI() {
-    if (!currentUser) return;
-    if (el.currentDay) el.currentDay.textContent = `Р”РµРЅСЊ ${currentDay}/30`;
-    if (el.streak) el.streak.textContent = String(currentUser.streak ?? 0);
-    if (el.points) el.points.textContent = String(currentUser.points ?? 0);
-  }
-
-  function initProfileHeader() {
-    const photoEl = document.getElementById('profilePhoto');
-    const nameEl = document.getElementById('profileName');
-    const usernameEl = document.getElementById('profileUsername');
-
-    if (!photoEl || !nameEl || !usernameEl) return;
-
-    nameEl.textContent = user.first_name || 'LeakFixer User';
-    usernameEl.textContent = user.username || 'demo';
-
-    // РџРѕРєР° РїСЂРѕСЃС‚Рѕ Р·Р°РіР»СѓС€РєР°-Р°РІР°С‚Р°СЂ, РїРѕР·Р¶Рµ РїРѕРґС‚СЏРЅРµРј СЂРµР°Р»СЊРЅРѕРµ С„РѕС‚Рѕ С‡РµСЂРµР· Bot API
-    photoEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name || 'LF')}&background=4f46e5&color=ffffff`;
-    loadTelegramProfilePhoto(photoEl);
-  }
-
-  async function loadTelegramProfilePhoto(photoEl) {
-    if (!photoEl) return;
-    if (!isTelegram || isDemoUser) return;
-    if (!tg?.initData) return;
-
-    const cacheKey = `tg_avatar_url:${user.id}`;
-    const cached = window.localStorage?.getItem(cacheKey);
-    if (cached) {
-      photoEl.src = cached;
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/telegram-avatar?user_id=${encodeURIComponent(String(user.id))}`, {
-        headers: {
-          'x-telegram-init-data': tg.initData,
-        },
-      });
-      if (!res.ok) return;
-
-      const data = await res.json();
-      if (data?.photo_url) {
-        photoEl.src = data.photo_url;
-        window.localStorage?.setItem(cacheKey, data.photo_url);
-      }
-    } catch (e) {}
-  }
-
-  async function loadProfileHabits() {
-    const container = document.getElementById('profileHabits');
-    if (!container) return;
-
-    if (!supabaseEnabled) {
-      container.innerHTML = '';
-      return;
-    }
-
-    try {
-      // 1. РџРѕР»СѓС‡Р°РµРј СЃРїРёСЃРѕРє РїСЂРёРІС‹С‡РµРє
-      const habitsRes = await fetch(`${SUPABASE_URL}/rest/v1/habits?select=*`, {
-        headers: { apikey: SUPABASE_KEY }
-      });
-      const habits = await habitsRes.json();
-
-      if (!Array.isArray(habits) || habits.length === 0) {
-        container.innerHTML = '<div class="col-span-2 text-sm opacity-70 text-center">РџСЂРёРІС‹С‡РєРё РїРѕРєР° РЅРµ РґРѕР±Р°РІР»РµРЅС‹</div>';
-        return;
-      }
-
-      // 2. РџРѕР»СѓС‡Р°РµРј Р»РѕРіРё РІС‹РїРѕР»РЅРµРЅРёСЏ РїРѕ С‚РµРєСѓС‰РµРјСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ
-      const logsRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/habit_logs?app_user_id=eq.${currentAppUserId}&completed=eq.true&select=habit_id,day`,
-        { headers: { apikey: SUPABASE_KEY } }
-      );
-      const logs = await logsRes.json();
-      
-      const counts = {};
-      if (Array.isArray(logs)) {
-        for (const log of logs) {
-          if (!counts[log.habit_id]) counts[log.habit_id] = new Set();
-          counts[log.habit_id].add(log.day);
-        }
-      }
-
-      container.innerHTML = '';
-      habits.forEach(habit => {
-        const doneDays = counts[habit.id]?.size || 0;
-        const el = document.createElement('div');
-        el.className = 'bg-white/15 rounded-xl p-3 text-sm';
-
-        el.innerHTML = `
-          <div class="font-semibold mb-1">${habit.title || 'РџСЂРёРІС‹С‡РєР°'}</div>
-          <div class="text-xs opacity-80">${doneDays} / 30</div>
-        `;
-
-        container.appendChild(el);
-      });
-    } catch (e) {
-      container.innerHTML = '<div class="col-span-2 text-sm opacity-70 text-center">РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё РїСЂРёРІС‹С‡РµРє</div>';
-    }
-  }
-
-  async function initFromSupabase() {
-    try {
-      // 1. РС‰РµРј/СЃРѕР·РґР°РµРј app_user РїРѕ telegram_id
-      const usersRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/app_users?telegram_id=eq.${user.id}`,
-        {
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-          },
-        }
-      );
-      const appUsers = await usersRes.json();
-      let appUser = Array.isArray(appUsers) ? appUsers[0] : null;
-
-      if (!appUser) {
-        const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/app_users`, {
-          method: 'POST',
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            telegram_id: user.id,
-            username: user.username,
-          }),
-        });
-        const inserted = await insertRes.json();
-        appUser = Array.isArray(inserted) ? inserted[0] : null;
-      }
-
-      if (!appUser) {
-        throw new Error('app_user not resolved');
-      }
-
-      currentAppUserId = appUser.id;
-      window.currentAppUserId = currentAppUserId;
-      if (typeof initFitnessSync === 'function') {
-        initFitnessSync(currentAppUserId);
-      }
-      // 2. РЎС‚Р°СЂСѓСЋ С‚Р°Р±Р»РёС†Сѓ users РјРѕР¶РЅРѕ РІСЂРµРјРµРЅРЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РєР°Рє В«РїСЂРѕС„РёР»СЊ РїСЂРѕРіСЂРµСЃСЃР°В»
-      const legacyUsers = await fetch(
-        `${SUPABASE_URL}/rest/v1/users?app_user_id=eq.${currentAppUserId}`,
-        {
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-          },
-        }
-      ).then(r => r.json());
-      
-      const existing = Array.isArray(legacyUsers) ? legacyUsers[0] : null;
-      
-      if (!existing) {
-        const createRes = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-          method: 'POST',
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            telegram_id: user.id,
-            username: user.username,
-            app_user_id: currentAppUserId,
-            day: 1,
-            streak: 0,
-            points: 0,
-          }),
-        });
-        const createdArr = await createRes.json();
-        const created = Array.isArray(createdArr) ? createdArr[0] : null;
-      
-        currentUser = created || {
-          telegram_id: user.id,
-          username: user.username,
-          day: 1,
-          streak: 0,
-          points: 0,
-          app_user_id: currentAppUserId,
-        };
-        currentDay = 1;
-      } else {
-        currentUser = existing;
-        currentDay = Number(existing.day ?? 1);
-      }
-      
-
-      await loadDayFromSupabase();
-      updateUI();
-      await loadProfileHabits();
-    } catch (e) {
-      showAlert('РћС€РёР±РєР° РёРЅРёС†РёР°Р»РёР·Р°С†РёРё (Supabase).');
-      initBrowserMode();
-    }
-  }
-
-
-  function initBrowserMode() {
-    currentUser = { telegram_id: null, username: 'browser', day: 1, streak: 0, points: 0 };
-    currentDay = 1;
-
-    if (el.lessonTitle) el.lessonTitle.textContent = 'Р”РµРјРѕ-СЂРµР¶РёРј';
-    if (el.lessonDesc) el.lessonDesc.textContent = 'РћС‚РєСЂС‹С‚Рѕ РІ Р±СЂР°СѓР·РµСЂРµ. Telegram-РґР°РЅРЅС‹Рµ РЅРµРґРѕСЃС‚СѓРїРЅС‹.';
-    if (el.video) el.video.style.display = 'none';
-    setCompleteButtonState({ completed: false });
-    updateUI();
-    loadProfileHabits();
-  }
-
-  async function loadDayFromSupabase() {
-    const lessons = await fetch(`${SUPABASE_URL}/rest/v1/lessons?day=eq.${currentDay}`, {
-      headers: { apikey: SUPABASE_KEY },
-    }).then((r) => r.json());
-
-    const lesson = Array.isArray(lessons) ? lessons[0] : null;
-    if (!lesson) {
-      if (el.lessonTitle) el.lessonTitle.textContent = `Р”РµРЅСЊ ${currentDay}`;
-      if (el.lessonDesc) el.lessonDesc.textContent = 'РЈСЂРѕРє РЅРµ РЅР°Р№РґРµРЅ.';
-      if (el.video) el.video.style.display = 'none';
-      setCompleteButtonState({ completed: false });
-      return;
-    }
-
-    if (el.lessonTitle) el.lessonTitle.textContent = lesson.title ?? '';
-    if (el.lessonDesc) el.lessonDesc.textContent = lesson.description ?? '';
-    if (el.video) {
-      if (lesson.video_url) {
-        el.video.src = lesson.video_url;
-        el.video.style.display = 'block';
-      } else {
-        el.video.style.display = 'none';
-        el.video.removeAttribute('src');
-      }
-    }
-
-    const logs = await fetch(
-      `${SUPABASE_URL}/rest/v1/daily_logs?app_user_id=eq.${currentAppUserId}&day=eq.${currentDay}`,
-      {
-        headers: { apikey: SUPABASE_KEY },
-      }
-    ).then((r) => r.json());
-    
-
-    const completed = Boolean(Array.isArray(logs) && logs[0]?.completed);
-    setCompleteButtonState({ completed });
-  }
-
-  function nextDay() {
-    currentDay++;
-    if (currentUser) currentUser.day = currentDay;
-
-    if (supabaseEnabled) loadDayFromSupabase().catch(() => initBrowserMode());
-    else initBrowserMode();
-
-    updateUI();
-  }
-
-  if (el.completeBtn) {
-    el.completeBtn.addEventListener('click', async () => {
-      if (!supabaseEnabled) {
-        setCompleteButtonState({ completed: true });
-        nextDay();
-        return;
-      }
-
-      try {
-        await fetch(`${SUPABASE_URL}/rest/v1/daily_logs`, {
-          method: 'POST',
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            app_user_id: currentAppUserId,
-            day: currentDay,
-            completed: true,
-          }),
-        });
-
-        setCompleteButtonState({ completed: true });
-        showAlert('вњ… Р”РµРЅСЊ РІС‹РїРѕР»РЅРµРЅ! +10 Р±Р°Р»Р»РѕРІ');
-
-        if (isTelegram && tg?.MainButton) {
-          try {
-            tg.MainButton.setText('РЎР»РµРґСѓСЋС‰РёР№ РґРµРЅСЊ в†’').show();
-            tg.MainButton.onClick(nextDay);
-          } catch (e) {
-            nextDay();
-          }
-        } else {
-          nextDay();
-        }
-      } catch (e) {
-        showAlert('РћС€РёР±РєР° РїСЂРё СЃРѕС…СЂР°РЅРµРЅРёРё.');
-      }
-    });
-  }
+// === FITNESS UI CODE ===
 
   // --- Fitness tab (glue only: DOM refs, events, render; logic in fitness.js) ---
   const FITNESS_SETUP_DONE_KEY = 'leakfixer_fitness_setup_done';
   let fitnessSelectedDate = new Date();
   const FS = window.FitnessState;
   const FITNESS_SETTINGS_PANEL_ID = 'fitnessSettingsPanelDynamic';
+
+  const fitnessTexts = {
+    en: {
+      settingsSummary: (water, work, target) => `Water baseline: ${water} ml | Work profile: ${work} | Target weight: ${target}`,
+      fitnessSettingsTitle: 'Fitness Settings',
+      waterBaselineLabel: 'Water baseline (ml/day)',
+      workProfileLabel: 'Work profile',
+      targetWeightLabel: 'Target weight (kg)',
+      workProfiles: {
+        sedentary: 'Sedentary (desk)',
+        mixed: 'Mixed (on feet)',
+        physical: 'Physical labor',
+        variable: 'Variable'
+      }
+    }
+  };
 
   const fitnessEl = {
     screen: document.getElementById('fitnessScreen'),
@@ -469,7 +75,7 @@
     panel.className = 'bg-white/10 rounded-xl p-3 mt-3';
     panel.innerHTML = `
       <div class="text-[11px] uppercase tracking-wide opacity-70 mb-1">Fitness Settings</div>
-      <div class="text-xs opacity-80 mb-2" id="fitnessSettingsSummary">Water baseline: 2000 ml В· Work profile: variable В· Target weight: not set</div>
+      <div class="text-xs opacity-80 mb-2" id="fitnessSettingsSummary">Water baseline: 2000 ml · Work profile: variable · Target weight: not set</div>
       <button type="button" id="fitnessSettingsOpen" class="w-full py-2 rounded-xl bg-cyan-500/30 hover:bg-cyan-500/45 text-sm">Open Fitness Settings</button>
     `;
     settingsContainer.appendChild(panel);
@@ -478,8 +84,8 @@
     fitnessEl.settingsOpen?.addEventListener('click', () => fitnessOpenWaterBaselineModal());
   }
 
-  function fitnessApplyEnglishTexts() {
-    document.querySelectorAll('.supp-edit-norm').forEach((elNode) => { elNode.textContent = 'norm'; });
+  function fitnessApplyEnglishUILabels() {
+    document.querySelectorAll('.supp-edit-norm').forEach((elNode) => { elNode.textContent = 'Edit'; });
     document.querySelectorAll('.supp-history').forEach((elNode) => { elNode.textContent = 'history'; });
     document.querySelectorAll('.supp-add-intake').forEach((elNode) => { elNode.textContent = '+ Add intake'; });
     document.getElementById('addFirstSupplement')?.replaceChildren(document.createTextNode('+ Add first supplement'));
@@ -496,7 +102,11 @@
     const water = profile.waterBaselineMl || 2000;
     const targetWeight = profile.targetWeight ? `${profile.targetWeight} kg` : 'not set';
     const workProfile = profile.workProfile || 'variable';
-    summaryEl.textContent = `Water baseline: ${water} ml В· Work profile: ${workProfile} В· Target weight: ${targetWeight}`;
+    const t = (key, ...args) => {
+      const value = fitnessTexts.en[key];
+      return typeof value === 'function' ? value(...args) : value;
+    };
+    summaryEl.textContent = t('settingsSummary', water, workProfile, targetWeight);
   }
   
 
@@ -521,7 +131,7 @@
     fitnessEl.balance.textContent = summary.balance || 0;
     fitnessEl.balance.className = 'font-semibold ' + (summary.balanceColor === 'green' ? 'text-green-300' : summary.balanceColor === 'red' ? 'text-red-300' : '');
     
-    // РћР±РЅРѕРІР»РµРЅРёРµ Р±Р°СЂР° Р±Р°Р»Р°РЅСЃР° (РїРѕРґ РіСЂР°С„РёРєРѕРј РІРµСЃР°)
+    // Обновление бара баланса (под графиком веса)
     const balanceBarFill = document.getElementById('fitnessCalorieBalanceFill');
     if (balanceBarFill) {
       const MAX_ABS_BALANCE = 700;
@@ -553,7 +163,7 @@
       }
     }
     
-    // РђР’РўРћРЎРћРҐР РђРќР•РќРР• РІ Supabase
+    // АВТОСОХРАНЕНИЕ в Supabase
     if (window.FitnessSync && window.currentAppUserId) {
         const dateKey = fitnessGetDateKey();
         const dayData = FS.getDayData(dateKey);
@@ -568,20 +178,20 @@
     if (!fitnessEl.workDayLabel) return;
     const dayData = FS.getDayData(fitnessGetDateKey());
     const v = dayData.workDay;
-    let text = 'РљР°Рє РѕР±С‹С‡РЅРѕ';
-    if (v === 'low') text = 'Р‘РѕР»СЊС€Рµ СЃРёРґРµР»';
-    if (v === 'normal') text = 'РћР±С‹С‡РЅС‹Р№ РґРµРЅСЊ';
-    if (v === 'high') text = 'РћС‡РµРЅСЊ Р°РєС‚РёРІРЅС‹Р№ РґРµРЅСЊ';
+    let text = 'Как обычно';
+    if (v === 'low') text = 'Больше сидел';
+    if (v === 'normal') text = 'Обычный день';
+    if (v === 'high') text = 'Очень активный день';
     fitnessEl.workDayLabel.textContent = text;
   }
 
-  // РћС‚РєСЂС‹С‚СЊ РґРµС‚Р°Р»РёР·Р°С†РёСЋ СЌРЅРµСЂРіРёРё
+  // Открыть детализацию энергии
   function fitnessOpenEnergyDetails() {
     const profile = FS.getFitnessProfile();
     const dayData = FS.getDayData(fitnessGetDateKey());
     const summary = FS.getCaloriesSummary(profile, dayData);
     
-    // Р—Р°С‰РёС‚Р° РѕС‚ undefined - РёСЃРїРѕР»СЊР·СѓРµРј Р·РЅР°С‡РµРЅРёСЏ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+    // Защита от undefined - используем значения по умолчанию
     const eaten = summary.eaten || 0;
     const burned = summary.burned || 0;
     const balance = summary.balance || 0;
@@ -590,47 +200,47 @@
     const activityCal = summary.activityCal || 0;
     const workMultiplier = summary.workMultiplier || 1.2;
     
-    // Р Р°СЃС‡С‘С‚ РєР°Р»РѕСЂРёР№ СЂР°Р±РѕС‚С‹ (СЃ Р·Р°С‰РёС‚РѕР№ РѕС‚ NaN)
+    // Расчёт калорий работы (с защитой от NaN)
     const workKcal = Math.max(0, baseWithWork - baseRest);
     
-    // Р—Р°РїРѕР»РЅСЏРµРј РјРѕРґР°Р»СЊРЅРѕРµ РѕРєРЅРѕ
-    document.getElementById('energyDetailsEatenTotal').textContent = eaten + ' РєРєР°Р»';
-    document.getElementById('energyDetailsBurnedTotal').textContent = burned + ' РєРєР°Р»';
-    document.getElementById('energyDetailsBalance').textContent = balance + ' РєРєР°Р»';
-    document.getElementById('energyDetailsBaseRest').textContent = baseRest + ' РєРєР°Р»';
-    document.getElementById('energyDetailsWork').textContent = workKcal + ' РєРєР°Р»';
-    document.getElementById('energyDetailsActivity').textContent = activityCal + ' РєРєР°Р»';
+    // Заполняем модальное окно
+    document.getElementById('energyDetailsEatenTotal').textContent = eaten + ' ккал';
+    document.getElementById('energyDetailsBurnedTotal').textContent = burned + ' ккал';
+    document.getElementById('energyDetailsBalance').textContent = balance + ' ккал';
+    document.getElementById('energyDetailsBaseRest').textContent = baseRest + ' ккал';
+    document.getElementById('energyDetailsWork').textContent = workKcal + ' ккал';
+    document.getElementById('energyDetailsActivity').textContent = activityCal + ' ккал';
     
-    // РўРёРї СЂР°Р±РѕС‚С‹ Рё РґРЅСЏ
-    const workProfileLabels = { sedentary: 'РЎРёРґСЏС‡Р°СЏ', mixed: 'РќР° РЅРѕРіР°С…', physical: 'Р¤РёР·РёС‡РµСЃРєР°СЏ', variable: 'РњРµРЅСЏРµС‚СЃСЏ' };
-    const workDayLabels = { none: 'РќРµ СЂР°Р±РѕС‚Р°Р»', low: 'Р‘РѕР»СЊС€Рµ СЃРёРґРµР»', normal: 'РћР±С‹С‡РЅС‹Р№', high: 'РћС‡РµРЅСЊ Р°РєС‚РёРІРЅС‹Р№' };
-    document.getElementById('energyDetailsWorkProfile').textContent = workProfileLabels[profile.workProfile] || 'вЂ”';
-    document.getElementById('energyDetailsWorkDay').textContent = workDayLabels[dayData.workDay] || 'РћР±С‹С‡РЅС‹Р№';
+    // Тип работы и дня
+    const workProfileLabels = { sedentary: 'Сидячая', mixed: 'На ногах', physical: 'Физическая', variable: 'Меняется' };
+    const workDayLabels = { none: 'Не работал', low: 'Больше сидел', normal: 'Обычный', high: 'Очень активный' };
+    document.getElementById('energyDetailsWorkProfile').textContent = workProfileLabels[profile.workProfile] || '—';
+    document.getElementById('energyDetailsWorkDay').textContent = workDayLabels[dayData.workDay] || 'Обычный';
     
-    // РЎРїРёСЃРѕРє РµРґС‹
+    // Список еды
     const eatenList = document.getElementById('energyDetailsEatenList');
     if (dayData.foods && dayData.foods.length > 0) {
       eatenList.innerHTML = dayData.foods.map(function(f) { 
-        return '<div class="flex justify-between bg-white/5 rounded px-2 py-1"><span>' + (f.name || 'Р•РґР°') + '</span><span>' + (f.calories || 0) + ' РєРєР°Р»</span></div>';
+        return '<div class="flex justify-between bg-white/5 rounded px-2 py-1"><span>' + (f.name || 'Еда') + '</span><span>' + (f.calories || 0) + ' ккал</span></div>';
       }).join('');
     } else {
-      eatenList.innerHTML = '<div class="opacity-50 text-center py-2">РќРµС‚ Р·Р°РїРёСЃРµР№ Рѕ РїСЂРёС‘РјР°С… РїРёС‰Рё</div>';
+      eatenList.innerHTML = '<div class="opacity-50 text-center py-2">Нет записей о приёмах пищи</div>';
     }
     
-    // РўРµРєСЃС‚ Р±Р°Р»Р°РЅСЃР°
+    // Текст баланса
     const balanceText = document.getElementById('energyDetailsBalanceText');
     if (balance > 0) {
-      balanceText.textContent = 'РџСЂРѕС„РёС†РёС‚ вЂ” РІРѕР·РјРѕР¶РµРЅ РЅР°Р±РѕСЂ РІРµСЃР°';
+      balanceText.textContent = 'Профицит — возможен набор веса';
       balanceText.className = 'text-xs text-red-300 mt-1 text-center';
     } else if (balance < 0) {
-      balanceText.textContent = 'Р”РµС„РёС†РёС‚ вЂ” РІРѕР·РјРѕР¶РЅР° РїРѕС‚РµСЂСЏ РІРµСЃР°';
+      balanceText.textContent = 'Дефицит — возможна потеря веса';
       balanceText.className = 'text-xs text-green-300 mt-1 text-center';
     } else {
-      balanceText.textContent = 'РќРµР№С‚СЂР°Р»СЊРЅС‹Р№ Р±Р°Р»Р°РЅСЃ';
+      balanceText.textContent = 'Нейтральный баланс';
       balanceText.className = 'text-xs opacity-70 mt-1 text-center';
     }
     
-    // РџРѕРєР°Р·С‹РІР°РµРј РјРѕРґР°Р»СЊРЅРѕРµ РѕРєРЅРѕ
+    // Показываем модальное окно
     document.getElementById('energyDetailsModalOverlay').classList.remove('hidden');
   }
 
@@ -642,13 +252,43 @@
     if (!fitnessEl.activityList) return;
     const dayData = FS.getDayData(fitnessGetDateKey());
     const items = FS.getActivityListViewModel(dayData.activities);
-    const empty = '<li class="opacity-70 text-sm">РќРµС‚ Р·Р°РїРёСЃРµР№</li>';
+    const empty = '<li class="opacity-70 text-sm">Нет записей</li>';
     fitnessEl.activityList.innerHTML = items.length
       ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
         <span>${item.label}</span>
         <span>
-          <button type="button" class="fitness-activity-edit mr-2 text-xs opacity-80" data-id="${item.id}">РёР·Рј</button>
-          <button type="button" class="fitness-activity-delete text-xs opacity-80 text-red-300" data-id="${item.id}">СѓРґР»</button>
+          <button type="button" class="fitness-activity-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
+          <button type="button" class="fitness-activity-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
+        </span>
+      </li>`).join('')
+      : empty;
+    fitnessEl.activityList.querySelectorAll('.fitness-activity-edit').forEach((btn) => {
+      btn.addEventListener('click', () => fitnessOpenActivityModal(btn.dataset.id));
+    });
+    fitnessEl.activityList.querySelectorAll('.fitness-activity-delete').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const k = fitnessGetDateKey();
+        const dayData = FS.getDayData(k);
+        const next = FS.removeActivityById(dayData.activities, btn.dataset.id);
+        FS.updateDayData(k, { activities: next });
+        fitnessRenderActivityList();
+        fitnessRenderCalories();
+        fitnessRenderActivityBlock();
+      });
+    });
+  }
+
+  function fitnessApplyEnglishUILabels() {
+    if (!fitnessEl.activityList) return;
+    const dayData = FS.getDayData(fitnessGetDateKey());
+    const items = FS.getActivityListViewModel(dayData.activities);
+    const empty = '<li class="opacity-70 text-sm">Нет записей</li>';
+    fitnessEl.activityList.innerHTML = items.length
+      ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
+        <span>${item.label}</span>
+        <span>
+          <button type="button" class="fitness-activity-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
+          <button type="button" class="fitness-activity-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
         </span>
       </li>`).join('')
       : empty;
@@ -672,17 +312,17 @@
     if (!fitnessEl.foodList) return;
     const dayData = FS.getDayData(fitnessGetDateKey());
     const items = FS.getFoodListViewModel(dayData.foods);
-    const empty = '<li class="opacity-70 text-sm">РќРµС‚ Р·Р°РїРёСЃРµР№</li>';
+    const empty = '<li class="opacity-70 text-sm">Нет записей</li>';
     fitnessEl.foodList.innerHTML = items.length
       ? items.map((item) => `<li class="flex items-center justify-between py-2 border-b border-white/10">
             <span>
               ${item.timeText ? `<span class="opacity-70 mr-1">${item.timeText}</span>` : ''}
-              ${item.name} ${item.amount ? item.amount + ' ' : ''}${item.caloriesText ? 'вЂў ' + item.caloriesText : ''}
+              ${item.name} ${item.amount ? item.amount + ' ' : ''}${item.caloriesText ? '• ' + item.caloriesText : ''}
               ${item.macrosText ? `<span class="text-xs opacity-70 ml-1">(${item.macrosText})</span>` : ''}
             </span>
             <span>
-              <button type="button" class="fitness-food-edit mr-2 text-xs opacity-80" data-id="${item.id}">РёР·Рј</button>
-              <button type="button" class="fitness-food-delete text-xs opacity-80 text-red-300" data-id="${item.id}">СѓРґР»</button>
+              <button type="button" class="fitness-food-edit mr-2 text-xs opacity-80" data-id="${item.id}">изм</button>
+              <button type="button" class="fitness-food-delete text-xs opacity-80 text-red-300" data-id="${item.id}">удл</button>
             </span>
           </li>`).join('')
       : empty;    
@@ -714,7 +354,7 @@
     const targetLiters = FS.formatWaterLiters(waterData.targetMl);
     
     // Update main display
-    fitnessEl.waterTotal.textContent = `${currentLiters} / ${targetLiters} Р»`;
+    fitnessEl.waterTotal.textContent = `${currentLiters} / ${targetLiters} л`;
     
     // Calculate and display status
     const status = FS.getWaterStatus(waterData.currentMl, waterData.targetMl);
@@ -755,13 +395,13 @@
 
   // NEW: Open modal to manually adjust water
   function fitnessOpenWaterAdjustModal() {
-    let html = '<h3 class="font-semibold mb-4">РР·РјРµРЅРёС‚СЊ РІРѕРґСѓ</h3>';
+    let html = '<h3 class="font-semibold mb-4">Изменить воду</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">РР·РјРµРЅРµРЅРёРµ РІ РјР» (РјРѕР¶РЅРѕ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕРµ)</label>';
-    html += '<input type="number" id="fmWaterDelta" class="w-full p-3 bg-white/30 rounded-xl text-white" placeholder="РќР°РїСЂРёРјРµСЂ: -200 РёР»Рё +500">';
-    html += '<p class="text-xs opacity-70">Р’РІРµРґРёС‚Рµ РїРѕР»РѕР¶РёС‚РµР»СЊРЅРѕРµ С‡РёСЃР»Рѕ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ, РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕРµ вЂ” РґР»СЏ СѓРјРµРЅСЊС€РµРЅРёСЏ</p>';
+    html += '<label class="block text-sm">Изменение в мл (можно отрицательное)</label>';
+    html += '<input type="number" id="fmWaterDelta" class="w-full p-3 bg-white/30 rounded-xl text-white" placeholder="Например: -200 или +500">';
+    html += '<p class="text-xs opacity-70">Введите положительное число для добавления, отрицательное — для уменьшения</p>';
     html += '</div>';
-    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmWaterAdjustCancel" class="flex-1 py-3 rounded-xl bg-white/20">РћС‚РјРµРЅР°</button><button type="button" id="fmWaterAdjustSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">РЎРѕС…СЂР°РЅРёС‚СЊ</button></div>';
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmWaterAdjustCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmWaterAdjustSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
     
     fitnessOpenModal(html, () => {
       fitnessEl.modalOverlay.querySelector('#fmWaterAdjustCancel')?.addEventListener('click', fitnessCloseModal);
@@ -782,24 +422,47 @@
   function fitnessOpenWaterBaselineModal() {
     const profile = FS.getFitnessProfile();
     const currentBaseline = profile.waterBaselineMl || 2000;
+    const currentTargetWeight = profile.targetWeight ?? '';
+    const currentWork = profile.workProfile || 'variable';
     
-    let html = '<h3 class="font-semibold mb-4">РР·РјРµРЅРёС‚СЊ РЅРѕСЂРјСѓ РІРѕРґС‹</h3>';
+    const t = (key, ...args) => {
+      const value = fitnessTexts.en[key];
+      return typeof value === 'function' ? value(...args) : value;
+    };
+    
+    let html = '<h3 class="font-semibold mb-4">' + t('fitnessSettingsTitle') + '</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Р”РЅРµРІРЅР°СЏ РЅРѕСЂРјР° РІ РјР»</label>';
+    html += '<label class="block text-sm">' + t('waterBaselineLabel') + '</label>';
     html += '<input type="number" id="fmWaterBaseline" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentBaseline + '" placeholder="2000">';
-    html += '<p class="text-xs opacity-70">РџСЂРёРјРµСЂС‹: 1800, 2000, 2500 РјР»</p>';
-    html += '</div>';
-    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmWaterBaselineCancel" class="flex-1 py-3 rounded-xl bg-white/20">РћС‚РјРµРЅР°</button><button type="button" id="fmWaterBaselineSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">РЎРѕС…СЂР°РЅРёС‚СЊ</button></div>';
+    html += '<label class="block text-sm mt-2">' + t('targetWeightLabel') + '</label>';
+    html += '<input type="number" id="fmTargetWeight" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentTargetWeight + '" placeholder="75">';
+    html += '<label class="block text-sm mt-2">' + t('workProfileLabel') + '</label>';
+    html += '<select id="fmWorkProfile" class="w-full p-3 bg-white/30 rounded-xl text-white">';
+    html += '<option value="sedentary"' + (currentWork === 'sedentary' ? ' selected' : '') + '>' + t('workProfiles').sedentary + '</option>';
+    html += '<option value="mixed"' + (currentWork === 'mixed' ? ' selected' : '') + '>' + t('workProfiles').mixed + '</option>';
+    html += '<option value="physical"' + (currentWork === 'physical' ? ' selected' : '') + '>' + t('workProfiles').physical + '</option>';
+    html += '<option value="variable"' + (currentWork === 'variable' ? ' selected' : '') + '>' + t('workProfiles').variable + '</option>';
+    html += '</select></div>';
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmWaterBaselineCancel" class="flex-1 py-3 rounded-xl bg-white/20">Cancel</button><button type="button" id="fmWaterBaselineSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Save</button></div>';
     
     fitnessOpenModal(html, () => {
       fitnessEl.modalOverlay.querySelector('#fmWaterBaselineCancel')?.addEventListener('click', fitnessCloseModal);
       fitnessEl.modalOverlay.querySelector('#fmWaterBaselineSave')?.addEventListener('click', () => {
         const baselineInput = document.getElementById('fmWaterBaseline')?.value;
         const newBaseline = Number(baselineInput);
+        const targetWeightInput = document.getElementById('fmTargetWeight')?.value;
+        const newTargetWeight = targetWeightInput ? Number(targetWeightInput) : null;
+        const newWorkProfile = document.getElementById('fmWorkProfile')?.value;
         
         if (!Number.isNaN(newBaseline) && newBaseline > 0) {
           // Update profile
           profile.waterBaselineMl = newBaseline;
+          if (newTargetWeight !== null && !Number.isNaN(newTargetWeight)) {
+            profile.targetWeight = newTargetWeight;
+          }
+          if (newWorkProfile) {
+            profile.workProfile = newWorkProfile;
+          }
           FS.setFitnessProfile(profile);
           
           // Update today's target if water exists, or initialize it
@@ -818,6 +481,7 @@
         
         fitnessCloseModal();
         fitnessRenderWater();
+        fitnessUpdateSettingsSummary();
       });
     });
   }
@@ -838,10 +502,10 @@
     }
 
     // Show loading state
-    chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Р—Р°РіСЂСѓР·РєР°...</div>';
+    chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Загрузка...</div>';
     
     if (!window.FitnessSync || !window.currentAppUserId) {
-      chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">РќРµС‚ РґР°РЅРЅС‹С…</div>';
+      chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Нет данных</div>';
       return;
     }
   
@@ -854,9 +518,9 @@
         // Show "Add weight" button when no data exists
         chartContainer.innerHTML = `
           <div class="flex flex-col items-center justify-center h-full">
-            <span class="text-xs opacity-70 mb-2">рџ“Љ РџРѕРєР° РЅРµС‚ РґР°РЅРЅС‹С… РїРѕ РІРµСЃСѓ</span>
+            <span class="text-xs opacity-70 mb-2">📊 Пока нет данных по весу</span>
             <button type="button" id="weightChartAddBtn" class="px-4 py-2 rounded-xl bg-green-500 hover:bg-green-600 text-sm font-medium">
-              + Р”РѕР±Р°РІРёС‚СЊ РІРµСЃ
+              + Добавить вес
             </button>
           </div>
         `;
@@ -870,7 +534,7 @@
       renderWeightChartSVG(chartData);
     } catch (e) {
       console.error('Error loading weight chart:', e);
-      chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё</div>';
+      chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Ошибка загрузки</div>';
     }
   }
   
@@ -911,7 +575,7 @@
         ${change.text}
       </div>
       <div class="absolute top-1 left-2 text-[10px] opacity-70">
-        ${currentWeight > 0 ? currentWeight.toFixed(1) + ' РєРі' : 'вЂ”'}
+        ${currentWeight > 0 ? currentWeight.toFixed(1) + ' кг' : '—'}
       </div>
     `;
     chartContainer.style.position = 'relative';
@@ -939,42 +603,42 @@
     fitnessRenderWater();
     fitnessRenderWeightChart();
     fitnessRenderSupplementsTracking();
-    fitnessApplyEnglishTexts();
+    fitnessApplyEnglishUILabels();
     fitnessRenderWorkDay();
     
-    // Р—Р°РіСЂСѓР·РєР° СЃРѕС…СЂР°РЅС‘РЅРЅРѕРіРѕ С„РѕС‚Рѕ РґР»СЏ С‚РµРєСѓС‰РµР№ РґР°С‚С‹
+    // Загрузка сохранённого фото для текущей даты
     if (typeof fitnessLoadSavedPhoto === 'function') {
       fitnessLoadSavedPhoto();
     }
     
-    // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃРІРѕСЂР°С‡РёРІР°РµРјС‹С… РєР°СЂС‚РѕС‡РµРє
+    // Инициализация сворачиваемых карточек
     fitnessInitCollapsibleCards();
-    // РћР±РЅРѕРІР»РµРЅРёРµ РјРёРЅРё-РґР°РЅРЅС‹С… РІ С€Р°РїРєР°С…
+    // Обновление мини-данных в шапках
     fitnessUpdateCardSummaries();
-    // РЎРІРѕСЂР°С‡РёРІР°РµРј РІСЃРµ РєР°СЂС‚РѕС‡РєРё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ (РїРµСЂРІС‹Р№ Р·Р°РїСѓСЃРє)
+    // Сворачиваем все карточки по умолчанию (первый запуск)
     if (!window.fitnessCardsInitiallyCollapsed) {
       window.fitnessCardsInitiallyCollapsed = true;
       fitnessCollapseAllCards();
     }
   }
 
-  // ========== РЎР’РћР РђР§РР’РђР•РњР«Р• РљРђР РўРћР§РљР ==========
+  // ========== СВОРАЧИВАЕМЫЕ КАРТОЧКИ ==========
   
-  // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РѕР±СЂР°Р±РѕС‚С‡РёРєРѕРІ РєР»РёРєРѕРІ РґР»СЏ СЃРІРѕСЂР°С‡РёРІР°РµРјС‹С… РєР°СЂС‚РѕС‡РµРє
+  // Инициализация обработчиков кликов для сворачиваемых карточек
   function fitnessInitCollapsibleCards() {
     const headers = document.querySelectorAll('.fitness-card-header');
     
     headers.forEach(header => {
-      // РџСЂРѕРІРµСЂСЏРµРј, РЅРµ РґРѕР±Р°РІР»РµРЅ Р»Рё СѓР¶Рµ РѕР±СЂР°Р±РѕС‚С‡РёРє
+      // Проверяем, не добавлен ли уже обработчик
       if (header.dataset.collapseInitialized) return;
       header.dataset.collapseInitialized = 'true';
       
       header.addEventListener('click', (e) => {
-        // РќРµ СЃРІРѕСЂР°С‡РёРІР°С‚СЊ РїСЂРё РєР»РёРєРµ РЅР° РєРЅРѕРїРєРё РІРЅСѓС‚СЂРё С€Р°РїРєРё
+        // Не сворачивать при клике на кнопки внутри шапки
         if (e.target.tagName === 'BUTTON' || e.target.closest('BUTTON')) return;
         
-        // РџР Р•Р”РћРўР’Р РђР©Р•РќРР• РљРћРќР¤Р›РРљРўРђ: РѕСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІСЃРїР»С‹С‚РёРµ, С‡С‚РѕР±С‹ РєР»РёРє РїРѕ header
-        // РЅРµ РІС‹Р·С‹РІР°Р» РѕР±СЂР°Р±РѕС‚С‡РёРєРё РЅР° СЂРѕРґРёС‚РµР»СЊСЃРєРѕР№ РєР°СЂС‚РѕС‡РєРµ (РЅР°РїСЂРёРјРµСЂ, РѕС‚РєСЂС‹С‚РёРµ РїРѕРїР°РїР° СЌРЅРµСЂРіРёРё)
+        // ПРЕДОТВРАЩЕНИЕ КОНФЛИКТА: останавливаем всплытие, чтобы клик по header
+        // не вызывал обработчики на родительской карточке (например, открытие попапа энергии)
         e.stopPropagation();
         
         const card = header.closest('[class*="bg-white/"]');
@@ -987,11 +651,11 @@
           const isCollapsed = body.classList.contains('collapsed');
           
           if (isCollapsed) {
-            // Р Р°Р·РІРѕСЂР°С‡РёРІР°РµРј
+            // Разворачиваем
             body.classList.remove('collapsed');
             if (chevron) chevron.classList.remove('rotated');
           } else {
-            // РЎРІРѕСЂР°С‡РёРІР°РµРј
+            // Сворачиваем
             body.classList.add('collapsed');
             if (chevron) chevron.classList.add('rotated');
           }
@@ -999,29 +663,29 @@
       });
     });
     
-    // Р РђР—Р’Р•Р”Р•РќРР• РљР›РРљРћР’: РґР»СЏ РєР°СЂС‚РѕС‡РєРё СЌРЅРµСЂРіРёРё - РѕС‚РєСЂС‹С‚РёРµ РїРѕРїР°РїР° С‚РѕР»СЊРєРѕ РїСЂРё РєР»РёРєРµ РїРѕ body (РЅРµ РїРѕ header)
+    // РАЗВЕДЕНИЕ КЛИКОВ: для карточки энергии - открытие попапа только при клике по body (не по header)
     const energyCard = document.getElementById('fitnessCaloriesCard');
     if (energyCard && !energyCard.dataset.popupHandlerAdded) {
       energyCard.dataset.popupHandlerAdded = 'true';
       energyCard.addEventListener('click', (e) => {
-        // Р•СЃР»Рё РєР»РёРє РїРѕ header - СЌС‚Рѕ РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ СЃРІРѕСЂР°С‡РёРІР°РЅРёРµ, РёРіРЅРѕСЂРёСЂСѓРµРј
+        // Если клик по header - это обрабатывает сворачивание, игнорируем
         if (e.target.closest('.fitness-card-header')) return;
-        // РРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ РєР»РёРєРё РїРѕ РєРЅРѕРїРєР°Рј
+        // Игнорировать клики по кнопкам
         if (e.target.closest('button')) return;
-        // РћС‚РєСЂС‹РІР°РµРј РїРѕРїР°Рї РґРµС‚Р°Р»РёР·Р°С†РёРё СЌРЅРµСЂРіРёРё
+        // Открываем попап детализации энергии
         fitnessOpenEnergyDetails();
       });
     }
   }
   
-  // РћР±РЅРѕРІР»РµРЅРёРµ РјРёРЅРё-РґР°РЅРЅС‹С… РІ С€Р°РїРєР°С… РІСЃРµС… РєР°СЂС‚РѕС‡РµРє
+  // Обновление мини-данных в шапках всех карточек
   function fitnessUpdateCardSummaries() {
     fitnessUpdateEnergyMiniSummary();
     fitnessUpdateActivityMiniSummary();
     fitnessUpdateSupportMiniSummary();
   }
   
-  // РњРёРЅРё-С€РєР°Р»Р° Р±Р°Р»Р°РЅСЃР° РІ С€Р°РїРєРµ "Р­РЅРµСЂРіРёСЏ С‚РµР»Р°"
+  // Мини-шкала баланса в шапке "Энергия тела"
   function fitnessUpdateEnergyMiniSummary() {
     const dateKey = fitnessGetDateKey();
     const dayData = FS.getDayData(dateKey);
@@ -1033,38 +697,38 @@
     
     if (miniFill && miniText) {
       const balance = summary.balance || 0;
-      const MAX_ABS_BALANCE = 1000; // РњР°РєСЃРёРјР°Р»СЊРЅС‹Р№ РѕС‚РѕР±СЂР°Р¶Р°РµРјС‹Р№ Р±Р°Р»Р°РЅСЃ
+      const MAX_ABS_BALANCE = 1000; // Максимальный отображаемый баланс
       
-      // РќРѕСЂРјР°Р»РёР·СѓРµРј: 0 = С†РµРЅС‚СЂ, -1000 = Р»РµРІС‹Р№ РєСЂР°Р№, +1000 = РїСЂР°РІС‹Р№ РєСЂР°Р№
+      // Нормализуем: 0 = центр, -1000 = левый край, +1000 = правый край
       const normalizedBalance = Math.max(-MAX_ABS_BALANCE, Math.min(MAX_ABS_BALANCE, balance));
       const percentFromCenter = (normalizedBalance / MAX_ABS_BALANCE) * 50; // 0-50%
       
       if (balance <= 0) {
-        // Р”РµС„РёС†РёС‚ - Р·Р°РїРѕР»РЅРµРЅРёРµ РІР»РµРІРѕ РѕС‚ С†РµРЅС‚СЂР°
+        // Дефицит - заполнение влево от центра
         miniFill.style.left = (50 - percentFromCenter) + '%';
         miniFill.style.width = percentFromCenter + '%';
         miniFill.className = 'fitness-mini-balance-fill bg-green-400';
       } else {
-        // РџСЂРѕС„РёС†РёС‚ - Р·Р°РїРѕР»РЅРµРЅРёРµ РІРїСЂР°РІРѕ РѕС‚ С†РµРЅС‚СЂР°
+        // Профицит - заполнение вправо от центра
         miniFill.style.left = '50%';
         miniFill.style.width = percentFromCenter + '%';
         miniFill.className = 'fitness-mini-balance-fill bg-red-400';
       }
       
-      // РўРµРєСЃС‚
+      // Текст
       const sign = balance >= 0 ? '+' : '';
       miniText.textContent = sign + balance;
       miniText.className = 'text-[10px] font-medium ' + (balance >= 0 ? 'text-red-300' : 'text-green-300');
     }
   }
   
-  // РњРёРЅРё-СЃС‚СЂРѕРєР° Рё РїРѕР»РѕСЃРєРё РІ С€Р°РїРєРµ "РђРєС‚РёРІРЅРѕСЃС‚СЊ"
+  // Мини-строка и полоски в шапке "Активность"
   function fitnessUpdateActivityMiniSummary() {
     const dateKey = fitnessGetDateKey();
     const dayData = FS.getDayData(dateKey);
     const activities = dayData.activities || [];
     
-    // РџРѕРґСЃС‡С‘С‚ РїРѕ С‚РёРїР°Рј
+    // Подсчёт по типам
     const totals = {
       gym: { calories: 0 },
       cardio: { calories: 0 },
@@ -1084,18 +748,18 @@
       }
     });
     
-    // РћР±С‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ
+    // Общее количество
     const totalCalories = totals.gym.calories + totals.cardio.calories + totals.home.calories + totals.steps.calories;
     const totalSessions = activities.length;
     
-    // РћР±РЅРѕРІР»СЏРµРј С‚РµРєСЃС‚
+    // Обновляем текст
     const summaryEl = document.getElementById('activityMiniSummary');
     if (summaryEl) {
-      summaryEl.textContent = `${totalSessions} Р°РєС‚РёРІРЅРѕСЃС‚РµР№ В· ${totalCalories} РєРєР°Р»`;
+      summaryEl.textContent = `${totalSessions} активностей · ${totalCalories} ккал`;
     }
     
-    // РћР±РЅРѕРІР»СЏРµРј РјРёРЅРё-РїРѕР»РѕСЃРєРё
-    const maxCalories = Math.max(totalCalories, 1); // РёР·Р±РµРіР°РµРј РґРµР»РµРЅРёСЏ РЅР° 0
+    // Обновляем мини-полоски
+    const maxCalories = Math.max(totalCalories, 1); // избегаем деления на 0
     
     const stripGym = document.getElementById('miniStripGym');
     const stripCardio = document.getElementById('miniStripCardio');
@@ -1108,22 +772,22 @@
     if (stripSteps) stripSteps.style.width = (totals.steps.calories / maxCalories * 60) + 'px';
   }
   
-  // РњРёРЅРё-СЃС‚СЂРѕРєР° РІ С€Р°РїРєРµ "РџРѕРґРґРµСЂР¶РєР° С‚РµР»Р°"
+  // Мини-строка в шапке "Поддержка тела"
   function fitnessUpdateSupportMiniSummary() {
     const dateKey = fitnessGetDateKey();
     const dayData = FS.getDayData(dateKey);
     const profile = FS.getFitnessProfile();
     
-    // Р•РґР°
+    // Еда
     const foods = dayData.foods || [];
     const totalEaten = foods.reduce((sum, f) => sum + (f.calories || 0), 0);
     
-    // Р’РѕРґР°
+    // Вода
     const waterData = FS.getWaterData(dateKey);
     const waterCurrent = (waterData.currentMl || 0) / 1000;
     const waterTarget = (waterData.targetMl || profile.waterBaselineMl || 2000) / 1000;
     
-    // Р‘РђР”С‹
+    // БАДы
     const supplements = FS.getAllSupplements();
     let suppTaken = 0;
     let suppPlanned = 0;
@@ -1137,13 +801,13 @@
       }
     });
     
-    // РћР±РЅРѕРІР»СЏРµРј С‚РµРєСЃС‚
+    // Обновляем текст
     const summaryEl = document.getElementById('supportMiniSummary');
     if (summaryEl) {
       const waterClass = waterCurrent >= waterTarget ? 'text-emerald-300' : 'text-white';
       const suppClass = suppTaken >= suppPlanned && suppPlanned > 0 ? 'text-emerald-300' : (suppTaken < suppPlanned ? 'text-amber-300' : 'text-white');
       
-      summaryEl.innerHTML = `Р•РґР°: ${totalEaten} РєРєР°Р» В· <span class="${waterClass}">Р’РѕРґР°: ${waterCurrent.toFixed(1)} / ${waterTarget.toFixed(1)} Р»</span> В· <span class="${suppClass}">Р‘РђР”С‹: ${suppTaken} / ${suppPlanned}</span>`;
+      summaryEl.innerHTML = `Еда: ${totalEaten} ккал · <span class="${waterClass}">Вода: ${waterCurrent.toFixed(1)} / ${waterTarget.toFixed(1)} л</span> · <span class="${suppClass}">БАДы: ${suppTaken} / ${suppPlanned}</span>`;
     }
   }
 
@@ -1152,40 +816,40 @@
   window.fitnessOpenWeightDetailScreen = async function() {
     let html = '<div class="space-y-4">';
     html += '<div class="flex items-center justify-between">';
-    html += '<h3 class="font-semibold text-lg">Р’РµСЃ</h3>';
-    html += '<button type="button" id="weightDetailClose" class="text-xs px-3 py-1 rounded-full bg-white/20">Р—Р°РєСЂС‹С‚СЊ</button>';
+    html += '<h3 class="font-semibold text-lg">Вес</h3>';
+    html += '<button type="button" id="weightDetailClose" class="text-xs px-3 py-1 rounded-full bg-white/20">Закрыть</button>';
     html += '</div>';
     
     // Period selector
     html += '<div class="flex gap-2 text-xs">';
-    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="7">7 РґРЅРµР№</button>';
-    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-green-500/50" data-days="30">30 РґРЅРµР№</button>';
-    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="90">90 РґРЅ</button>';
-    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="365">Р’СЃС‘</button>';
+    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="7">7 дней</button>';
+    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-green-500/50" data-days="30">30 дней</button>';
+    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="90">90 дн</button>';
+    html += '<button type="button" class="weight-period-btn flex-1 py-2 rounded-lg bg-white/10" data-days="365">Всё</button>';
     html += '</div>';
     
     // Stats section
     html += '<div class="bg-white/10 rounded-xl p-3">';
     html += '<div class="grid grid-cols-3 gap-2 text-center text-xs">';
-    html += '<div><div class="opacity-70">РўРµРєСѓС‰РёР№</div><div id="weightCurrent" class="text-lg font-semibold mt-1">вЂ”</div></div>';
-    html += '<div><div class="opacity-70">Р¦РµР»СЊ</div><div id="weightGoal" class="text-lg font-semibold mt-1">вЂ”</div></div>';
-    html += '<div><div class="opacity-70">РўСЂРµРЅРґ</div><div id="weightTrend" class="text-lg font-semibold mt-1">вЂ”</div></div>';
+    html += '<div><div class="opacity-70">Текущий</div><div id="weightCurrent" class="text-lg font-semibold mt-1">—</div></div>';
+    html += '<div><div class="opacity-70">Цель</div><div id="weightGoal" class="text-lg font-semibold mt-1">—</div></div>';
+    html += '<div><div class="opacity-70">Тренд</div><div id="weightTrend" class="text-lg font-semibold mt-1">—</div></div>';
     html += '</div>';
     html += '</div>';
     
     // Chart
     html += '<div id="weightDetailChart" class="h-40 bg-white/5 rounded-xl relative overflow-hidden">';
-    html += '<div class="flex items-center justify-center h-full text-xs opacity-50">Р—Р°РіСЂСѓР·РєР°...</div>';
+    html += '<div class="flex items-center justify-center h-full text-xs opacity-50">Загрузка...</div>';
     html += '</div>';
 
     // Add button
-    html += '<button type="button" id="weightAddBtn" class="w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 font-semibold text-sm">+ Р”РѕР±Р°РІРёС‚СЊ РІРµСЃ</button>';
+    html += '<button type="button" id="weightAddBtn" class="w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 font-semibold text-sm">+ Добавить вес</button>';
     
     // History list
     html += '<div class="bg-white/10 rounded-xl p-3">';
-    html += '<h4 class="text-sm font-semibold mb-2">РСЃС‚РѕСЂРёСЏ</h4>';
+    html += '<h4 class="text-sm font-semibold mb-2">История</h4>';
     html += '<div id="weightHistoryList" class="space-y-2 max-h-64 overflow-y-auto">';
-    html += '<div class="text-xs opacity-50 text-center py-4">Р—Р°РіСЂСѓР·РєР°...</div>';
+    html += '<div class="text-xs opacity-50 text-center py-4">Загрузка...</div>';
     html += '</div>';
     html += '</div>';
     
@@ -1227,25 +891,25 @@
       const firstWeight = history.length > 1 ? history[history.length - 1].value : currentWeight;
       const goalWeight = profile.targetWeight;
       
-      document.getElementById('weightCurrent').textContent = currentWeight ? currentWeight.toFixed(1) + ' РєРі' : 'вЂ”';
-      document.getElementById('weightGoal').textContent = goalWeight ? goalWeight.toFixed(1) + ' РєРі' : 'вЂ”';
+      document.getElementById('weightCurrent').textContent = currentWeight ? currentWeight.toFixed(1) + ' кг' : '—';
+      document.getElementById('weightGoal').textContent = goalWeight ? goalWeight.toFixed(1) + ' кг' : '—';
       
       if (currentWeight && firstWeight) {
         const totalDiff = currentWeight - firstWeight;
-        const trendText = totalDiff < -0.1 ? 'в†“ ' + Math.abs(totalDiff).toFixed(1) + ' РєРі' : 
-                         totalDiff > 0.1 ? 'в†‘ +' + totalDiff.toFixed(1) + ' РєРі' : 'в†’ 0.0 РєРі';
+        const trendText = totalDiff < -0.1 ? '↓ ' + Math.abs(totalDiff).toFixed(1) + ' кг' : 
+                         totalDiff > 0.1 ? '↑ +' + totalDiff.toFixed(1) + ' кг' : '→ 0.0 кг';
         const trendEl = document.getElementById('weightTrend');
         trendEl.textContent = trendText;
         trendEl.className = 'text-lg font-semibold mt-1 ' + 
           (totalDiff < -0.1 ? 'text-green-400' : totalDiff > 0.1 ? 'text-red-400' : 'text-white');
       } else {
-        document.getElementById('weightTrend').textContent = 'вЂ”';
+        document.getElementById('weightTrend').textContent = '—';
       }
   
       // Render chart
       const chartContainer = document.getElementById('weightDetailChart');
       if (chartData.length === 0) {
-        chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">РќРµС‚ РґР°РЅРЅС‹С…</div>';
+        chartContainer.innerHTML = '<div class="flex items-center justify-center h-full text-xs opacity-50">Нет данных</div>';
       } else {
         const points = FS.generateWeightChartPoints(chartData, 100, 40, 4);
         chartContainer.innerHTML = `
@@ -1265,7 +929,7 @@
       // Render history list
       const listContainer = document.getElementById('weightHistoryList');
       if (history.length === 0) {
-        listContainer.innerHTML = '<div class="text-xs opacity-50 text-center py-4">РќРµС‚ Р·Р°РїРёСЃРµР№</div>';
+        listContainer.innerHTML = '<div class="text-xs opacity-50 text-center py-4">Нет записей</div>';
       } else {
         listContainer.innerHTML = history.slice(0, 50).map(item => {
           const date = new Date(item.measured_at);
@@ -1278,8 +942,8 @@
                 <span class="text-xs opacity-50">${timeStr}</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="font-medium">${item.value.toFixed(1)} РєРі</span>
-                <span class="text-xs opacity-50">вњЏ</span>
+                <span class="font-medium">${item.value.toFixed(1)} кг</span>
+                <span class="text-xs opacity-50">✏</span>
               </div>
             </div>
           `;
@@ -1303,18 +967,18 @@
     const currentTime = FS.formatTimeHM(now);
     const profile = FS.getFitnessProfile();
     
-    let html = '<h3 class="font-semibold mb-4">Р”РѕР±Р°РІРёС‚СЊ РІРµСЃ</h3>';
+    let html = '<h3 class="font-semibold mb-4">Добавить вес</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Р’РµСЃ (РєРі)</label>';
+    html += '<label class="block text-sm">Вес (кг)</label>';
     html += '<input type="number" step="0.1" id="addWeightValue" class="w-full p-3 bg-white/30 rounded-xl text-white" placeholder="78.5" value="' + (profile.weight || '') + '">';
-    html += '<label class="block text-sm">Р”Р°С‚Р°</label>';
+    html += '<label class="block text-sm">Дата</label>';
     html += '<input type="date" id="addWeightDate" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + today + '">';
-    html += '<label class="block text-sm">Р’СЂРµРјСЏ</label>';
+    html += '<label class="block text-sm">Время</label>';
     html += '<input type="time" id="addWeightTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentTime + '">';
     html += '</div>';
     html += '<div class="flex gap-3 mt-4">';
-    html += '<button type="button" id="addWeightCancel" class="flex-1 py-3 rounded-xl bg-white/20">РћС‚РјРµРЅР°</button>';
-    html += '<button type="button" id="addWeightSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">РЎРѕС…СЂР°РЅРёС‚СЊ</button>';
+    html += '<button type="button" id="addWeightCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
+    html += '<button type="button" id="addWeightSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
@@ -1325,12 +989,12 @@
         const time = document.getElementById('addWeightTime')?.value;
         
         if (!weight || weight <= 0) {
-          alert('Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ РІРµСЃ');
+          alert('Введите корректный вес');
           return;
         }
         
         if (!window.FitnessSync || !window.currentAppUserId) {
-          alert('РќРµС‚ СЃРІСЏР·Рё СЃ СЃРµСЂРІРµСЂРѕРј');
+          alert('Нет связи с сервером');
           return;
         }
         
@@ -1348,7 +1012,7 @@
           setTimeout(() => window.fitnessOpenWeightDetailScreen(), 100);
         } catch (e) {
           console.error('Error saving weight:', e);
-          alert('РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ');
+          alert('Ошибка сохранения');
         }
       });
     });
@@ -1359,25 +1023,25 @@
     const dateKey = FS.formatDateKey(date);
     const timeStr = date.toTimeString().slice(0, 5);
     
-    let html = '<h3 class="font-semibold mb-4">РР·РјРµРЅРёС‚СЊ РёР·РјРµСЂРµРЅРёРµ</h3>';
+    let html = '<h3 class="font-semibold mb-4">Изменить измерение</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Р’РµСЃ (РєРі)</label>';
+    html += '<label class="block text-sm">Вес (кг)</label>';
     html += '<input type="number" step="0.1" id="editWeightValue" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentWeight + '">';
-    html += '<label class="block text-sm">Р”Р°С‚Р°</label>';
+    html += '<label class="block text-sm">Дата</label>';
     html += '<input type="date" id="editWeightDate" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + dateKey + '">';
-    html += '<label class="block text-sm">Р’СЂРµРјСЏ</label>';
+    html += '<label class="block text-sm">Время</label>';
     html += '<input type="time" id="editWeightTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + timeStr + '">';
     html += '</div>';
     html += '<div class="flex gap-3 mt-4">';
-    html += '<button type="button" id="editWeightDelete" class="flex-1 py-3 rounded-xl bg-red-500/30 text-red-300">РЈРґР°Р»РёС‚СЊ</button>';
-    html += '<button type="button" id="editWeightCancel" class="flex-1 py-3 rounded-xl bg-white/20">РћС‚РјРµРЅР°</button>';
-    html += '<button type="button" id="editWeightSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">РЎРѕС…СЂР°РЅРёС‚СЊ</button>';
+    html += '<button type="button" id="editWeightDelete" class="flex-1 py-3 rounded-xl bg-red-500/30 text-red-300">Удалить</button>';
+    html += '<button type="button" id="editWeightCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
+    html += '<button type="button" id="editWeightSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
       document.getElementById('editWeightCancel')?.addEventListener('click', fitnessCloseModal);
       document.getElementById('editWeightDelete')?.addEventListener('click', async () => {
-        if (!confirm('РЈРґР°Р»РёС‚СЊ СЌС‚Рѕ РёР·РјРµСЂРµРЅРёРµ?')) return;
+        if (!confirm('Удалить это измерение?')) return;
         
         try {
           await window.FitnessSync.deleteWeightMeasurement(measurementId);
@@ -1387,7 +1051,7 @@
           fitnessRenderDashboard();
           setTimeout(() => window.fitnessOpenWeightDetailScreen(), 100);
         } catch (e) {
-          alert('РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ');
+          alert('Ошибка удаления');
         }
       });
       document.getElementById('editWeightSave')?.addEventListener('click', async () => {
@@ -1396,7 +1060,7 @@
         const time = document.getElementById('editWeightTime')?.value;
         
         if (!weight || weight <= 0) {
-          alert('Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ РІРµСЃ');
+          alert('Введите корректный вес');
           return;
         }
         
@@ -1409,7 +1073,7 @@
           fitnessRenderDashboard();
           setTimeout(() => window.fitnessOpenWeightDetailScreen(), 100);
         } catch (e) {
-          alert('РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ');
+          alert('Ошибка сохранения');
         }
       });
     });
@@ -1467,12 +1131,12 @@
   
   // Choice modal for gym: use GYM module or simple form
   function fitnessOpenGymChoiceModal(editId) {
-    let html = '<h3 class="font-semibold mb-4">Р”РѕР±Р°РІРёС‚СЊ СЃРёР»РѕРІСѓСЋ С‚СЂРµРЅРёСЂРѕРІРєСѓ</h3>';
+    let html = '<h3 class="font-semibold mb-4">Добавить силовую тренировку</h3>';
     html += '<div class="space-y-3">';
-    html += '<button type="button" id="gymChoiceModule" class="w-full py-4 rounded-xl bg-indigo-500 hover:bg-indigo-600 font-semibold">рџЏ‹пёЏ РћС‚РєСЂС‹С‚СЊ GYM (РїР»Р°РЅ С‚СЂРµРЅРёСЂРѕРІРѕРє)</button>';
-    html += '<button type="button" id="gymChoiceSimple" class="w-full py-4 rounded-xl bg-white/15 hover:bg-white/25">вЏ±пёЏ Р‘С‹СЃС‚СЂР°СЏ Р·Р°РїРёСЃСЊ (С‚РѕР»СЊРєРѕ РІСЂРµРјСЏ)</button>';
+    html += '<button type="button" id="gymChoiceModule" class="w-full py-4 rounded-xl bg-indigo-500 hover:bg-indigo-600 font-semibold">🏋️ Открыть GYM (план тренировок)</button>';
+    html += '<button type="button" id="gymChoiceSimple" class="w-full py-4 rounded-xl bg-white/15 hover:bg-white/25">⏱️ Быстрая запись (только время)</button>';
     html += '</div>';
-    html += '<div class="mt-4"><button type="button" id="gymChoiceCancel" class="w-full py-3 rounded-xl bg-white/10">РћС‚РјРµРЅР°</button></div>';
+    html += '<div class="mt-4"><button type="button" id="gymChoiceCancel" class="w-full py-3 rounded-xl bg-white/10">Отмена</button></div>';
     
     fitnessOpenModal(html, () => {
       fitnessEl.modalOverlay.querySelector('#gymChoiceCancel')?.addEventListener('click', fitnessCloseModal);
@@ -1517,7 +1181,7 @@
     const title = document.getElementById('cardioModalTitle');
     const typeSelect = document.getElementById('cardioTypeSelect');
     
-    title.textContent = isOutdoor ? 'РђСЌСЂРѕР±РЅР°СЏ РЅР° СѓР»РёС†Рµ' : 'РљР°СЂРґРёРѕ РІ Р·Р°Р»Рµ';
+    title.textContent = isOutdoor ? 'Аэробная на улице' : 'Кардио в зале';
     document.getElementById('cardioEditId').value = editId || '';
     document.getElementById('cardioIsOutdoor').value = isOutdoor ? 'true' : 'false';
     document.getElementById('cardioDuration').value = existing?.durationMinutes || 30;
@@ -1605,23 +1269,23 @@
     const dayData = FS.getDayData(fitnessGetDateKey());
     const existing = editId ? (dayData.activities || []).find((a) => a.id === editId) : null;
     const kind = forceKind || existing?.kind || 'gym';
-    let html = '<h3 class="font-semibold mb-4">Р”РѕР±Р°РІРёС‚СЊ Р°РєС‚РёРІРЅРѕСЃС‚СЊ</h3>';
+    let html = '<h3 class="font-semibold mb-4">Добавить активность</h3>';
     html += '<input type="hidden" id="fmActivityKind" value="' + kind + '">';
     html += '<input type="hidden" id="fmActivityEditId" value="' + (editId || '') + '">';
     if (kind === 'gym') {
-      html += '<div class="space-y-3"><label class="block">РњРёРЅСѓС‚С‹</label><input type="number" id="fmGymMinutes" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.durationMinutes ?? '') + '">';
-      html += '<label class="block">РРЅС‚РµРЅСЃРёРІРЅРѕСЃС‚СЊ</label><select id="fmGymIntensity" class="w-full p-3 bg-white/30 rounded-xl text-white">';
-      ['low','medium','high'].forEach((v) => { html += '<option value="' + v + '"' + (existing?.intensity === v ? ' selected' : '') + '>' + (v === 'low' ? 'РќРёР·РєР°СЏ' : v === 'medium' ? 'РЎСЂРµРґРЅСЏСЏ' : 'Р’С‹СЃРѕРєР°СЏ') + '</option>'; });
+      html += '<div class="space-y-3"><label class="block">Минуты</label><input type="number" id="fmGymMinutes" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.durationMinutes ?? '') + '">';
+      html += '<label class="block">Интенсивность</label><select id="fmGymIntensity" class="w-full p-3 bg-white/30 rounded-xl text-white">';
+      ['low','medium','high'].forEach((v) => { html += '<option value="' + v + '"' + (existing?.intensity === v ? ' selected' : '') + '>' + (v === 'low' ? 'Низкая' : v === 'medium' ? 'Средняя' : 'Высокая') + '</option>'; });
       html += '</select></div>';
     } else if (kind === 'cardio') {
-      html += '<div class="space-y-3"><label class="block">РњРёРЅСѓС‚С‹</label><input type="number" id="fmCardioMinutes" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.durationMinutes ?? '') + '">';
-      html += '<label class="block">РўРёРї</label><select id="fmCardioType" class="w-full p-3 bg-white/30 rounded-xl text-white">';
-      ['run','walk','bike','other'].forEach((v) => { html += '<option value="' + v + '"' + (existing?.type === v ? ' selected' : '') + '>' + (v === 'run' ? 'Р‘РµРі' : v === 'walk' ? 'РҐРѕРґСЊР±Р°' : v === 'bike' ? 'Р’РµР»РѕСЃРёРїРµРґ' : 'Р”СЂСѓРіРѕРµ') + '</option>'; });
+      html += '<div class="space-y-3"><label class="block">Минуты</label><input type="number" id="fmCardioMinutes" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.durationMinutes ?? '') + '">';
+      html += '<label class="block">Тип</label><select id="fmCardioType" class="w-full p-3 bg-white/30 rounded-xl text-white">';
+      ['run','walk','bike','other'].forEach((v) => { html += '<option value="' + v + '"' + (existing?.type === v ? ' selected' : '') + '>' + (v === 'run' ? 'Бег' : v === 'walk' ? 'Ходьба' : v === 'bike' ? 'Велосипед' : 'Другое') + '</option>'; });
       html += '</select></div>';
     } else {
-      html += '<div class="space-y-3"><label class="block">РЁР°РіРё</label><input type="number" id="fmSteps" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.steps ?? '') + '"></div>';
+      html += '<div class="space-y-3"><label class="block">Шаги</label><input type="number" id="fmSteps" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.steps ?? '') + '"></div>';
     }
-    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmActivityCancel" class="flex-1 py-3 rounded-xl bg-white/20">РћС‚РјРµРЅР°</button><button type="button" id="fmActivitySave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">РЎРѕС…СЂР°РЅРёС‚СЊ</button></div>';
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmActivityCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmActivitySave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button></div>';
     fitnessOpenModal(html, () => {
       fitnessEl.modalOverlay.querySelector('#fmActivityCancel')?.addEventListener('click', fitnessCloseModal);
       fitnessEl.modalOverlay.querySelector('#fmActivitySave')?.addEventListener('click', () => {
@@ -1742,31 +1406,31 @@
     
     // Gym
     document.getElementById('activityGymStats').textContent = 
-      `${totals.gym.duration} РјРёРЅ В· ${totals.gym.calories} РєРєР°Р»`;
+      `${totals.gym.duration} мин · ${totals.gym.calories} ккал`;
     const gymPercent = Math.min(100, Math.round((totals.gym.duration / goals.GYM_MINUTES) * 100));
     document.getElementById('activityGymBar').style.width = `${gymPercent}%`;
     
     // Cardio Indoor
     document.getElementById('activityCardioIndoorStats').textContent = 
-      `${totals.cardio_indoor.duration} РјРёРЅ В· ${totals.cardio_indoor.calories} РєРєР°Р»`;
+      `${totals.cardio_indoor.duration} мин · ${totals.cardio_indoor.calories} ккал`;
     const cardioInPercent = Math.min(100, Math.round((totals.cardio_indoor.duration / goals.CARDIO_MINUTES) * 100));
     document.getElementById('activityCardioIndoorBar').style.width = `${cardioInPercent}%`;
     
     // Cardio Outdoor
     document.getElementById('activityCardioOutdoorStats').textContent = 
-      `${totals.cardio_outdoor.duration} РјРёРЅ В· ${totals.cardio_outdoor.calories} РєРєР°Р»`;
+      `${totals.cardio_outdoor.duration} мин · ${totals.cardio_outdoor.calories} ккал`;
     const cardioOutPercent = Math.min(100, Math.round((totals.cardio_outdoor.duration / goals.CARDIO_MINUTES) * 100));
     document.getElementById('activityCardioOutdoorBar').style.width = `${cardioOutPercent}%`;
     
     // Home
     document.getElementById('activityHomeStats').textContent = 
-      `${totals.home.duration} РјРёРЅ В· ${totals.home.calories} РєРєР°Р»`;
+      `${totals.home.duration} мин · ${totals.home.calories} ккал`;
     const homePercent = Math.min(100, Math.round((totals.home.duration / goals.HOME_MINUTES) * 100));
     document.getElementById('activityHomeBar').style.width = `${homePercent}%`;
     
     // Steps
     document.getElementById('activityStepsStats').textContent = 
-      `${totals.steps.steps.toLocaleString()} / ${goals.STEPS.toLocaleString()} С€Р°РіРѕРІ`;
+      `${totals.steps.steps.toLocaleString()} / ${goals.STEPS.toLocaleString()} шагов`;
     const stepsPercent = Math.min(100, Math.round((totals.steps.steps / goals.STEPS) * 100));
     document.getElementById('activityStepsBar').style.width = `${stepsPercent}%`;
     
@@ -1815,40 +1479,40 @@
     // For editing, only show Manual mode with pre-filled values
     const isEditMode = !!editId;
     
-    let html = '<h3 class="font-semibold mb-4">' + (isEditMode ? 'Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ РїСЂРёС‘Рј РїРёС‰Рё' : 'Р”РѕР±Р°РІРёС‚СЊ РїСЂРёС‘Рј РїРёС‰Рё') + '</h3>';
+    let html = '<h3 class="font-semibold mb-4">' + (isEditMode ? 'Edit meal' : 'Add meal') + '</h3>';
     
     // Mode toggle (only for new entries)
     if (!isEditMode) {
       html += '<div class="flex gap-2 mb-4">';
-      html += '<button type="button" id="fmModeManual" class="flex-1 py-2 px-3 rounded-lg bg-green-500/50 text-sm font-medium">Р СѓС‡РЅРѕР№ РІРІРѕРґ</button>';
-      html += '<button type="button" id="fmModeAuto" class="flex-1 py-2 px-3 rounded-lg bg-white/10 text-sm font-medium opacity-70">РђРІС‚Рѕ (С‚РµРєСЃС‚)</button>';
+      html += '<button type="button" id="fmModeManual" class="flex-1 py-2 px-3 rounded-lg bg-green-500/50 text-sm font-medium">Manual</button>';
+      html += '<button type="button" id="fmModeAuto" class="flex-1 py-2 px-3 rounded-lg bg-white/10 text-sm font-medium opacity-70">Auto (text)</button>';
       html += '</div>';
     }
     
     // Manual mode content
     html += '<div id="fmManualContent" class="space-y-3">';
-    html += '<label class="block text-sm">РќР°Р·РІР°РЅРёРµ</label><input type="text" id="fmFoodName" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.name ?? '') + '" placeholder="Р§С‚Рѕ СЃСЉРµР»Рё">';
-    html += '<label class="block text-sm">РљРѕР»РёС‡РµСЃС‚РІРѕ</label><input type="text" id="fmFoodAmount" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.amount ?? '') + '" placeholder="200 Рі, 1 РїРѕСЂС†РёСЏ">';
-    html += '<label class="block text-sm">РљР°Р»РѕСЂРёРё (РѕРїС†РёРѕРЅР°Р»СЊРЅРѕ)</label><input type="number" id="fmFoodCalories" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.calories ?? '') + '">';
+    html += '<label class="block text-sm">Название</label><input type="text" id="fmFoodName" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.name ?? '') + '" placeholder="Что съели">';
+    html += '<label class="block text-sm">Количество</label><input type="text" id="fmFoodAmount" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" value="' + (existing?.amount ?? '') + '" placeholder="200 г, 1 порция">';
+    html += '<label class="block text-sm">Калории (опционально)</label><input type="number" id="fmFoodCalories" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.calories ?? '') + '">';
     html += '<div class="flex gap-2">';
-    html += '<div class="flex-1"><label class="block text-sm">Р‘ (РѕРїС†.)</label><input type="number" id="fmFoodProtein" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.protein ?? '') + '" placeholder="0"></div>';
-    html += '<div class="flex-1"><label class="block text-sm">Р– (РѕРїС†.)</label><input type="number" id="fmFoodFat" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.fat ?? '') + '" placeholder="0"></div>';
-    html += '<div class="flex-1"><label class="block text-sm">РЈ (РѕРїС†.)</label><input type="number" id="fmFoodCarbs" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.carbs ?? '') + '" placeholder="0"></div>';
+    html += '<div class="flex-1"><label class="block text-sm">Б (опц.)</label><input type="number" id="fmFoodProtein" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.protein ?? '') + '" placeholder="0"></div>';
+    html += '<div class="flex-1"><label class="block text-sm">Ж (опц.)</label><input type="number" id="fmFoodFat" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.fat ?? '') + '" placeholder="0"></div>';
+    html += '<div class="flex-1"><label class="block text-sm">У (опц.)</label><input type="number" id="fmFoodCarbs" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.carbs ?? '') + '" placeholder="0"></div>';
     html += '</div>';
-    html += '<label class="block text-sm">Р’СЂРµРјСЏ (РїСЂРёРјРµСЂРЅРѕ)</label><input type="time" id="fmFoodTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
+    html += '<label class="block text-sm">Время (примерно)</label><input type="time" id="fmFoodTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
     html += '</div>';
     
     // Auto mode content (hidden by default, only for new entries)
     if (!isEditMode) {
       html += '<div id="fmAutoContent" class="space-y-3 hidden">';
-      html += '<label class="block text-sm">РўРµРєСЃС‚ (Р»СѓС‡С€Рµ РїРѕвЂ‘Р°РЅРіР»РёР№СЃРєРё)</label><input type="text" id="fmFoodQuery" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" placeholder="buckwheat 200 g РёР»Рё РіСЂРµС‡РєР° 200 Рі">';
-      html += '<p class="text-xs opacity-70">РђРІС‚РѕвЂ‘СЂРµР¶РёРј СЃС‡РёС‚Р°РµС‚ РєР°Р»РѕСЂРёРё Рё Р‘Р–РЈ РїРѕ С‚РµРєСЃС‚Сѓ. Р›СѓС‡С€Рµ РІРІРѕРґРёС‚СЊ РЅР° Р°РЅРіР»РёР№СЃРєРѕРј (buckwheat 200 g). Р СѓСЃСЃРєРёР№ С‚РѕР¶Рµ СЂР°Р±РѕС‚Р°РµС‚: РіСЂРµС‡РєР° 200 Рі, С‚РІРѕСЂРѕРі 150 Рі.</p>';
-      html += '<label class="block text-sm">Р’СЂРµРјСЏ (РїСЂРёРјРµСЂРЅРѕ)</label><input type="time" id="fmFoodTimeAuto" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
+      html += '<label class="block text-sm">Текст (лучше по‑английски)</label><input type="text" id="fmFoodQuery" class="w-full p-3 bg-white/30 rounded-xl text-white placeholder-white/70" placeholder="buckwheat 200 g или гречка 200 г">';
+      html += '<p class="text-xs opacity-70">Авто‑режим считает калории и БЖУ по тексту. Лучше вводить на английском (buckwheat 200 g). Русский тоже работает: гречка 200 г, творог 150 г.</p>';
+      html += '<label class="block text-sm">Время (примерно)</label><input type="time" id="fmFoodTimeAuto" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultTime + '">';
       html += '<div id="fmAutoError" class="text-red-300 text-sm hidden"></div>';
       html += '</div>';
     }
     
-    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmFoodCancel" class="flex-1 py-3 rounded-xl bg-white/20">РћС‚РјРµРЅР°</button><button type="button" id="fmFoodSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">' + (isEditMode ? 'РЎРѕС…СЂР°РЅРёС‚СЊ' : 'Р”РѕР±Р°РІРёС‚СЊ') + '</button></div>';
+    html += '<div class="flex gap-3 mt-4"><button type="button" id="fmFoodCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button><button type="button" id="fmFoodSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">' + (isEditMode ? 'Сохранить' : 'Добавить') + '</button></div>';
     
     fitnessOpenModal(html, () => {
       // Mode toggle handlers (only for new entries)
@@ -1901,7 +1565,7 @@
           
           if (!queryText) {
             if (errorEl) {
-              errorEl.textContent = 'Р’РІРµРґРёС‚Рµ С‚РµРєСЃС‚ (РЅР°РїСЂРёРјРµСЂ: buckwheat 200 g)';
+              errorEl.textContent = 'Введите текст (например: buckwheat 200 g)';
               errorEl.classList.remove('hidden');
             }
             return;
@@ -1910,7 +1574,7 @@
           // Show loading state
           if (saveBtn) {
             saveBtn.disabled = true;
-            saveBtn.textContent = 'РЎС‡РёС‚Р°РµРј...';
+            saveBtn.textContent = 'Считаем...';
           }
           if (errorEl) {
             errorEl.classList.add('hidden');
@@ -1941,23 +1605,23 @@
             } else {
               // Show error
               if (errorEl) {
-                errorEl.textContent = 'РќРµ СѓРґР°Р»РѕСЃСЊ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РїРѕСЃС‡РёС‚Р°С‚СЊ. РџРѕРїСЂРѕР±СѓР№С‚Рµ РІРІРµСЃС‚Рё РїРѕвЂ‘Р°РЅРіР»РёР№СЃРєРё (buckwheat 200 g) РёР»Рё РёСЃРїРѕР»СЊР·СѓР№С‚Рµ СЂСѓС‡РЅРѕР№ РІРІРѕРґ.';
+                errorEl.textContent = 'Не удалось автоматически посчитать. Попробуйте ввести по‑английски (buckwheat 200 g) или используйте ручной ввод.';
                 errorEl.classList.remove('hidden');
               }
               if (saveBtn) {
                 saveBtn.disabled = false;
-                saveBtn.textContent = 'Р”РѕР±Р°РІРёС‚СЊ';
+                saveBtn.textContent = 'Добавить';
               }
             }
           } catch (err) {
             console.error('Auto mode error:', err);
             if (errorEl) {
-              errorEl.textContent = 'РћС€РёР±РєР° СЃРѕРµРґРёРЅРµРЅРёСЏ. РџРѕРїСЂРѕР±СѓР№С‚Рµ РµС‰С‘ СЂР°Р· РёР»Рё РёСЃРїРѕР»СЊР·СѓР№С‚Рµ СЂСѓС‡РЅРѕР№ РІРІРѕРґ.';
+              errorEl.textContent = 'Ошибка соединения. Попробуйте ещё раз или используйте ручной ввод.';
               errorEl.classList.remove('hidden');
             }
             if (saveBtn) {
               saveBtn.disabled = false;
-              saveBtn.textContent = 'Р”РѕР±Р°РІРёС‚СЊ';
+              saveBtn.textContent = 'Добавить';
             }
           }
         } else {
@@ -2011,8 +1675,8 @@
       fitnessEl.supplementsTracking.innerHTML = `
         <div id="fitnessSupplementsDebug" class="text-[11px] leading-4 bg-black/25 border border-white/10 rounded-lg px-2 py-1 mb-2 hidden"></div>
         <div class="text-center py-4 opacity-70">
-          <p class="text-sm mb-2">РќРµС‚ РґРѕР±Р°РІР»РµРЅРЅС‹С… Р‘РђР”РѕРІ</p>
-          <button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Р”РѕР±Р°РІРёС‚СЊ РїРµСЂРІС‹Р№ Р‘РђР”</button>
+          <p class="text-sm mb-2">Нет добавленных БАДов</p>
+          <button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Добавить первый БАД</button>
         </div>
       `;
       fitnessBindSupplementsTrackingHandlers();
@@ -2026,7 +1690,7 @@
     for (const supp of supplements) {
       const intakes = FS.getSupplementIntakesForDay(supp.id, dateKey);
       const totalDose = FS.getTotalDoseForDay(intakes);
-      const unitLabel = supp.unit === 'С‚Р°Р±Р»' ? 'С‚Р°Р±Р»' : supp.unit;
+      const unitLabel = supp.unit === 'табл' ? 'табл' : supp.unit;
       
       // CRITICAL FIX: Filter supplements based on daily flag and date interval
       const isPast = FS.isPastDate(dateKey);
@@ -2071,13 +1735,13 @@
       html += '<div class="flex items-center justify-between mb-2">';
       html += '<h4 class="font-semibold text-sm">' + supp.name + '</h4>';
       html += '<div class="flex gap-1">';
-      html += '<button type="button" class="supp-edit-norm text-xs opacity-70" data-id="' + supp.id + '">РЅРѕСЂРјР°</button>';
-      html += '<button type="button" class="supp-history text-xs opacity-70" data-id="' + supp.id + '">РёСЃС‚РѕСЂРёСЏ</button>';
+      html += '<button type="button" class="supp-edit-norm text-xs opacity-70" data-id="' + supp.id + '">норма</button>';
+      html += '<button type="button" class="supp-history text-xs opacity-70" data-id="' + supp.id + '">история</button>';
       // NEW: Button to remove supplement from this specific day
-      html += '<button type="button" class="supp-remove-from-day text-xs opacity-70 text-red-300" data-id="' + supp.id + '" title="РЈР±СЂР°С‚СЊ РёР· СЌС‚РѕРіРѕ РґРЅСЏ">Г—</button>';
+      html += '<button type="button" class="supp-remove-from-day text-xs opacity-70 text-red-300" data-id="' + supp.id + '" title="Убрать из этого дня">×</button>';
       html += '</div></div>';
       
-      html += '<p class="text-xs opacity-70 mb-2">' + supp.standardDailyDose + ' ' + unitLabel + '/РґРµРЅСЊ' + (supp.daily ? ' (РµР¶РµРґРЅРµРІРЅРѕ)' : '') + '</p>';
+      html += '<p class="text-xs opacity-70 mb-2">' + supp.standardDailyDose + ' ' + unitLabel + '/день' + (supp.daily ? ' (ежедневно)' : '') + '</p>';
       
       // Show intakes
       for (const intake of intakes) {
@@ -2087,7 +1751,7 @@
         // CRITICAL: Determine if checkbox should be disabled (future dates)
         const isFuture = FS.isFutureDate(dateKey);
         const checkboxDisabled = isFuture ? ' disabled' : '';
-        const checkboxTitle = isFuture ? ' title="РќРµР»СЊР·СЏ РѕС‚РјРµС‚РёС‚СЊ РїСЂРёС‘Рј РІ Р±СѓРґСѓС‰РµРј"' : '';
+        const checkboxTitle = isFuture ? ' title="Нельзя отметить приём в будущем"' : '';
 
         html += '<div class="flex items-center gap-2 py-1 border-b border-white/5 last:border-0">';
         // CRITICAL: Checkbox disabled for future dates - planning only, no actual taking
@@ -2102,17 +1766,17 @@
         
         html += '<span class="flex-1 text-sm ' + doseClass + '">' + intake.dose + ' ' + unitLabel + '</span>';
         
-        html += '<button type="button" class="supp-edit-intake text-xs opacity-70" data-supp-id="' + supp.id + '" data-intake-id="' + intake.id + '">вњЏ</button>';
+        html += '<button type="button" class="supp-edit-intake text-xs opacity-70" data-supp-id="' + supp.id + '" data-intake-id="' + intake.id + '">✏</button>';
         html += '</div>';
       }
 
       // Total for today
       html += '<div class="text-xs mt-2 pt-2 border-t border-white/10">';
-      html += 'РЎРµРіРѕРґРЅСЏ: ' + totalDose + ' ' + unitLabel + ' / ' + supp.standardDailyDose + ' ' + unitLabel;
+      html += 'Сегодня: ' + totalDose + ' ' + unitLabel + ' / ' + supp.standardDailyDose + ' ' + unitLabel;
       html += '</div>';
       
       // Add intake button
-      html += '<button type="button" class="supp-add-intake w-full mt-2 py-1 text-xs bg-white/10 rounded" data-supp-id="' + supp.id + '">+ Р”РѕР±Р°РІРёС‚СЊ РїСЂРёС‘Рј</button>';
+      html += '<button type="button" class="supp-add-intake w-full mt-2 py-1 text-xs bg-white/10 rounded" data-supp-id="' + supp.id + '">+ Добавить приём</button>';
       
       html += '</div>';
     }
@@ -2124,18 +1788,18 @@
     if (html === '' || visibleCount === 0) {
       console.log('[Supplements] showing EMPTY placeholder for dateKey:', dateKey);
       html += '<div class="text-center py-6 opacity-70">';
-      html += '<p class="text-sm mb-3">РќРµС‚ Р‘РђР”РѕРІ РґР»СЏ СЌС‚РѕР№ РґР°С‚С‹</p>';
-      html += '<button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Р”РѕР±Р°РІРёС‚СЊ Р‘РђР”</button>';
+      html += '<p class="text-sm mb-3">Нет БАДов для этой даты</p>';
+      html += '<button type="button" id="addFirstSupplement" class="text-green-400 text-sm hover:underline">+ Добавить БАД</button>';
       html += '</div>';
     }
       
     // Add new supplement button
-    html += '<button type="button" id="addNewSupplement" class="w-full py-2 rounded-xl bg-green-500/30 text-sm">+ Р”РѕР±Р°РІРёС‚СЊ Р‘РђР”</button>';
+    html += '<button type="button" id="addNewSupplement" class="w-full py-2 rounded-xl bg-green-500/30 text-sm">+ Добавить БАД</button>';
     
     // DEV/DEBUG: Clear history button (hidden in production, shown for debugging)
-    html += '<button type="button" id="clearSupplementsHistory" class="w-full py-1 mt-2 rounded-xl bg-red-500/20 text-xs text-red-300 opacity-50 hover:opacity-100">рџ—‘ РћС‡РёСЃС‚РёС‚СЊ РІСЃСЋ РёСЃС‚РѕСЂРёСЋ Р‘РђР”РѕРІ</button>';
+    html += '<button type="button" id="clearSupplementsHistory" class="w-full py-1 mt-2 rounded-xl bg-red-500/20 text-xs text-red-300 opacity-50 hover:opacity-100">🗑 Очистить всю историю БАДов</button>';
     // DEV/DEBUG: COMPLETE RESET button - deletes ALL supplements
-    html += '<button type="button" id="resetAllSupplements" class="w-full py-1 mt-1 rounded-xl bg-red-900/40 text-xs text-red-400 opacity-50 hover:opacity-100">вљ пёЏ РЈР”РђР›РРўР¬ Р’РЎР• Р‘РђР”Р«</button>';
+    html += '<button type="button" id="resetAllSupplements" class="w-full py-1 mt-1 rounded-xl bg-red-900/40 text-xs text-red-400 opacity-50 hover:opacity-100">⚠️ УДАЛИТЬ ВСЕ БАДЫ</button>';
 
     fitnessEl.supplementsTracking.innerHTML = html;
     fitnessBindSupplementsTrackingHandlers();
@@ -2175,7 +1839,7 @@
 
         if (FS.isFutureDate(dateKey)) {
           logSuppDebug('supp: blocked by future-date guard');
-          alert('РќРµР»СЊР·СЏ РѕС‚РјРµС‚РёС‚СЊ РїСЂРёС‘Рј Р‘РђР”Р° РІ Р±СѓРґСѓС‰РµРј РґРЅРµ. РњРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РїР»Р°РЅРёСЂРѕРІР°С‚СЊ (РјРµРЅСЏС‚СЊ РґРѕР·Сѓ/РІСЂРµРјСЏ).');
+          alert('Нельзя отметить приём БАДа в будущем дне. Можно только планировать (менять дозу/время).');
           return;
         }
 
@@ -2196,23 +1860,23 @@
       }
 
       if (e.target.closest('#clearSupplementsHistory')) {
-        if (confirm('РћС‡РёСЃС‚РёС‚СЊ РІСЃСЋ РёСЃС‚РѕСЂРёСЋ Р‘РђР”РѕРІ? РЎР°РјРё Р‘РђР”С‹ РѕСЃС‚Р°РЅСѓС‚СЃСЏ.')) {
+        if (confirm('Очистить всю историю БАДов? Сами БАДы останутся.')) {
           const success = FS.clearAllSupplementsHistory();
           if (success) {
-            alert('РСЃС‚РѕСЂРёСЏ Р‘РђР”РѕРІ РѕС‡РёС‰РµРЅР°.');
+            alert('История БАДов очищена.');
             fitnessRenderSupplementsTracking();
           } else {
-            alert('РћС€РёР±РєР° РїСЂРё РѕС‡РёСЃС‚РєРµ РёСЃС‚РѕСЂРёРё.');
+            alert('Ошибка при очистке истории.');
           }
         }
         return;
       }
 
       if (e.target.closest('#resetAllSupplements')) {
-        if (confirm('РЈРґР°Р»РёС‚СЊ РІСЃРµ Р‘РђР”С‹ Рё РёС… РёСЃС‚РѕСЂРёСЋ Р±РµР·РІРѕР·РІСЂР°С‚РЅРѕ?') &&
-            confirm('РџРѕРґС‚РІРµСЂРґРёС‚Рµ СѓРґР°Р»РµРЅРёРµ РІСЃРµС… Р‘РђР”РѕРІ.')) {
+        if (confirm('Удалить все БАДы и их историю безвозвратно?') &&
+            confirm('Подтвердите удаление всех БАДов.')) {
           FS.resetAllSupplements();
-          alert('Р’СЃРµ Р‘РђР”С‹ СѓРґР°Р»РµРЅС‹.');
+          alert('Все БАДы удалены.');
           fitnessRenderSupplementsTracking();
         }
         return;
@@ -2247,7 +1911,7 @@
         const suppId = removeFromDayBtn.dataset.id;
         const supp = FS.getSupplementById(suppId);
         if (!supp) return;
-        if (confirm('РЈР±СЂР°С‚СЊ \"' + supp.name + '\" РёР· СЌС‚РѕРіРѕ РґРЅСЏ?')) {
+        if (confirm('Убрать \"' + supp.name + '\" из этого дня?')) {
           FS.removeAllSupplementIntakesForDay(suppId, dateKey);
           fitnessRenderSupplementsTracking();
         }
@@ -2260,54 +1924,54 @@
     const existing = editId ? FS.getSupplementById(editId) : null;
     const todayKey = FS.formatDateKey(new Date());
     
-    let html = '<h3 class="font-semibold mb-4">' + (existing ? 'Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ Р‘РђР”' : 'Р”РѕР±Р°РІРёС‚СЊ Р‘РђР”') + '</h3>';
+    let html = '<h3 class="font-semibold mb-4">' + (existing ? 'Редактировать БАД' : 'Добавить БАД') + '</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">РќР°Р·РІР°РЅРёРµ</label>';
-    html += '<input type="text" id="suppProfileName" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.name ?? '') + '" placeholder="РљСЂРµР°С‚РёРЅ, РљР»РµРЅР±СѓС‚РµСЂРѕР»...">';
+    html += '<label class="block text-sm">Название</label>';
+    html += '<input type="text" id="suppProfileName" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.name ?? '') + '" placeholder="Креатин, Кленбутерол...">';
     
-    html += '<label class="block text-sm">Р•РґРёРЅРёС†Р° РёР·РјРµСЂРµРЅРёСЏ</label>';
+    html += '<label class="block text-sm">Единица измерения</label>';
     html += '<select id="suppProfileUnit" class="w-full p-3 bg-white/30 rounded-xl text-white">';
-    html += '<option value="РјРі"' + (existing?.unit === 'РјРі' ? ' selected' : '') + '>РјРі</option>';
-    html += '<option value="Рі"' + (existing?.unit === 'Рі' ? ' selected' : '') + '>Рі</option>';
-    html += '<option value="С‚Р°Р±Р»"' + (existing?.unit === 'С‚Р°Р±Р»' ? ' selected' : '') + '>С‚Р°Р±Р»РµС‚РєРё</option>';
+    html += '<option value="мг"' + (existing?.unit === 'мг' ? ' selected' : '') + '>мг</option>';
+    html += '<option value="г"' + (existing?.unit === 'г' ? ' selected' : '') + '>г</option>';
+    html += '<option value="табл"' + (existing?.unit === 'табл' ? ' selected' : '') + '>таблетки</option>';
     html += '</select>';
     
     // CRITICAL: Daily checkbox with date interval controls
     html += '<div class="bg-white/5 rounded-lg p-3 mt-2">';
     html += '<label class="flex items-center gap-2">';
     html += '<input type="checkbox" id="suppProfileDaily" class="rounded"' + (existing?.daily ? ' checked' : '') + '>';
-    html += '<span class="text-sm font-medium">РџСЂРёРЅРёРјР°С‚СЊ РµР¶РµРґРЅРµРІРЅРѕ</span></label>';
+    html += '<span class="text-sm font-medium">Принимать ежедневно</span></label>';
 
     // Daily interval controls (shown only when daily is checked)
     html += '<div id="dailyIntervalControls" class="mt-3 space-y-2' + (existing?.daily ? '' : ' hidden') + '">';
-    html += '<label class="block text-xs opacity-70">РќР°С‡Р°С‚СЊ СЃ РґР°С‚С‹</label>';
+    html += '<label class="block text-xs opacity-70">Начать с даты</label>';
     html += '<input type="date" id="suppProfileDailyStart" class="w-full p-2 bg-white/30 rounded-xl text-white text-sm" value="' + (existing?.dailyStartDate ?? todayKey) + '">';
 
-    html += '<label class="block text-xs opacity-70 mt-2">Р—Р°РєРѕРЅС‡РёС‚СЊ (РЅРµРѕР±СЏР·Р°С‚РµР»СЊРЅРѕ)</label>';
+    html += '<label class="block text-xs opacity-70 mt-2">Закончить (необязательно)</label>';
     html += '<input type="date" id="suppProfileDailyEnd" class="w-full p-2 bg-white/30 rounded-xl text-white text-sm" value="' + (existing?.dailyEndDate ?? '') + '">';
     html += '<label class="flex items-center gap-2 mt-1">';
     html += '<input type="checkbox" id="suppProfileDailyNoEnd" class="rounded"' + (!existing?.dailyEndDate ? ' checked' : '') + '>';
-    html += '<span class="text-xs opacity-70">Р‘РµР· РѕРєРѕРЅС‡Р°РЅРёСЏ (Р±РµСЃРєРѕРЅРµС‡РЅРѕ)</span></label>';
+    html += '<span class="text-xs opacity-70">Без окончания (бесконечно)</span></label>';
     html += '</div>';
     html += '</div>';
     
-    html += '<label class="block text-sm mt-2">Р”РЅРµРІРЅР°СЏ РЅРѕСЂРјР°</label>';
+    html += '<label class="block text-sm mt-2">Дневная норма</label>';
     html += '<input type="number" id="suppProfileDailyDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.standardDailyDose ?? '1') + '" placeholder="10">';
 
-    html += '<label class="block text-sm mt-2">РљРѕР»РёС‡РµСЃС‚РІРѕ РїСЂРёС‘РјРѕРІ РІ РґРµРЅСЊ</label>';
+    html += '<label class="block text-sm mt-2">Количество приёмов в день</label>';
     html += '<input type="number" id="suppProfileIntakesCount" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.templateIntakes?.length ?? 1) + '" min="1" max="5">';
 
-    html += '<label class="block text-sm mt-2">Р”РѕР·Р° РЅР° РїСЂРёС‘Рј (Р±Р°Р·РѕРІР°СЏ)</label>';
+    html += '<label class="block text-sm mt-2">Доза на приём (базовая)</label>';
     html += '<input type="number" id="suppProfileDefaultDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (existing?.templateIntakes?.[0]?.defaultDose ?? '1') + '">';
 
     if (existing) {
-      html += '<button type="button" id="suppProfileDelete" class="w-full py-2 mt-2 rounded-xl bg-red-500/30 text-sm text-red-300">РЈРґР°Р»РёС‚СЊ Р‘РђР”</button>';
+      html += '<button type="button" id="suppProfileDelete" class="w-full py-2 mt-2 rounded-xl bg-red-500/30 text-sm text-red-300">Удалить БАД</button>';
     }
     html += '</div>';
 
     html += '<div class="flex gap-3 mt-4">';
-    html += '<button type="button" id="suppProfileCancel" class="flex-1 py-3 rounded-xl bg-white/20">РћС‚РјРµРЅР°</button>';
-    html += '<button type="button" id="suppProfileSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">РЎРѕС…СЂР°РЅРёС‚СЊ</button>';
+    html += '<button type="button" id="suppProfileCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
+    html += '<button type="button" id="suppProfileSave" class="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600">Сохранить</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
@@ -2355,7 +2019,7 @@
         }
 
         if (!name) {
-          alert('Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ Р‘РђР”Р°');
+          alert('Введите название БАДа');
           return;
 
         }
@@ -2377,7 +2041,7 @@
       });
 
       document.getElementById('suppProfileDelete')?.addEventListener('click', () => {
-        if (confirm('РЈРґР°Р»РёС‚СЊ СЌС‚РѕС‚ Р‘РђР”? РСЃС‚РѕСЂРёСЏ РїСЂРёС‘РјРѕРІ Р±СѓРґРµС‚ РїРѕС‚РµСЂСЏРЅР°.')) {
+        if (confirm('Удалить этот БАД? История приёмов будет потеряна.')) {
           FS.deleteSupplement(editId);
           fitnessCloseModal();
           fitnessRenderSupplementsTracking();
@@ -2393,24 +2057,24 @@
     if (!intake) return;
     
     const supp = FS.getSupplementById(suppId);
-    const unit = supp?.unit || 'С‚Р°Р±Р»';
+    const unit = supp?.unit || 'табл';
     
-    let html = '<h3 class="font-semibold mb-4">РР·РјРµРЅРёС‚СЊ РїСЂРёС‘Рј</h3>';
+    let html = '<h3 class="font-semibold mb-4">Изменить приём</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Р”РѕР·Р° (' + unit + ')</label>';
+    html += '<label class="block text-sm">Доза (' + unit + ')</label>';
     html += '<input type="number" id="intakeEditDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + intake.dose + '">';
     html += '<div class="flex gap-2">';
-    html += '<button type="button" id="intakeEditMinus1" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">в€’1</button>';
+    html += '<button type="button" id="intakeEditMinus1" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">−1</button>';
     html += '<button type="button" id="intakeEditPlus1" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">+1</button>';
-    html += '<button type="button" id="intakeEditX2" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">Г—2</button>';
+    html += '<button type="button" id="intakeEditX2" class="flex-1 py-2 rounded-xl bg-white/20 text-sm">×2</button>';
     html += '</div>';
-    html += '<label class="block text-sm mt-2">Р’СЂРµРјСЏ (HH:MM)</label>';
+    html += '<label class="block text-sm mt-2">Время (HH:MM)</label>';
     html += '<input type="time" id="intakeEditTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + (intake.time || '') + '">';
     html += '</div>';
     html += '<div class="flex gap-3 mt-4">';
-    html += '<button type="button" id="intakeEditDelete" class="flex-1 py-3 rounded-xl bg-red-500/30 text-red-300">РЈРґР°Р»РёС‚СЊ</button>';
-    html += '<button type="button" id="intakeEditCancel" class="flex-1 py-3 rounded-xl bg-white/20">РћС‚РјРµРЅР°</button>';
-    html += '<button type="button" id="intakeEditSave" class="flex-1 py-3 rounded-xl bg-green-500">РЎРѕС…СЂР°РЅРёС‚СЊ</button>';
+    html += '<button type="button" id="intakeEditDelete" class="flex-1 py-3 rounded-xl bg-red-500/30 text-red-300">Удалить</button>';
+    html += '<button type="button" id="intakeEditCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
+    html += '<button type="button" id="intakeEditSave" class="flex-1 py-3 rounded-xl bg-green-500">Сохранить</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
@@ -2438,7 +2102,7 @@
         
         // CRITICAL: If dose is 0, delete the intake instead of updating
         if (dose === 0) {
-          if (confirm('Р”РѕР·Р° = 0. РЈРґР°Р»РёС‚СЊ СЌС‚РѕС‚ РїСЂРёС‘Рј?')) {
+          if (confirm('Доза = 0. Удалить этот приём?')) {
             FS.removeSupplementIntake(suppId, dateKey, intakeId);
             fitnessCloseModal();
             fitnessRenderSupplementsTracking();
@@ -2459,20 +2123,20 @@
   // NEW: Open modal to add new intake
   function fitnessOpenIntakeAddModal(suppId, dateKey) {
     const supp = FS.getSupplementById(suppId);
-    const unit = supp?.unit || 'С‚Р°Р±Р»';
+    const unit = supp?.unit || 'табл';
     const defaultDose = supp?.templateIntakes?.[0]?.defaultDose || 1;
     const currentTime = FS.formatTimeHM(new Date());
     
-    let html = '<h3 class="font-semibold mb-4">Р”РѕР±Р°РІРёС‚СЊ РїСЂРёС‘Рј</h3>';
+    let html = '<h3 class="font-semibold mb-4">Добавить приём</h3>';
     html += '<div class="space-y-3">';
-    html += '<label class="block text-sm">Р”РѕР·Р° (' + unit + ')</label>';
+    html += '<label class="block text-sm">Доза (' + unit + ')</label>';
     html += '<input type="number" id="intakeAddDose" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + defaultDose + '">';
-    html += '<label class="block text-sm mt-2">Р’СЂРµРјСЏ (HH:MM)</label>';
+    html += '<label class="block text-sm mt-2">Время (HH:MM)</label>';
     html += '<input type="time" id="intakeAddTime" class="w-full p-3 bg-white/30 rounded-xl text-white" value="' + currentTime + '">';
     html += '</div>';
     html += '<div class="flex gap-3 mt-4">';
-    html += '<button type="button" id="intakeAddCancel" class="flex-1 py-3 rounded-xl bg-white/20">РћС‚РјРµРЅР°</button>';
-    html += '<button type="button" id="intakeAddSave" class="flex-1 py-3 rounded-xl bg-green-500">Р”РѕР±Р°РІРёС‚СЊ</button>';
+    html += '<button type="button" id="intakeAddCancel" class="flex-1 py-3 rounded-xl bg-white/20">Отмена</button>';
+    html += '<button type="button" id="intakeAddSave" class="flex-1 py-3 rounded-xl bg-green-500">Добавить</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
@@ -2495,7 +2159,7 @@
     const supp = FS.getSupplementById(suppId);
     if (!supp) return;
     
-    const unit = supp.unit || 'С‚Р°Р±Р»';
+    const unit = supp.unit || 'табл';
     const history = supp.history || [];
     
     // Get last 14 days with data
@@ -2506,7 +2170,7 @@
       dates.push(FS.formatDateKey(d));
     }
     
-    let html = '<h3 class="font-semibold mb-4">РСЃС‚РѕСЂРёСЏ: ' + supp.name + '</h3>';
+    let html = '<h3 class="font-semibold mb-4">История: ' + supp.name + '</h3>';
     html += '<div class="space-y-3 max-h-96 overflow-y-auto">';
     
     for (const dateKey of dates) {
@@ -2527,12 +2191,12 @@
         html += '<input type="checkbox" class="hist-intake-check rounded" data-date="' + dateKey + '" data-intake-id="' + intake.id + '"' + (intake.checked ? ' checked' : '') + '>';
         html += '<span class="w-12">' + (intake.time || '--:--') + '</span>';
         html += '<span class="flex-1">' + intake.dose + ' ' + unit + '</span>';
-        html += '<button type="button" class="hist-intake-edit text-xs opacity-70" data-date="' + dateKey + '" data-intake-id="' + intake.id + '">вњЏ</button>';
+        html += '<button type="button" class="hist-intake-edit text-xs opacity-70" data-date="' + dateKey + '" data-intake-id="' + intake.id + '">✏</button>';
         html += '</div>';
       }
       
       if (intakes.length === 0) {
-        html += '<div class="text-xs opacity-50 py-1">РќРµС‚ РґР°РЅРЅС‹С…</div>';
+        html += '<div class="text-xs opacity-50 py-1">Нет данных</div>';
       }
       
       html += '</div>';
@@ -2540,7 +2204,7 @@
     
     html += '</div>';
     html += '<div class="flex gap-3 mt-4">';
-    html += '<button type="button" id="histClose" class="flex-1 py-3 rounded-xl bg-white/20">Р—Р°РєСЂС‹С‚СЊ</button>';
+    html += '<button type="button" id="histClose" class="flex-1 py-3 rounded-xl bg-white/20">Закрыть</button>';
     html += '</div>';
     
     fitnessOpenModal(html, () => {
@@ -2599,7 +2263,7 @@
         if (fitnessEl.height) fitnessEl.height.value = p.height ?? '';
         if (fitnessEl.age) fitnessEl.age.value = p.age ?? '';
         if (fitnessEl.targetWeight) fitnessEl.targetWeight.value = p.targetWeight ?? '';
-        fitnessSetSelectedWorkProfile(p.workProfile); // РќРћР’РћР•
+        fitnessSetSelectedWorkProfile(p.workProfile); // НОВОЕ
       } else {
         fitnessEl.profileSetup?.classList.add('hidden');
         fitnessEl.dashboard?.classList.remove('hidden');
@@ -2629,7 +2293,7 @@
       height: fitnessEl.height?.value,
       age: fitnessEl.age?.value,
       targetWeight: fitnessEl.targetWeight?.value,
-      workProfile, // РќРћР’РћР•
+      workProfile, // НОВОЕ
     });
     FS.setFitnessProfile(profile);
     setFitnessSetupDone();
@@ -2648,7 +2312,7 @@
   });
   fitnessEl.profileEdit?.addEventListener('click', () => {
     const p = FS.getFitnessProfile();
-    // РїРѕРєР°Р·Р°С‚СЊ С„РѕСЂРјСѓ РїСЂРѕС„РёР»СЏ РІРјРµСЃС‚Рѕ РґР°С€Р±РѕСЂРґР°
+    // показать форму профиля вместо дашборда
     fitnessEl.dashboard?.classList.add('hidden');
     fitnessEl.profileSetup?.classList.remove('hidden');
 
@@ -2657,6 +2321,10 @@
     if (fitnessEl.age) fitnessEl.age.value = p.age ?? '';
     if (fitnessEl.targetWeight) fitnessEl.targetWeight.value = p.targetWeight ?? '';
     fitnessSetSelectedWorkProfile(p.workProfile);
+  });
+
+  fitnessEl.settingsOpen?.addEventListener('click', () => {
+    fitnessOpenWaterBaselineModal();
   });
 
   document.querySelectorAll('.fitness-activity-btn').forEach(btn => {
@@ -2778,3 +2446,181 @@
     document.getElementById('stepsModalOverlay')?.classList.add('hidden');
   });
   document.getElementById('stepsCount')?.addEventListener('input', fitnessUpdateStepsCaloriesPreview);
+  document.getElementById('stepsIntensity')?.addEventListener('change', fitnessUpdateStepsCaloriesPreview);
+
+  fitnessEl.foodAdd?.addEventListener('click', () => fitnessOpenFoodModal(null));
+
+  // Клик на карточку энергии — открыть детализацию
+  document.getElementById('fitnessCaloriesCard')?.addEventListener('click', function(e) {
+    // Не открывать если клик по кнопкам внутри карточки
+    if (e.target.closest('button')) return;
+    fitnessOpenEnergyDetails();
+  });
+
+  // Закрытие модального окна энергии
+  document.getElementById('energyDetailsCloseBtn')?.addEventListener('click', function() {
+    document.getElementById('energyDetailsModalOverlay')?.classList.add('hidden');
+  });
+  document.getElementById('energyDetailsModalOverlay')?.addEventListener('click', function(e) {
+    if (e.target.id === 'energyDetailsModalOverlay') {
+      document.getElementById('energyDetailsModalOverlay')?.classList.add('hidden');
+    }
+  });
+
+  // UPDATED: Water button handlers - use new fitnessAdjustWater
+  document.querySelectorAll('.fitness-water-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const deltaMl = Number(btn.dataset.water) || 0;
+      fitnessAdjustWater(deltaMl);
+    });
+  });
+
+  // NEW: Water manual adjust link handler
+  document.querySelectorAll('.fitness-water-adjust').forEach((link) => {
+    link.addEventListener('click', () => {
+      fitnessOpenWaterAdjustModal();
+    });
+  });
+
+  // NEW: Water baseline change link handler
+  document.querySelectorAll('.fitness-water-baseline').forEach((link) => {
+    link.addEventListener('click', () => {
+      fitnessOpenWaterBaselineModal();
+    });
+  });
+
+  document.querySelectorAll('.fitness-workday-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const value = btn.dataset.workday; // 'low' | 'normal' | 'high'
+      const k = fitnessGetDateKey();
+      const dayData = FS.getDayData(k);
+      FS.updateDayData(k, { workDay: value });
+      fitnessRenderWorkDay();
+      fitnessRenderCalories(); // чтобы пересчитать ккал с учётом workDay
+    });
+  });
+
+  fitnessEl.modalOverlay?.addEventListener('click', (e) => {
+    if (e.target === fitnessEl.modalOverlay) fitnessCloseModal();
+  });
+
+    // --- Глобальная шкала настроения (главный экран) ---
+
+    function renderGlobalMood(moodValue = 7.3, yesterdayValue = 6.5) {
+    const container = document.getElementById('moodScaleContainer');
+    const scoreEl = document.getElementById('moodScore');
+    const yesterdayEl = document.getElementById('moodYesterday');
+    const trendEl = document.getElementById('moodTrend');
+    const statusEl = document.getElementById('moodStatus');
+
+    if (!container || !scoreEl || !yesterdayEl || !trendEl || !statusEl) return;
+
+    const segments = container.querySelectorAll('.mood-segment');
+
+    const value = Math.max(0, Math.min(10, Number(moodValue) || 0));
+    const yesterday = Math.max(0, Math.min(10, Number(yesterdayValue) || 0));
+
+    const fullSegments = Math.floor(value);
+
+    segments.forEach((segment, index) => {
+      const level = 10 - index; // 10 = верхний
+      segment.innerHTML = '';   // очищаем на всякий случай
+
+      // базовый фон (неактивный)
+      segment.style.backgroundColor = 'rgba(15,23,42,0.6)';
+
+      if (level <= fullSegments) {
+        // активный сегмент
+        const hue = 120 - level * 8; // зелёный → красный
+        const color = `hsl(${hue}, 70%, 50%)`;
+        segment.style.backgroundColor = color;
+      }
+    });
+
+    // числа
+    scoreEl.textContent = value.toFixed(1);
+    yesterdayEl.textContent = yesterday.toFixed(1);
+
+    const diff = value - yesterday;
+    if (Math.abs(diff) < 0.1) {
+      trendEl.textContent = '→ 0.0';
+      trendEl.className = 'text-[10px] opacity-70';
+    } else if (diff > 0) {
+      trendEl.textContent = `↗ +${diff.toFixed(1)}`;
+      trendEl.className = 'text-[10px] text-emerald-300';
+    } else {
+      trendEl.textContent = `↘ ${diff.toFixed(1)}`;
+      trendEl.className = 'text-[10px] text-red-300';
+    }
+
+    // статус
+    let statusText = '';
+    let statusClass = 'text-xs font-medium ';
+    if (value >= 8.5) {
+      statusText = 'Пик, используй момент';
+      statusClass += 'text-orange-300';
+    } else if (value >= 7) {
+      statusText = 'Хороший тон, есть ресурс';
+      statusClass += 'text-emerald-300';
+    } else if (value >= 5) {
+      statusText = 'Норма, держи базу';
+      statusClass += 'text-amber-200';
+    } else if (value >= 3) {
+      statusText = 'Усталость, нужен отдых';
+      statusClass += 'text-red-300';
+    } else {
+      statusText = 'Кризис, нужна поддержка';
+      statusClass += 'text-red-400';
+    }
+    statusEl.textContent = statusText;
+    statusEl.className = statusClass;
+  }
+
+
+  function initGlobalMoodWidget() {
+    const btn = document.getElementById('logMoodBtn');
+    if (btn) {
+      btn.addEventListener('click', async () => {
+        const raw = prompt('Текущее состояние (0–10):', '7');
+        if (raw == null) return;
+        const num = parseFloat(raw);
+        if (Number.isNaN(num)) return;
+  
+        // обновляем UI
+        renderGlobalMood(num, 6.5);
+  
+        // сохраняем в Supabase как daily_state + measurements
+        if (window.FitnessSync && window.currentAppUserId) {
+          const todayKey = FS.formatDateKey(new Date()); // YYYY-MM-DD
+          try {
+            await window.FitnessSync.saveMood(todayKey, num);
+          } catch (e) {
+            console.error('saveMood failed', e);
+          }
+        }
+      });
+    }
+  
+    renderGlobalMood(7.3, 6.5);
+  }
+  
+  
+
+
+  // Инициализация профиля
+  initProfileHeader();
+  // Инициализация глобальной шкалы настроения
+  initGlobalMoodWidget();
+
+  // Запуск приложения
+  if (supabaseEnabled) initFromSupabase();
+  else initBrowserMode();
+
+
+// === EXPORTS ===
+window.FitnessUI = {
+  renderDashboard: typeof fitnessRenderDashboard !== 'undefined' ? fitnessRenderDashboard : null,
+  openModal: typeof fitnessOpenModal !== 'undefined' ? fitnessOpenModal : null,
+  closeModal: typeof fitnessCloseModal !== 'undefined' ? fitnessCloseModal : null,
+};
+})();
